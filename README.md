@@ -33,11 +33,11 @@ To deploy on Vercel (task 4.7):
    `GITHUB_APP_PRIVATE_KEY` holding the `.pem`'s contents (not `GITHUB_APP_PRIVATE_KEY_PATH`).
    Vercel sets `CRON_SECRET` itself once the cron in `vercel.json` exists; add it by hand if it
    doesn't. The database is the same Neon one; `make migrate` has already been run against it.
-3. **Deploy**, and note the production URL, `https://<deployment>`.
+3. **Deploy.** Production is https://www.projectmagic.work (the bare domain redirects to `www`).
 4. **The GitHub App** (GitHub → Settings → Developer settings → GitHub Apps → Project Magic):
-   - add the callback URL `https://<deployment>/auth/github/callback`;
-   - under *Webhook*, tick *Active* and set the URL to `https://<deployment>/api/github/webhook`,
+   - add the callback URL `https://www.projectmagic.work/auth/github/callback`;
+   - under *Webhook*, tick *Active* and set the URL to `https://www.projectmagic.work/api/github/webhook`,
      with the secret from `GITHUB_WEBHOOK_SECRET`.
-5. **Check**: sign in at `https://<deployment>`; push to a tracked repository and see the
+5. **Check**: sign in at `https://www.projectmagic.work`; push to a tracked repository and see the
    overview's *synced* time change within a few seconds (the App's *Advanced* tab lists each
    webhook delivery and its response).
