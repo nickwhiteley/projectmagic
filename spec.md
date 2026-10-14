@@ -106,6 +106,8 @@ main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 edit_mode: auto                  # auto | commit | pr (§10.3)
 new_id_prefix: NW                # the prefix suggested for a new item (§10.1)
+production_environments:         # default: GitHub deployment environments named Production*
+  - "Production – orchard-web"   # (§16.6)
 ```
 
 The file lives in the repository, where it is versioned and the agents can see it. The tool
@@ -157,6 +159,8 @@ The prose, exactly as today …
   | `Plan`     | `PROGRESS.md` task numbers, comma-separated                    | links (§6)          |
   | `Waiting`  | free text: who or what it waits on                             | shown with blocked  |
   | `Type`     | `feature` (default) · `bug`                                    | kept; v0.2 (§13)    |
+  | `Found`    | for a bug: `production` · `preview` · `development`            | kept; §16.4         |
+  | `Raised`   | for a bug: when it was first noticed                           | kept; §16.4         |
   | `Epic`     | an epic id                                                     | kept; v0.2 (§13)    |
 
   Unknown keys are kept and shown as-is. **A missing meta line is not an error.** The item is
@@ -215,7 +219,9 @@ feat/5.7-sketch-part-editor
 item's `Branch` key or a PR body.
 
 **A pull request body names what it works on** with a line `Backlog: NW9` and/or
-`Plan: 5.7`. Several ids are separated by commas.
+`Plan: 5.7`. Several ids are separated by commas. **A PR that fixes a bug says where the bug
+was found**, `Bug: production`, `Bug: preview` or `Bug: development`, and, for production,
+`Raised: <date and time>` when it was first noticed, if known (§16.4).
 
 Existing branches keep their names. They link through `Branch:` on the item, or not at all.
 
@@ -534,6 +540,8 @@ repository's `backlog.md`.
 - **Ask across projects**: a question box answered from the cached parses, such as "what is
   blocked on the lawyer?"
 - **Activity feed**: recent commits across all projects, grouped by linked item.
+- **Delivery and quality** (§16): deployment frequency, lead time, change failure rate, time to
+  restore, throughput, and the founder queue.
 - **Editing `PROGRESS.md` status cells and docs.**
 - **More users**: invitations, the member list and role management, on top of the §11.2
   model that v0.1 already enforces.
@@ -552,3 +560,82 @@ repository's `backlog.md`.
 ## 15. Open questions
 
 None that block phase 0.
+
+## 16. Delivery and quality (after v0.1)
+
+**A view of how fast each project moves and how often it breaks production, inspired by DORA
+but sized for one person and a team of agents.** It is backlog item PM9. Nothing here needs
+collecting in advance: every source below can be backfilled from GitHub, so it can follow v0.1
+without losing history.
+
+### 16.1 What is measured
+
+| Measure | How | Source |
+| ------- | --- | ------ |
+| **Deployment frequency** | production deploys per week | GitHub Deployments, which Vercel writes (`Production – <project>` environments) |
+| **Lead time for changes** | a merged PR's first commit to the production deploy that contains its merge commit | PRs and Deployments, matched by sha ancestry |
+| **Change failure rate** | production bug-fix PRs over production deploys, over a rolling 4 weeks | PRs with `Bug: production` (§5.3) |
+| **Time to restore** | `Raised:` (or the fix branch's first commit, if absent) to the production deploy containing the fix | the same PRs, and Deployments |
+| **Throughput** | items done per week, **weighted by size** (S = 1, M = 3, L = 8; ranges take the midpoint), and plan tasks done per week | backlog and `PROGRESS.md` history (§7.3) |
+| **Item lead time** | an item first appearing in `backlog.md` to its removal or `done` | backlog history |
+| **Cycle time** | an item's first `in progress` evidence (meta or a linked branch) to done | backlog history and branches |
+| **The founder queue** | items in `built` or `blocked` whose waiting reason needs the owner: how many, and how long each has waited | current meta lines, and history for the age |
+| **Main health** | the share of CI runs on main that fail, and how long main stays red | GitHub Actions runs |
+
+**The founder queue is the measure most specific to agent-built projects.** Agents finish work
+faster than one person can accept it. Orchard has 14 items `built` and waiting on a step by
+hand, such as opening DXF files in three CAD programs, a console change or the lawyer. The
+bottleneck is the owner, and this shows its size and age.
+
+### 16.2 What is deliberately not measured
+
+- **PR counts, commits and lines of code as velocity.** Agents make them cheap, so they measure
+  the agents' verbosity, not progress. They are shown as context, never as a headline.
+- **Story points.** Size is a rough weight, used only to stop ten S items looking like ten L ones.
+- **Comparisons between projects.** Each project's figures are shown against its own past.
+
+### 16.3 Honest numbers
+
+- **Small counts are shown as counts.** A rate is shown only when its denominator is at least
+  10. "2 of 7 deploys" is more honest than "29%".
+- **Trends, not targets**: weekly bars with a 4-week rolling line, and no red or green
+  thresholds.
+- **Every figure links to its evidence**: the deploys, PRs or items it counts.
+
+### 16.4 Bugs
+
+A production bug is a **merged PR whose body says `Bug: production`** (§5.3), which is how an
+agent fixes one today: on a `fix/` branch, usually straight away. A bug that isn't fixed
+straight away is a backlog item with `Type: bug`, plus `Found: production` and `Raised:` on its
+meta line. Its fix PR cites it with `Backlog:`, so the item's `Raised:` date is the start of
+time to restore. This joins PM2: bug items are the backlog half, and bug-fix PRs are the
+measured half.
+
+`fix/` PRs without a `Bug:` line, such as a broken build on main, are fixes but not production
+bugs, and count only towards main health. That matters: lantern's eight `fix/` PRs so
+far include both kinds.
+
+**Later sources**, once the convention has proved itself: lantern's failure log
+(`PROGRESS.md` 8.8) and orchard's alerts, each read through a small read-only endpoint, would
+show production faults that no PR has fixed yet.
+
+### 16.5 Where it appears
+
+- **On the overview card**: one line of four figures per project (deploys this week, median lead
+  time, production bugs in the last four weeks, the founder queue), each a link.
+- **A Delivery tab per project**: the charts in §16.1, a list of production bugs with time to
+  restore, and the founder queue, oldest first.
+
+### 16.6 Data
+
+The sync (§7) adds two fetches, both cheap and both incremental:
+
+- **Deployments.** `deployments(environments: [...], first: 100)` with statuses. Only
+  production environments, and only those in `.projectmagic.yml`'s
+  `production_environments` (default: any environment whose name starts with `Production`).
+- **Workflow runs** on main, through REST, newest first, until a run already stored is reached.
+
+A new `event` table holds `(project_id, kind, at, sha, ref, data)` for deploys, merged PRs, CI
+runs and status changes, keyed so that a re-sync is idempotent. The backlog history walk (§7.3)
+records **every status change** per item, not only removals, which is what cycle time and the
+founder queue's ages need.
