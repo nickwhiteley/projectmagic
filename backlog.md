@@ -6,6 +6,35 @@ Magic can read its own backlog.
 
 ## After v0.1
 
+### PM12 A home page that explains Project Magic, and a README fit for a public repository
+**Status:** todo · **Size:** M · **Type:** feature
+
+Next: Nick is making the repository public so that others can use it. Two parts:
+
+- **`/` for a signed-out visitor** becomes a home page instead of a redirect to sign in: what
+  Project Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in
+  markdown in GitHub), why it helps (see every project's state without asking an agent in each
+  repository; what is waiting on you; edits that land on main as ordinary commits), and the setup
+  at a high level (the conventions, a GitHub App, a Postgres database, Vercel), linking to the
+  README for the detail. Signed in, `/` stays the overview. In the look of `design/README.md`.
+- **The README** is written for a stranger: what it is and who it is for, a screenshot, how the
+  conventions work (`specs/conventions.md`), setting up the GitHub App, the database and the
+  environment, running locally, deploying, and the project's layout and status. Before going
+  public, check that nothing private is in the repository or its history: `.env` and the App's
+  key are ignored, but the fixtures, golden files and `design/stitch/` hold copies of Orchard's
+  and Lantern's backlogs and plans.
+
+### PM13 Show that a navigation is under way
+**Status:** todo · **Size:** S · **Type:** feature
+
+Straight after PM12. Clicking a project in the left navigation can take seconds before anything
+changes, so people click again and again. Show at once that something is happening: the clicked
+link marked as current and busy, and a thin progress bar at the top while SvelteKit navigates
+(`navigating` from `$app/state`), as on every navigation. Then find out why it is slow, rather
+than only hiding it: a project page reads the cached state from Postgres and should not call
+GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
+project's state) and fix what dominates.
+
 ### PM1 Epics
 **Status:** todo · **Size:** M · **Type:** feature
 
