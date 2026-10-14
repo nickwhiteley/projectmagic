@@ -57,7 +57,7 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 | #   | Task | Status |
 |-----|------|--------|
 | 3.1 | Register the GitHub App (permissions per §11.3) and install it on both repositories. App auth, installation tokens, user OAuth, the bootstrap administrator, signed session cookie, and `can()` on every route with the route-coverage test. **M** | todo |
-| 3.2 | Neon database, migrations for §8's schema (users and memberships included), and `db.ts` | todo |
+| 3.2 | Neon database, migrations for §8's schema (users and memberships included), and `db.ts` | **done**: `migrations/001_initial.sql` applied to Neon (Postgres 18) with `make migrate`; `history_cursor` also keeps the items present, so the walk can continue; `project` has the sync-coalescing columns. The environment is declared and checked at start in `src/env.ts` (SvelteKit 3's `$app/env/private`) |
 | 3.3 | `sync.ts`: the 0.1 query productionised, a parse cached by `oid`, and the result written per project. History backfill and incremental done detection. **M** | todo |
 | 3.4 | The webhook endpoint (verified, deduplicated by delivery, bursts coalesced), revalidation on load after a failure or a quiet day, the daily cron route, the refresh action | todo |
 

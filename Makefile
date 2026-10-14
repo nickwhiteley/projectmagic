@@ -1,4 +1,4 @@
-.PHONY: install dev test test-unit test-e2e check lint format build
+.PHONY: install dev test test-unit test-e2e check lint format build migrate
 
 install: node_modules
 node_modules: package.json package-lock.json
@@ -27,3 +27,7 @@ format: install
 
 build: install
 	npm run build
+
+# Applies migrations/*.sql to DATABASE_URL (from the environment or .env).
+migrate: install
+	node scripts/migrate.ts

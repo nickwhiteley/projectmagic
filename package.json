@@ -14,7 +14,8 @@
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
-		"test:e2e": "playwright install && playwright test"
+		"test:e2e": "playwright install && playwright test",
+		"migrate": "node scripts/migrate.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
@@ -42,6 +43,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"postgres": "^3.4.9",
 		"remark-gfm": "^4.0.1",
 		"remark-parse": "^11.0.0",
 		"unified": "^11.0.5",
