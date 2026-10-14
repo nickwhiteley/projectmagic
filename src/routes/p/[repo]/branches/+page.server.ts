@@ -1,8 +1,8 @@
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const s = await projectState({ locals, params });
 	const titleOf = new Map(s.items.map((i) => [i.id, i.titleText]));
 	return {
 		repoUrl: `https://github.com/${s.owner}/${s.repo}`,

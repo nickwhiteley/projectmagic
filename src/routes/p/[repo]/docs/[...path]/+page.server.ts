@@ -2,14 +2,14 @@ import { parseConfig } from '#lib/core/config.ts';
 import type { TocEntry } from '#lib/core/render.ts';
 import { db } from '#lib/server/db.ts';
 import { docText, listDocs } from '#lib/server/docs.ts';
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { md } from '#lib/server/views.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const project = locals.project!;
-	const s = await loadProjectState(project.id);
+	const s = await projectState({ locals, params });
 	const [row] = await db()<{ config_json: ReturnType<typeof parseConfig>['config'] | null }[]>`
 		select config_json from project where id = ${project.id}`;
 	const config =

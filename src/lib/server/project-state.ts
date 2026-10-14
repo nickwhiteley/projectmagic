@@ -22,6 +22,24 @@ interface ProjectRow {
 
 const cache = new Map<string, { key: string; state: ProjectState }>();
 
+/**
+ * The project's state for a project page's load, at most once per request (the layout and the page
+ * both need it). It reads `params.repo` so SvelteKit knows the load depends on it: the hook has
+ * already found the project, but without this a client-side navigation from one project to
+ * another would not re-run the load, and the page would keep showing the first project (PM13).
+ */
+export function projectState(event: {
+	locals: App.Locals;
+	params: { repo?: string };
+}): Promise<ProjectState> {
+	const { locals, params } = event;
+	if (!params.repo || !locals.project) throw new Error('projectState is for project routes');
+	const id = locals.project.id;
+	let p = locals.states.get(id);
+	if (!p) locals.states.set(id, (p = loadProjectState(id)));
+	return p;
+}
+
 export async function loadProjectState(projectId: string): Promise<ProjectState> {
 	const sql = db();
 	const [p] = await sql<ProjectRow[]>`
@@ -32,25 +50,38 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 	if (hit?.key === key) return hit.state;
 
 	const config = p.config_json ?? parseConfig(null, { name: p.repo, defaultBranch: 'main' }).config;
-	const refs = await sql<
-		{
-			name: string;
-			head_oid: string;
-			committed_at: Date;
-			ahead: number;
-			behind: number;
-			active: boolean;
-			pr_json: { message: string; prs: Pr[] };
-		}[]
-	>`select name, head_oid, committed_at, ahead, behind, active, pr_json from ref where project_id = ${projectId}`;
-	const files = await sql<{ ref_name: string; path: string; oid: string }[]>`
-		select ref_name, path, oid from ref_file where project_id = ${projectId}`;
-	const oids = [...new Set(files.map((f) => f.oid))];
-	const parses = oids.length
-		? await sql<{ oid: string; kind: string; parsed_json: unknown }[]>`
-			select oid, kind, parsed_json from blob_parse
-			where oid in ${sql(oids)} and parser_version = ${PARSER_VERSION}`
-		: [];
+	type RefRow = {
+		name: string;
+		head_oid: string;
+		committed_at: Date;
+		ahead: number;
+		behind: number;
+		active: boolean;
+		pr_json: { message: string; prs: Pr[] };
+	};
+	type DoneRow = {
+		item_id: string;
+		title: string;
+		last_body: string;
+		removed_oid: string;
+		removed_at: Date;
+		pr_number: number | null;
+	};
+	// Independent reads in parallel; parses only for active branches, the only ones the view uses.
+	const [refs, files, done, parses] = await Promise.all([
+		sql<RefRow[]>`select name, head_oid, committed_at, ahead, behind, active, pr_json
+			from ref where project_id = ${projectId}`,
+		sql<{ ref_name: string; path: string; oid: string }[]>`
+			select ref_name, path, oid from ref_file where project_id = ${projectId}`,
+		sql<DoneRow[]>`select item_id, title, last_body, removed_oid, removed_at, pr_number
+			from done_item where project_id = ${projectId}`,
+		sql<{ oid: string; kind: string; parsed_json: unknown }[]>`
+			select distinct on (b.oid, b.kind) b.oid, b.kind, b.parsed_json
+			from ref_file f
+			join ref r on r.project_id = f.project_id and r.name = f.ref_name and r.active
+			join blob_parse b on b.oid = f.oid and b.parser_version = ${PARSER_VERSION}
+			where f.project_id = ${projectId}`
+	]);
 	const parsed = new Map(parses.map((r) => [`${r.kind}:${r.oid}`, r.parsed_json]));
 	const fileOf = (ref: string, path: string) =>
 		files.find((f) => f.ref_name === ref && f.path === path)?.oid;
@@ -78,16 +109,6 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			plan: planOid ? ((parsed.get(`progress:${planOid}`) as StoredPlan | undefined) ?? null) : null
 		};
 	});
-	const done = await sql<
-		{
-			item_id: string;
-			title: string;
-			last_body: string;
-			removed_oid: string;
-			removed_at: Date;
-			pr_number: number | null;
-		}[]
-	>`select item_id, title, last_body, removed_oid, removed_at, pr_number from done_item where project_id = ${projectId}`;
 
 	const state = assembleState({
 		owner: p.owner,

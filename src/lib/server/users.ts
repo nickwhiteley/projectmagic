@@ -33,6 +33,29 @@ export async function userById(id: string): Promise<SessionUser | null> {
 	return r ? toUser(r) : null;
 }
 
+/** The signed-in user and their memberships in one round trip: every request needs both. */
+export async function sessionUser(
+	id: string
+): Promise<{ user: SessionUser; memberships: Membership[] } | null> {
+	const [r] = await db()<
+		(UserRow & { memberships: { project_id: string; role: Membership['role'] }[] })[]
+	>`
+		select u.id, u.github_login, u.name, u.system_role, u.disabled_at,
+			coalesce(json_agg(json_build_object('project_id', m.project_id, 'role', m.role))
+				filter (where m.project_id is not null), '[]') as memberships
+		from app_user u left join membership m on m.user_id = u.id
+		where u.id = ${id} group by u.id`;
+	if (!r) return null;
+	return {
+		user: toUser(r),
+		memberships: r.memberships.map((m) => ({
+			userId: String(r.id),
+			projectId: String(m.project_id),
+			role: m.role
+		}))
+	};
+}
+
 export async function membershipsOf(userId: string): Promise<Membership[]> {
 	const rows = await db()<{ project_id: string; role: Membership['role'] }[]>`
 		select project_id, role from membership where user_id = ${userId}`;

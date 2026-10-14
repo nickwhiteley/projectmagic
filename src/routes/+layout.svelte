@@ -1,16 +1,26 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
 	const path = $derived(page.url.pathname);
+	// Where a navigation in progress is going, so the clicked link can say so at once (PM13).
+	// The URL changes as soon as a navigation starts, so compare with where it came from.
+	const going = $derived(navigating.to?.url.pathname ?? null);
+	const from = $derived(navigating.from?.url.pathname ?? null);
+	const busy = (href: string) =>
+		!!going && going !== from && (going === href || going.startsWith(`${href}/`));
 </script>
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+{#if navigating.to}
+	<div class="nav-progress" role="progressbar" aria-label="Loading"></div>
+{/if}
 
 {#if data.user}
 	<div class="shell">
@@ -20,7 +30,11 @@
 				<span>Project Magic</span>
 			</a>
 			<nav aria-label="Views">
-				<a href="/" aria-current={path === '/' ? 'page' : undefined}>Overview</a>
+				<a
+					href="/"
+					aria-current={path === '/' ? 'page' : undefined}
+					aria-busy={busy('/') && going === '/' ? true : undefined}>Overview</a
+				>
 				<a href="/search" aria-current={path === '/search' ? 'page' : undefined}>Search</a>
 			</nav>
 			<div class="label group">Projects</div>
@@ -31,6 +45,7 @@
 						aria-current={path === `/p/${p.repo}` || path.startsWith(`/p/${p.repo}/`)
 							? 'page'
 							: undefined}
+						aria-busy={busy(`/p/${p.repo}`) || undefined}
 					>
 						<span class="dot" class:failed={p.failed}></span>{p.name}
 					</a>
@@ -114,6 +129,66 @@
 	nav a:hover {
 		background: var(--surface-2);
 		color: var(--text);
+	}
+	nav a[aria-busy='true'] {
+		background: var(--surface-2);
+		color: var(--text);
+	}
+	nav a[aria-busy='true']::after {
+		content: '';
+		margin-left: auto;
+		width: 10px;
+		height: 10px;
+		border: 2px solid var(--line-strong);
+		border-top-color: var(--accent);
+		border-radius: 50%;
+		animation: spin 0.7s linear infinite;
+	}
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	/* A thin bar across the top while a page loads; only after a moment, so quick ones don't flash. */
+	.nav-progress {
+		position: fixed;
+		inset: 0 0 auto 0;
+		height: 3px;
+		z-index: 50;
+		overflow: hidden;
+		opacity: 0;
+		animation: appear 0s linear 120ms forwards;
+	}
+	.nav-progress::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		width: 40%;
+		background: var(--accent);
+		animation: slide 1.1s ease-in-out infinite;
+	}
+	@keyframes appear {
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes slide {
+		from {
+			transform: translateX(-100%);
+		}
+		to {
+			transform: translateX(250%);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.nav-progress::before {
+			animation: none;
+			width: 100%;
+			opacity: 0.6;
+		}
+		nav a[aria-busy='true']::after {
+			animation: none;
+		}
 	}
 	nav a[aria-current='page'] {
 		background: var(--surface-3);

@@ -10,7 +10,9 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter()
+			// Run the functions in London, next to the Neon database (eu-west-2): every page makes several
+			// queries, and from Vercel's default region each crossed the Atlantic (PM13).
+			adapter: adapter({ regions: ['lhr1'] })
 		})
 	],
 	test: {

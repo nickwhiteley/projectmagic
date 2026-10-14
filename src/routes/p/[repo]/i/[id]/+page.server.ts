@@ -1,12 +1,12 @@
 import { diffLines } from '#lib/core/diff.ts';
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { sourceText } from '#lib/server/item-view.ts';
 import { inline, md } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
-	const s = await loadProjectState(locals.project!.id);
+	const s = await projectState({ locals, params });
 	const it = s.items.find((i) => i.id === params.id);
 	if (!it) {
 		const done = s.done.find((d) => d.id === params.id);

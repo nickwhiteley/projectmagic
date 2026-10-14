@@ -3,12 +3,12 @@ import { updateMeta } from '#lib/core/meta.ts';
 import { asMessage, respond } from '#lib/server/edit-actions.ts';
 import { edits } from '#lib/server/edits.ts';
 import { problems, readItemForm, type ItemFormValues } from '#lib/server/item-form.ts';
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { loadProjectState, projectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params, url }) => {
+	const s = await projectState({ locals, params });
 	if (!s.hasBacklog) error(404, 'This project has no backlog');
 	const suggested = suggestId(s.newIdPrefix, s.usedIds);
 	const values: ItemFormValues = {
