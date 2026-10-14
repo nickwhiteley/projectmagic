@@ -78,11 +78,11 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Status |
 |-----|------|--------|
-| 5.1 | The write path (§10.2–§10.3): the `projectmagic` branch's four states, merging main into it before each edit, the acting user's token, compare-and-swap, retry, `edit_log` and the PR body, then a sync. **M** | todo |
+| 5.1 | The write path (§10.2–§10.3): the `projectmagic` branch's four states, the acting user's token, compare-and-swap, retry, `edit_log` and the PR body, then **merge the PR at once (squash) and delete the branch**, falling back to an open PR when the merge is refused. Then a sync. **M** | todo |
 | 5.2 | The edit and add forms (meta as fields, body as markdown), with id uniqueness against main, branches and history | todo |
 | 5.3 | Move (drag in List and Board) and remove (done-and-prune or delete), with confirmation | todo |
 | 5.4 | The same-item conflict view (three-way choice) | todo |
-| 5.5 | Pending-edit badges and the main-versus-pending view, *Merge* for maintainers, and the "edits not merged" and "needs a merge by hand" states. **M** | todo |
+| 5.5 | `auto_merge: false` and refused merges: merging main into an open branch before each edit, pending-edit badges and the main-versus-pending view, *Merge* for maintainers, and the "edits not merged" and "needs a merge by hand" states. **M** | todo |
 | 5.6 | Playwright walk against a throwaway repository. **Deploy v0.1.** | todo |
 
 ## Decisions log
@@ -101,3 +101,6 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 - **2026-10-14** Every edit to a managed repository goes to a branch named `projectmagic`, with
   one open PR, never to main, so repositories can exclude the tool's PRs from their workflows.
   This replaces the per-repository `edit_mode` (`spec.md` §10.2).
+- **2026-10-14** The tool merges each edit's PR straight away, so main stays current (`auto_merge`,
+  default on). CI and the review skip the `projectmagic` branch, and CI skips pushes to main that
+  change only `backlog.md` (`spec.md` §10.2, §10.4).

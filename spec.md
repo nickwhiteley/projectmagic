@@ -105,6 +105,7 @@ docs_exclude:
 main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
+auto_merge: true                 # merge each edit's PR straight away (§10.2)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
 ```
@@ -422,10 +423,23 @@ Only main's `backlog.md` is edited. Editing `PROGRESS.md` and docs is out of sco
 ### 10.2 Every edit goes to the `projectmagic` branch
 
 **Project Magic never commits to main.** Every edit is a commit on a branch named exactly
-`projectmagic` in the managed repository, and reaches main through one open PR from it,
-*Project Magic edits*. The fixed name lets a repository exclude the tool's PRs from its
-workflows (§10.4). Edits accumulate on the branch while the PR is open, so a dozen small edits
-cost one review, not twelve.
+`projectmagic` in the managed repository, and reaches main through a PR from it, *Project Magic
+edits*. The fixed name lets a repository exclude the tool's PRs from its workflows (§10.4).
+
+**The PR is merged straight away** (`auto_merge: true`, the default), so main, which agents
+branch from and the views read, is never behind the owner's edits. After the commit, the tool
+merges the PR itself with the acting user's token (`PUT /pulls/{n}/merge`, squash, titled with
+the edit's commit message) and deletes the branch. Each edit therefore becomes one commit on main,
+such as `Backlog: edit NW9 DXF export (#41)`. It doesn't use GitHub's own auto-merge, which only
+waits for required checks, and neither managed repository has any. It needs nothing from GitHub
+Actions either.
+
+**If the merge is refused** (a branch protection rule added later, a required review, or a race
+with an agent's merge that conflicts), the PR stays open, its edits show as pending (§10.3), and
+the project shows why. The next edit goes onto the same open PR.
+
+With `auto_merge: false`, edits accumulate on the open PR until someone merges it, for a
+repository whose owner wants to batch and read them first.
 
 The branch's state decides what an edit does first:
 
@@ -433,10 +447,11 @@ The branch's state decides what an edit does first:
 | ----------------------------------------------------------- | -------------------------------------------- |
 | doesn't exist                                               | create it from main's head, and open the PR  |
 | has an open PR                                              | use it                                       |
-| has no open PR, and every commit on it is in main           | move it to main's head (nothing is lost), and open a new PR |
+| has no open PR, and every commit on it is in main           | move it to main's head (nothing is lost), and open a new PR. This happens when someone merged it on GitHub without deleting it |
 | has no open PR, and commits that aren't in main             | **stop.** The project shows "edits not merged", with the commits, and a maintainer chooses to reopen a PR for them or discard them, with confirmation |
 
-**While the PR is open, main moves**, because agents merge their branches. Before each edit, if
+**While a PR is open (with `auto_merge: false`, or after a refused merge), main moves**, because
+agents merge their branches. Before each edit, if
 the branch is behind main, the tool merges main into it (`POST /repos/{owner}/{repo}/merges`) so
 the edit is made against the current backlog and the PR stays mergeable. If that merge
 conflicts, the project shows "edits need a merge by hand" with a link to the PR, and no further
@@ -455,9 +470,10 @@ edit is accepted until it is resolved.
    times. Splices are by id, so a concurrent change to a different item is harmless. A
    concurrent change to **the same** item is shown to the user as a three-way choice and is
    never overwritten silently.
-5. Write `edit_log`, update the PR's body with the list of edits it holds, and start a sync.
+5. Write `edit_log` and update the PR's body with the list of edits it holds.
+6. With `auto_merge`, merge the PR and delete the branch. Then start a sync.
 
-**Pending edits are visible.** Until the PR merges, each affected item carries a *pending* badge,
+**Pending edits are visible.** While a PR is open, each affected item carries a *pending* badge,
 and its page shows main's version beside the pending one. Views read main, so the board doesn't
 change until the edit is merged. **Merging** happens on GitHub, or with a *Merge* button for a
 project `maintainer` whose GitHub account may merge.
@@ -480,9 +496,22 @@ jobs:
     if: github.head_ref != 'projectmagic'
 ```
 
-A job skipped by `if` reports success, so it doesn't block a required check. Push-triggered
-workflows use `branches-ignore: [projectmagic]`. Workflows on main still run when the PR
-merges, as they should.
+A job skipped by `if` reports success, so it doesn't block a required check. **CI does the same
+on every job**, because a `pull_request` trigger filters on the base branch and can't filter on
+the head. A merged edit changes only `backlog.md`, so the push to main is skipped with
+`paths-ignore: [backlog.md]`. Both managed repositories carry these rules (orchard#36,
+lantern#71).
+
+**Vercel deploys every branch and every push to main**, so an edit causes a preview deploy of
+`projectmagic` and, once merged, a production deploy that changes nothing. Each Vercel project can
+skip both with an Ignored Build Step that exits 0 when a commit touches nothing but
+`backlog.md`:
+
+```sh
+git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'
+```
+
+Until that is set, §16 doesn't count deploys whose commit is a Project Magic edit.
 
 ## 11. Auth and security
 
@@ -605,7 +634,7 @@ without losing history.
 
 | Measure | How | Source |
 | ------- | --- | ------ |
-| **Deployment frequency** | production deploys per week | GitHub Deployments, which Vercel writes (`Production – <project>` environments) |
+| **Deployment frequency** | production deploys per week, **leaving out deploys of a Project Magic edit** (a squash commit from a `projectmagic` PR), which change nothing that runs | GitHub Deployments, which Vercel writes (`Production – <project>` environments) |
 | **Lead time for changes** | a merged PR's first commit to the production deploy that contains its merge commit | PRs and Deployments, matched by sha ancestry |
 | **Change failure rate** | production bug-fix PRs over production deploys, over a rolling 4 weeks | PRs with `Bug: production` (§5.3) |
 | **Time to restore** | `Raised:` (or the fix branch's first commit, if absent) to the production deploy containing the fix | the same PRs, and Deployments |
