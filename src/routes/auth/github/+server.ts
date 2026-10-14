@@ -7,12 +7,18 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = ({ url, cookies }) => {
 	const state = randomToken();
 	const next = url.searchParams.get('next');
-	cookies.set('pm_oauth', JSON.stringify({ state, next: next?.startsWith('/') ? next : '/' }), {
-		path: '/auth/github',
-		httpOnly: true,
-		sameSite: 'lax',
-		secure: true,
-		maxAge: 600
+	cookies.set(
+		'pm_oauth',
+		JSON.stringify({ state, next: next && /^\/(?![/\\])/.test(next) ? next : '/' }),
+		{
+			path: '/auth/github',
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: true,
+			maxAge: 600
+		}
+	);
+	redirect(302, authorizeUrl(`${url.origin}/auth/github/callback`, state), {
+		external: ['https://github.com']
 	});
-	redirect(302, authorizeUrl(`${url.origin}/auth/github/callback`, state));
 };
