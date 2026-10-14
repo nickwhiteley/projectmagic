@@ -24,7 +24,8 @@ Keep to these conventions so it reads them correctly:
   Status is one of `todo`, `in progress`, `blocked`, `in review` or `done`. Use `**Waiting:**`
   to say what a blocked item waits on. `Type` (`feature` or `bug`) and `Epic` are accepted too.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
-  of `backlog.md` in your first commit.
+  of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
+  exists only on this machine is invisible to Project Magic.
 - **Name branches `<type>/<ref>-<slug>`**: the type is `feat`, `fix`, `spike`, `spec`,
   `chore` or `docs`, and the ref is the item id in lower case or the `PROGRESS.md` task
   number. For example, `feat/nw9-dxf-export` or `feat/5.7-sketch-part-editor`.
