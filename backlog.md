@@ -20,9 +20,9 @@ Next: Nick is making the repository public so that others can use it. Two parts:
 - **The README** is written for a stranger: what it is and who it is for, a screenshot, how the
   conventions work (`specs/conventions.md`), setting up the GitHub App, the database and the
   environment, running locally, deploying, and the project's layout and status. Before going
-  public, check that nothing private is in the repository or its history: `.env` and the App's
-  key are ignored, but the fixtures, golden files and `design/stitch/` hold copies of Orchard's
-  and Lantern's backlogs and plans.
+  public, check that nothing private is in the repository or its history. The real projects'
+  backlogs and plans used as fixtures are replaced by two made-up projects, the Stitch exports
+  are removed, and the projects' names and details are scrubbed from the history.
 
 ### PM13 Show that a navigation is under way
 **Status:** todo · **Size:** S · **Type:** feature
@@ -93,7 +93,7 @@ fixes, not production bugs.
 ### PM10 Accept a built item from the founder queue
 **Status:** todo · **Size:** S · **Type:** feature
 
-From Stitch's *Awaiting Human Check* screen (`design/stitch/x-awaiting.png`): an **Accept**
+From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
 an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
 branch, so it needs phase 5's write path. It turns the queue from something to read into

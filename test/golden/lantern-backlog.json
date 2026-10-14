@@ -1,0 +1,210 @@
+{
+	"sections": [
+		{
+			"title": "Now — days",
+			"line": 15
+		},
+		{
+			"title": "The sketch editor",
+			"line": 33
+		},
+		{
+			"title": "Before launch",
+			"line": 65
+		},
+		{
+			"title": "Later",
+			"line": 81
+		}
+	],
+	"notes": [
+		{
+			"title": "Start here, 14 October 2026",
+			"line": 10
+		}
+	],
+	"items": [
+		{
+			"id": "2.6",
+			"line": 17,
+			"title": "Accept the preview deployment",
+			"job": "TRUST",
+			"section": 0,
+			"meta": {
+				"Status": "in progress",
+				"Size": "S",
+				"Waiting": "Nick's acceptance walk, and the record of the roles"
+			}
+		},
+		{
+			"id": "LN1",
+			"line": 23,
+			"title": "Deal with the stray `.key` file",
+			"job": "TRUST",
+			"section": 0,
+			"meta": {
+				"Status": "todo",
+				"Size": "S"
+			}
+		},
+		{
+			"id": "7.7",
+			"line": 28,
+			"title": "Smaller prompts per step",
+			"job": "COST",
+			"section": 0,
+			"meta": {
+				"Status": "todo",
+				"Size": "S–M"
+			}
+		},
+		{
+			"id": "5.8",
+			"line": 37,
+			"title": "New sketch piece, and *Make sketch*",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "S–M",
+				"Branch": "`feat/sketch-editor`"
+			}
+		},
+		{
+			"id": "5.7",
+			"line": 42,
+			"title": "The sketch part editor",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "M",
+				"Branch": "`feat/sketch-editor`"
+			}
+		},
+		{
+			"id": "5.9",
+			"line": 47,
+			"title": "Joints between sketched parts",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "M",
+				"Branch": "`feat/sketch-editor`"
+			}
+		},
+		{
+			"id": "5.10",
+			"line": 50,
+			"title": "Direct manipulation in the 3D view",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "M–L",
+				"Branch": "`feat/sketch-editor`"
+			}
+		},
+		{
+			"id": "3.7",
+			"line": 55,
+			"title": "Shaped parts",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "L",
+				"Branch": "`spec/shaped-parts-decided`"
+			}
+		},
+		{
+			"id": "5.11",
+			"line": 60,
+			"title": "The shape sketcher",
+			"job": "DESIGN",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "M–L",
+				"Branch": "`feat/sketch-editor`"
+			}
+		},
+		{
+			"id": "9.1",
+			"line": 67,
+			"title": "The workshop",
+			"star": true,
+			"job": "TRUST",
+			"section": 2,
+			"meta": {
+				"Status": "blocked",
+				"Size": "M",
+				"Waiting": "Nick's survey of the workshop (`PROGRESS.md`, *Prerequisites*)"
+			}
+		},
+		{
+			"id": "8.5",
+			"line": 72,
+			"title": "Maintenance endpoints and erasure",
+			"job": "TRUST",
+			"section": 2,
+			"meta": {
+				"Status": "todo",
+				"Size": "M"
+			}
+		},
+		{
+			"id": "8.6",
+			"line": 75,
+			"title": "Alerting and the support form",
+			"job": "TRUST",
+			"section": 2,
+			"meta": {
+				"Status": "todo",
+				"Size": "S–M"
+			}
+		},
+		{
+			"id": "9.2",
+			"line": 78,
+			"title": "The production environment",
+			"job": "LAUNCH",
+			"section": 2,
+			"meta": {
+				"Status": "todo",
+				"Size": "M"
+			}
+		},
+		{
+			"id": "LN2",
+			"line": 83,
+			"title": "Comments pinned to a part",
+			"job": "CLIENT",
+			"section": 3,
+			"meta": {
+				"Status": "todo",
+				"Size": "M"
+			}
+		},
+		{
+			"id": "LN3",
+			"line": 86,
+			"title": "Photo-realistic images of a lamp in a room",
+			"section": 3,
+			"meta": {
+				"Status": "todo"
+			}
+		},
+		{
+			"id": "LN4",
+			"line": 89,
+			"title": "Voice control of the assistant",
+			"section": 3,
+			"meta": {
+				"Status": "todo"
+			}
+		}
+	],
+	"warnings": []
+}

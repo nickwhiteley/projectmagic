@@ -1,22 +1,12 @@
 # Fixtures
 
-Test data for the core's tests (phase 2): frozen copies of files from the managed repositories
-after the phase 1 migration. They are not edits to those repositories; the originals live there.
-Copies are frozen on purpose, so tests change when the parser does, not when a backlog does.
-Refresh them deliberately, by copying again and updating the table below.
+Test data for the core's tests: two made-up projects whose files follow `specs/conventions.md`,
+written to exercise the cases real backlogs and plans produce.
 
-| Path | Source | Commit |
-| ---- | ------ | ------ |
-| `orchard/main/` | nickwhiteley/orchard `main`, after #35 and #36 | `0a9ae62` |
-| `lantern/main/` | nickwhiteley/lantern `main`, after #70 and #71 | `1b202f9` |
-| `lantern/feat-sketch-editor/PROGRESS.md` | lantern `feat/sketch-editor` | `9be655b` |
+| Path | What it exercises |
+| ---- | ----------------- |
+| `orchard/main/` | letter ids (`NW9`, `A1a`), `★`, job tags, every status, `Waiting:` and `Plan:` keys, a note before the first section, a `---` between sections, a `####` heading and a table inside bodies; a plan whose v2 table restarts numbering, so the later table wins, `built*` cells, and backlog/plan disagreements (NW7 against task 35, F9 against 26, C2 against 24) |
+| `lantern/main/` | plan task numbers as ids (`2.6`, `5.8`), which link to their tasks; `Branch:` keys; a blocked `★` item (`9.1`); plan tables in several phases, bold status cells with notes, and a spike table with more columns |
+| `lantern/feat-sketch-editor/PROGRESS.md` | a branch's copy of the plan with rows main doesn't have (3.7, 5.7–5.11) and a task further along than on main (2.6) |
 
-What they exercise:
-
-- **orchard**: 55 items with meta lines (todo, in progress, blocked, built, done), letter ids
-  (NW9, A1b, BP3), plan numbers that repeat across tables (the later table wins, §5.3), task 46
-  as `built*`, and a meta/plan disagreement (NW7 built, plan task 35 done).
-- **lantern**: 24 items, most with plan task numbers as ids (2.6, 5.8), so they link to
-  their plan task without a `Plan:` key; `Branch:` keys; a blocked item (9.1).
-- **feat-sketch-editor**: a branch copy of `PROGRESS.md` whose rows 3.7 and 5.7–5.11 don't
-  exist on `main`, as the in-flight branch case (§7.2 rule 3). That branch has no `backlog.md`.
+They replace copies of real projects' files that were used while the parser was built.

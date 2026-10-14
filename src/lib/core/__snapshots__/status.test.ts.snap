@@ -5,5 +5,6 @@ exports[`deriveStatus on the fixtures > orchard: every disagreement on main 1`] 
   "NW7: backlog says built, plan task 35 says done",
   "F9: backlog says in progress, plan task 26 says built",
   "C2: backlog says in progress, plan task 24 says built",
+  "BP11: backlog says todo, plan task 9 says done",
 ]
 `;

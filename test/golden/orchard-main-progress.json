@@ -1,0 +1,271 @@
+{
+	"groups": [
+		{
+			"title": "Prototype",
+			"line": 12,
+			"total": 5,
+			"done": 5,
+			"counts": {
+				"done": 5
+			}
+		},
+		{
+			"title": "v2: the spec set",
+			"line": 25,
+			"total": 21,
+			"done": 14,
+			"counts": {
+				"done": 14,
+				"todo": 3,
+				"built": 4
+			}
+		}
+	],
+	"next": "12",
+	"tasks": [
+		{
+			"number": "1",
+			"line": 9,
+			"group": "Prototype",
+			"status": "done",
+			"superseded": true,
+			"title": "Prototype step 1",
+			"note": ""
+		},
+		{
+			"number": "2",
+			"line": 10,
+			"group": "Prototype",
+			"status": "done",
+			"superseded": true,
+			"title": "Prototype step 2",
+			"note": ""
+		},
+		{
+			"number": "3",
+			"line": 11,
+			"group": "Prototype",
+			"status": "done",
+			"superseded": true,
+			"title": "Prototype step 3",
+			"note": ""
+		},
+		{
+			"number": "4",
+			"line": 12,
+			"group": "Prototype",
+			"status": "done",
+			"title": "Prototype step 4",
+			"note": ""
+		},
+		{
+			"number": "5",
+			"line": 13,
+			"group": "Prototype",
+			"status": "done",
+			"title": "Prototype step 5",
+			"note": ""
+		},
+		{
+			"number": "6",
+			"line": 14,
+			"group": "Prototype",
+			"status": "done",
+			"title": "Prototype step 6",
+			"note": ""
+		},
+		{
+			"number": "7",
+			"line": 15,
+			"group": "Prototype",
+			"status": "done",
+			"title": "Prototype step 7",
+			"note": ""
+		},
+		{
+			"number": "8",
+			"line": 16,
+			"group": "Prototype",
+			"status": "done",
+			"title": "Prototype step 8",
+			"note": ""
+		},
+		{
+			"number": "9",
+			"line": 17,
+			"group": "Prototype",
+			"status": "done",
+			"superseded": true,
+			"title": "Auth and catalogue endpoints",
+			"note": ""
+		},
+		{
+			"number": "1",
+			"line": 25,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Plant records, one per taxon",
+			"note": ""
+		},
+		{
+			"number": "2",
+			"line": 26,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "The plan editor's canvas",
+			"note": ""
+		},
+		{
+			"number": "3",
+			"line": 27,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Planting areas",
+			"note": ""
+		},
+		{
+			"number": "9",
+			"line": 28,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Catalogue sorting and filtering",
+			"note": "sorting only; filtering is backlog BP3"
+		},
+		{
+			"number": "10",
+			"line": 29,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "A plant specification on the element",
+			"note": ""
+		},
+		{
+			"number": "11",
+			"line": 30,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Element status",
+			"note": ""
+		},
+		{
+			"number": "12",
+			"line": 31,
+			"group": "v2: the spec set",
+			"status": "todo",
+			"title": "Sheet sizes",
+			"note": ""
+		},
+		{
+			"number": "13",
+			"line": 32,
+			"group": "v2: the spec set",
+			"status": "todo",
+			"title": "Print styles",
+			"note": ""
+		},
+		{
+			"number": "21",
+			"line": 33,
+			"group": "v2: the spec set",
+			"status": "built",
+			"title": "Billing against a stub provider",
+			"note": "waiting on the lifecycle walk"
+		},
+		{
+			"number": "24",
+			"line": 34,
+			"group": "v2: the spec set",
+			"status": "built",
+			"title": "Plant pages, phase 1",
+			"note": ""
+		},
+		{
+			"number": "26",
+			"line": 35,
+			"group": "v2: the spec set",
+			"status": "built",
+			"title": "Photographs at volume, phases 1–5",
+			"note": ""
+		},
+		{
+			"number": "30",
+			"line": 36,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Hide the plants",
+			"note": ""
+		},
+		{
+			"number": "32",
+			"line": 37,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Existing and new plants",
+			"note": ""
+		},
+		{
+			"number": "33",
+			"line": 38,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "A shopping list",
+			"note": ""
+		},
+		{
+			"number": "35",
+			"line": 39,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "A renewal reminder",
+			"note": "sent on the test account"
+		},
+		{
+			"number": "36",
+			"line": 40,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "End-to-end tests on money paths",
+			"note": ""
+		},
+		{
+			"number": "46",
+			"line": 41,
+			"group": "v2: the spec set",
+			"status": "built",
+			"title": "CSV export",
+			"note": ""
+		},
+		{
+			"number": "49",
+			"line": 42,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Context buildings",
+			"note": ""
+		},
+		{
+			"number": "50",
+			"line": 43,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Shade from context buildings",
+			"note": ""
+		},
+		{
+			"number": "52",
+			"line": 44,
+			"group": "v2: the spec set",
+			"status": "done",
+			"title": "Shade through the day",
+			"note": ""
+		},
+		{
+			"number": "60",
+			"line": 45,
+			"group": "v2: the spec set",
+			"status": "todo",
+			"title": "A plant palette per project",
+			"note": ""
+		}
+	]
+}

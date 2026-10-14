@@ -36,6 +36,7 @@ team; the roles and permissions exist, but inviting people is not built yet
 - [Adding a repository](#adding-a-repository)
 - [Developing](#developing)
 - [Where things are](#where-things-are)
+- [Licence](#licence)
 
 ## How it works
 
@@ -228,3 +229,7 @@ the markdown parsed with remark. The unit tests run against real backlogs and pl
 | `migrations/` | the database schema |
 | `design/` | the visual design and what to keep from it |
 | `spikes/` | the experiments that settled the GraphQL fetch and the splicing |
+
+## Licence
+
+[MIT](LICENSE).

@@ -1,0 +1,8 @@
+# Read by Project Magic. Every key is optional; see its spec.md §4.
+name: Lantern
+new_id_prefix: LN
+docs:
+  - README.md
+  - spec.md
+  - specs/**/*.md
+  - spikes/*/RESULT.md

@@ -610,8 +610,9 @@ test/fixtures/       real snapshots of both repositories' files, committed
 
 - **Markdown is parsed with `unified`/`remark` + `remark-gfm`** for position-accurate headings
   and tables. Rendering uses the same pipeline plus `rehype-sanitize`.
-- **Golden tests against real files**: today's Orchard and Lantern `backlog.md` and
-  `PROGRESS.md` are committed under `test/fixtures/`, and their parse is pinned.
+- **Golden tests against realistic files**: two made-up projects' `backlog.md` and `PROGRESS.md`,
+  written to the cases real ones produce, are committed under `test/fixtures/`, and their parse
+  is pinned in `test/golden/`.
 - **The splice round trip is a property test**: for every item in a fixture, a no-op edit
   returns the file byte for byte, and an edit changes only that item's range.
 - Vitest for the core, and Playwright for one walk (sign in with a test login, the overview, an

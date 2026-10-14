@@ -1,0 +1,324 @@
+{
+	"groups": [
+		{
+			"title": "Phase 0: spikes",
+			"line": 13,
+			"total": 4,
+			"done": 3,
+			"counts": {
+				"done": 3,
+				"todo": 1
+			}
+		},
+		{
+			"title": "Phase 2: walking skeleton",
+			"line": 22,
+			"total": 6,
+			"done": 5,
+			"counts": {
+				"done": 5,
+				"in progress": 1
+			}
+		},
+		{
+			"title": "Phase 3: engine depth",
+			"line": 33,
+			"total": 3,
+			"done": 2,
+			"counts": {
+				"done": 2,
+				"todo": 1
+			}
+		},
+		{
+			"title": "Phase 5: the editor UI",
+			"line": 41,
+			"total": 11,
+			"done": 6,
+			"counts": {
+				"done": 6,
+				"todo": 5
+			}
+		},
+		{
+			"title": "Phase 7: the assistant",
+			"line": 57,
+			"total": 2,
+			"done": 1,
+			"counts": {
+				"done": 1,
+				"todo": 1
+			}
+		},
+		{
+			"title": "Phase 8: operations",
+			"line": 64,
+			"total": 3,
+			"done": 1,
+			"counts": {
+				"done": 1,
+				"todo": 2
+			}
+		},
+		{
+			"title": "Phase 9: launch",
+			"line": 72,
+			"total": 2,
+			"done": 0,
+			"counts": {
+				"todo": 2
+			}
+		}
+	],
+	"next": "0.4",
+	"tasks": [
+		{
+			"number": "0.1",
+			"line": 13,
+			"group": "Phase 0: spikes",
+			"status": "done",
+			"title": "Postgres row-level audit",
+			"note": "passed, see `spikes/0.1/RESULT.md`"
+		},
+		{
+			"number": "0.2",
+			"line": 14,
+			"group": "Phase 0: spikes",
+			"status": "done",
+			"title": "The engine in a Web Worker",
+			"note": ""
+		},
+		{
+			"number": "0.3",
+			"line": 15,
+			"group": "Phase 0: spikes",
+			"status": "done",
+			"title": "2D projection to SVG",
+			"note": "for straight parts; arcs are 3.7's"
+		},
+		{
+			"number": "0.4",
+			"line": 16,
+			"group": "Phase 0: spikes",
+			"status": "todo",
+			"title": "Boolean geometry for joints",
+			"note": ""
+		},
+		{
+			"number": "2.1",
+			"line": 22,
+			"group": "Phase 2: walking skeleton",
+			"status": "done",
+			"title": "Repo scaffold, CI and Makefile",
+			"note": ""
+		},
+		{
+			"number": "2.2",
+			"line": 23,
+			"group": "Phase 2: walking skeleton",
+			"status": "done",
+			"title": "Migrations for accounts and designs",
+			"note": "except the audit triggers, which go with 8.5"
+		},
+		{
+			"number": "2.3",
+			"line": 24,
+			"group": "Phase 2: walking skeleton",
+			"status": "done",
+			"title": "The engine's foundations",
+			"note": ""
+		},
+		{
+			"number": "2.4",
+			"line": 25,
+			"group": "Phase 2: walking skeleton",
+			"status": "done",
+			"title": "Sign up and sign in",
+			"note": ""
+		},
+		{
+			"number": "2.5",
+			"line": 26,
+			"group": "Phase 2: walking skeleton",
+			"status": "done",
+			"title": "A lamp from a template",
+			"note": ""
+		},
+		{
+			"number": "2.6",
+			"line": 27,
+			"group": "Phase 2: walking skeleton",
+			"status": "in progress",
+			"title": "Deploy the preview and walk it",
+			"note": "deployed; the walk is next"
+		},
+		{
+			"number": "3.1",
+			"line": 33,
+			"group": "Phase 3: engine depth",
+			"status": "done",
+			"title": "Joints",
+			"note": ""
+		},
+		{
+			"number": "3.2",
+			"line": 34,
+			"group": "Phase 3: engine depth",
+			"status": "done",
+			"title": "Materials",
+			"note": ""
+		},
+		{
+			"number": "3.7",
+			"line": 35,
+			"group": "Phase 3: engine depth",
+			"status": "todo",
+			"title": "Shaped parts",
+			"note": ""
+		},
+		{
+			"number": "5.1",
+			"line": 41,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 1",
+			"note": ""
+		},
+		{
+			"number": "5.2",
+			"line": 42,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 2",
+			"note": ""
+		},
+		{
+			"number": "5.3",
+			"line": 43,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 3",
+			"note": ""
+		},
+		{
+			"number": "5.4",
+			"line": 44,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 4",
+			"note": ""
+		},
+		{
+			"number": "5.5",
+			"line": 45,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 5",
+			"note": ""
+		},
+		{
+			"number": "5.6",
+			"line": 46,
+			"group": "Phase 5: the editor UI",
+			"status": "done",
+			"title": "Editor step 6",
+			"note": ""
+		},
+		{
+			"number": "5.7",
+			"line": 47,
+			"group": "Phase 5: the editor UI",
+			"status": "todo",
+			"title": "The sketch part editor",
+			"note": ""
+		},
+		{
+			"number": "5.8",
+			"line": 48,
+			"group": "Phase 5: the editor UI",
+			"status": "todo",
+			"title": "New sketch piece",
+			"note": ""
+		},
+		{
+			"number": "5.9",
+			"line": 49,
+			"group": "Phase 5: the editor UI",
+			"status": "todo",
+			"title": "Joints between sketched parts",
+			"note": ""
+		},
+		{
+			"number": "5.10",
+			"line": 50,
+			"group": "Phase 5: the editor UI",
+			"status": "todo",
+			"title": "Direct manipulation",
+			"note": ""
+		},
+		{
+			"number": "5.11",
+			"line": 51,
+			"group": "Phase 5: the editor UI",
+			"status": "todo",
+			"title": "The shape sketcher",
+			"note": ""
+		},
+		{
+			"number": "7.1",
+			"line": 57,
+			"group": "Phase 7: the assistant",
+			"status": "done",
+			"title": "The assistant's loop",
+			"note": ""
+		},
+		{
+			"number": "7.7",
+			"line": 58,
+			"group": "Phase 7: the assistant",
+			"status": "todo",
+			"title": "Smaller prompts per step",
+			"note": ""
+		},
+		{
+			"number": "8.1",
+			"line": 64,
+			"group": "Phase 8: operations",
+			"status": "done",
+			"title": "Logging",
+			"note": ""
+		},
+		{
+			"number": "8.5",
+			"line": 65,
+			"group": "Phase 8: operations",
+			"status": "todo",
+			"title": "Maintenance endpoints",
+			"note": ""
+		},
+		{
+			"number": "8.6",
+			"line": 66,
+			"group": "Phase 8: operations",
+			"status": "todo",
+			"title": "Alerting",
+			"note": ""
+		},
+		{
+			"number": "9.1",
+			"line": 72,
+			"group": "Phase 9: launch",
+			"status": "todo",
+			"title": "The workshop, end to end",
+			"note": ""
+		},
+		{
+			"number": "9.2",
+			"line": 73,
+			"group": "Phase 9: launch",
+			"status": "todo",
+			"title": "Production",
+			"note": ""
+		}
+	]
+}

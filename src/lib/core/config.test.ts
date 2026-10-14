@@ -86,7 +86,7 @@ production_environments: ["Production – orchard-web"]
 			defaultBranch: 'main'
 		});
 		expect(warnings).toEqual([]);
-		expect(config.newIdPrefix).toBe(r === 'orchard' ? 'BP' : 'FM');
+		expect(config.newIdPrefix).toBe(r === 'orchard' ? 'BP' : 'LN');
 		expect(config.name).toBe(r === 'orchard' ? 'Orchard' : 'Lantern');
 	});
 });
