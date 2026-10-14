@@ -1,7 +1,8 @@
 # Fixtures
 
-Real files from the managed repositories after the phase 1 migration, for the core's tests
-(phase 2). They are copies, frozen on purpose: tests should not change when the projects do.
+Test data for the core's tests (phase 2): frozen copies of files from the managed repositories
+after the phase 1 migration. They are not edits to those repositories; the originals live there.
+Copies are frozen on purpose, so tests change when the parser does, not when a backlog does.
 Refresh them deliberately, by copying again and updating the table below.
 
 | Path | Source | Commit |

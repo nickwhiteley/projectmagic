@@ -570,13 +570,13 @@ src/lib/core/        pure: backlog.ts, progress.ts, meta.ts, branchref.ts, link.
                      (no I/O, no imports from shell)
 src/lib/server/      shell: github.ts (GraphQL, REST, App auth), sync.ts, db.ts, auth.ts
 src/routes/          pages and the webhook, cron and edit endpoints
-fixtures/            real snapshots of both repositories' files, committed
+test/fixtures/       real snapshots of both repositories' files, committed
 ```
 
 - **Markdown is parsed with `unified`/`remark` + `remark-gfm`** for position-accurate headings
   and tables. Rendering uses the same pipeline plus `rehype-sanitize`.
 - **Golden tests against real files**: today's Orchard and Lantern `backlog.md` and
-  `PROGRESS.md` are committed under `fixtures/`, and their parse is pinned.
+  `PROGRESS.md` are committed under `test/fixtures/`, and their parse is pinned.
 - **The splice round trip is a property test**: for every item in a fixture, a no-op edit
   returns the file byte for byte, and an edit changes only that item's range.
 - Vitest for the core, and Playwright for one walk (sign in with a test login, the overview, an
