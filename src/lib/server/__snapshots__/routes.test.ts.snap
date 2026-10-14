@@ -3,9 +3,12 @@
 exports[`every route has an access rule (spec §11.2) > lists what each route checks 1`] = `
 {
   "/": "signed-in",
+  "/api/cron/sync": "machine",
+  "/api/github/webhook": "machine",
   "/auth/github": "public",
   "/auth/github/callback": "public",
   "/auth/signout": "public",
+  "/p/[repo]/sync": "project: view",
   "/signin": "public",
 }
 `;
