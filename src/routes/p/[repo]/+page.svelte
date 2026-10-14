@@ -1,0 +1,192 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import ItemRow from '#lib/components/ItemRow.svelte';
+	import { plural, STATUS_ORDER } from '#lib/format.ts';
+
+	let { data } = $props();
+	const repo = $derived(page.params.repo!);
+	// Filters live in the page and are mirrored in the URL, so a filtered list can be shared.
+	let status = $state(page.url.searchParams.get('status') ?? '');
+	let job = $state(page.url.searchParams.get('job') ?? '');
+	const h = $derived(data.health);
+	const notices = $derived(
+		h.warnings.length +
+			h.disagreements.length +
+			h.dangling.length +
+			h.unknownTasks.length +
+			h.configWarnings.length
+	);
+
+	function filter(key: 'status' | 'job', value: string) {
+		if (key === 'status') status = value;
+		else job = value;
+		const u = new URL(page.url.href);
+		if (value) u.searchParams.set(key, value);
+		else u.searchParams.delete(key);
+		goto(u.href, { replace: true, shallow: true });
+	}
+	const shown = (it: { status: string; job: string | null }) =>
+		(!status || it.status === status) && (!job || it.job === job);
+	const filtered = $derived(!!status || !!job);
+</script>
+
+<svelte:head><title>{page.data.project.name} · Project Magic</title></svelte:head>
+
+{#if !page.data.project.hasBacklog}
+	<p class="muted">
+		This repository has no backlog.md, so there is nothing to list. Its branches and docs are in the
+		other tabs.
+	</p>
+{:else}
+	<div class="tools">
+		<p class="muted small">In the file’s order, which is its priority.</p>
+		<label
+			>Status
+			<select value={status} onchange={(e) => filter('status', e.currentTarget.value)}>
+				<option value="">all</option>
+				{#each STATUS_ORDER as s (s)}<option value={s}>{s}</option>{/each}
+			</select>
+		</label>
+		<label
+			>Job
+			<select value={job} onchange={(e) => filter('job', e.currentTarget.value)}>
+				<option value="">all</option>
+				{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
+			</select>
+		</label>
+	</div>
+
+	{#if notices}
+		<details class="health" id="health">
+			<summary>Health: {plural(notices, 'notice')}</summary>
+			<ul>
+				{#each h.disagreements as d (d)}<li><strong>Disagreement:</strong> {d}</li>{/each}
+				{#each h.warnings as w (w.line + w.message)}<li>
+						<strong>Backlog line {w.line}:</strong>
+						{w.message}
+					</li>{/each}
+				{#each h.dangling as d (d)}<li><strong>Dangling reference:</strong> {d}</li>{/each}
+				{#each h.unknownTasks as t (t)}<li>
+						<strong>Plan task {t}:</strong> its status cell doesn’t start with a known word
+					</li>{/each}
+				{#each h.configWarnings as c (c)}<li><strong>.projectmagic.yml:</strong> {c}</li>{/each}
+			</ul>
+			{#if h.notes.length}<p class="muted small">
+					Notes (headings without an id): {h.notes.join(' · ')}
+				</p>{/if}
+		</details>
+	{/if}
+
+	{#if data.preambleHtml && !filtered}
+		<details class="preamble">
+			<summary>Preamble</summary>
+			<div class="prose">{@html data.preambleHtml}</div>
+		</details>
+	{/if}
+
+	{#snippet entries(list: typeof data.top)}
+		{#each list as e (e.start)}
+			{#if e.kind === 'item'}
+				{#if shown(e.item)}<ItemRow item={e.item} {repo} />{/if}
+			{:else if !filtered}
+				<details class="note">
+					<summary>{e.title}</summary>
+					<div class="prose">{@html e.html}</div>
+				</details>
+			{/if}
+		{/each}
+	{/snippet}
+
+	{@render entries(data.top)}
+	{#each data.sections as sec, i (i)}
+		{#if !filtered || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
+			<section>
+				<h2>{sec.title}</h2>
+				{#if sec.introHtml}<p class="intro">{@html sec.introHtml}</p>{/if}
+				{@render entries(sec.entries)}
+			</section>
+		{/if}
+	{/each}
+{/if}
+
+<style>
+	.tools {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 1rem;
+		flex-wrap: wrap;
+	}
+	.tools p {
+		margin: 0 auto 0 0;
+		flex-basis: 100%;
+	}
+	@media (min-width: 761px) {
+		.tools p {
+			flex-basis: auto;
+		}
+	}
+	label {
+		font-size: 13px;
+		color: var(--text-2);
+		display: flex;
+		gap: 0.4rem;
+		align-items: center;
+	}
+	select {
+		border: 1px solid var(--line-strong);
+		background: var(--card);
+		border-radius: var(--radius);
+		padding: 0.2rem 0.4rem;
+	}
+	.small {
+		font-size: 12.5px;
+	}
+	.health {
+		background: var(--warn-bg);
+		border-radius: var(--radius);
+		padding: 0.6rem 0.9rem;
+		margin-bottom: 1rem;
+		font-size: 13.5px;
+	}
+	.health summary {
+		cursor: pointer;
+		color: var(--warn);
+		font-weight: 500;
+	}
+	.health ul {
+		margin: 0.5rem 0 0;
+		padding-left: 1.2rem;
+	}
+	.preamble,
+	.note {
+		background: var(--surface-1);
+		border-radius: var(--radius);
+		padding: 0.6rem 0.9rem;
+		margin: 0.75rem 0;
+	}
+	.preamble summary,
+	.note summary {
+		cursor: pointer;
+		font: italic 16px var(--serif);
+		color: var(--text-2);
+	}
+	.preamble .prose,
+	.note .prose {
+		margin-top: 0.75rem;
+		font-size: 15px;
+	}
+	section {
+		margin-top: 2rem;
+	}
+	h2 {
+		font-size: 26px;
+		padding-bottom: 0.2rem;
+	}
+	.intro {
+		font: italic 15px var(--serif);
+		color: var(--text-2);
+		margin: 0.2rem 0 0.5rem;
+	}
+</style>

@@ -65,12 +65,12 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Status |
 |-----|------|--------|
-| 4.1 | The overview: project cards with in-flight work, counts, the next plan task and health. **M** | todo |
-| 4.2 | Project: List (default) and Board with swimlanes. **M** | todo |
-| 4.3 | Item page: body, meta, status source, links, branch-copy diffs | todo |
-| 4.4 | Plan, Done and Branches tabs | todo |
-| 4.5 | Docs: the tree, rendering with sanitising, id and task autolinks, relative links, branch picker. **M** | todo |
-| 4.6 | Search across projects | todo |
+| 4.1 | The overview: project cards with in-flight work, counts, the next plan task and health. **M** | **done**: per card: last commit, notices, status counts and done in 14 days, *waiting on you* (built and blocked items with their reasons), in-flight branches with their items, PRs and ahead/behind, the current phase's progress and next task. Deploy branches (`main` merged into them by PR, both projects' `vercel`) are recognised and left out |
+| 4.2 | Project: List (default) and Board with swimlanes. **M** | **done**: the List interleaves notes and items in file order under their sections, rows expand to the rendered body, filters by status and job, and the health panel lists warnings, disagreements and dangling references. The Board has six columns, lanes by section, and the last 30 days' shipped items |
+| 4.3 | Item page: body, meta, status source, links, branch-copy diffs | **done**: diffs only for the branches linked to the item; other branches' differing copies (usually just behind main) are named, not diffed. A shipped item's page shows its last text, commit and PR |
+| 4.4 | Plan, Done and Branches tabs | **done** |
+| 4.5 | Docs: the tree, rendering with sanitising, id and task autolinks, relative links, branch picker. **M** | **done**: tree per branch head from the `docs` globs, text cached by blob oid in `doc_blob`, contents from h2–h3 |
+| 4.6 | Search across projects | **done**: id, then title, then body, across every visible project's main |
 | 4.7 | **Deploy v0.1-read** to Vercel and Neon. Point the App's webhook at it. Acceptance: Nick reads both projects' state without asking an agent. | todo |
 | 4.8 | Inferred links for older branches (§6, source 6): cited spec filename, then title word overlap. Optional. **S** | todo |
 

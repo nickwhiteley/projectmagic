@@ -1,0 +1,234 @@
+/* Project Magic's look (design/README.md): a calm, editorial tool. Serif for headings and long
+   prose, sans for the interface, monospace for ids, branches and hashes. Colour is kept for status,
+   and every status is a labelled pill, never colour alone. */
+
+:root {
+	--bg: #fff8f5;
+	--surface-1: #fcf2eb;
+	--surface-2: #f6ece6;
+	--surface-3: #f0e6e0;
+	--surface-4: #eae1da;
+	--card: #fffdfb;
+	--text: #1f1b17;
+	--text-2: #4d4540;
+	--text-3: #7e7570;
+	--line: #e3d8d1;
+	--line-strong: #d0c4be;
+	--accent: #0051d5;
+	--warn-bg: #fff1e6;
+	--warn: #8a4b00;
+	--danger: #ba1a1a;
+	--add-bg: #e3f3e1;
+	--del-bg: #fbe3e1;
+
+	--st-todo: #5f5650;
+	--st-todo-bg: #ece3dc;
+	--st-progress: #0b4fc4;
+	--st-progress-bg: #dde5ff;
+	--st-blocked: #8a4b00;
+	--st-blocked-bg: #ffe0c7;
+	--st-review: #6a3fb5;
+	--st-review-bg: #ece0ff;
+	--st-built: #00695f;
+	--st-built-bg: #cdeee8;
+	--st-done: #2f6b31;
+	--st-done-bg: #d8eed5;
+
+	--serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+	--sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+	--radius: 6px;
+	--sidebar: 15rem;
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--bg: #16130f;
+		--surface-1: #1d1915;
+		--surface-2: #231f1a;
+		--surface-3: #2b2620;
+		--surface-4: #342e27;
+		--card: #1e1a16;
+		--text: #eee6df;
+		--text-2: #c6bbb3;
+		--text-3: #968b83;
+		--line: #3a332c;
+		--line-strong: #4b433b;
+		--accent: #8fb0ff;
+		--warn-bg: #3a2614;
+		--warn: #ffb77d;
+		--danger: #ffb4ab;
+		--add-bg: #1f3a22;
+		--del-bg: #4a1f1c;
+		--st-todo: #cfc4bc;
+		--st-todo-bg: #3a332d;
+		--st-progress: #b4c6ff;
+		--st-progress-bg: #1f3260;
+		--st-blocked: #ffc28e;
+		--st-blocked-bg: #4a2c10;
+		--st-review: #d5bfff;
+		--st-review-bg: #3b2766;
+		--st-built: #8edfd3;
+		--st-built-bg: #0f3f3a;
+		--st-done: #a8dba4;
+		--st-done-bg: #1f3d20;
+		color-scheme: dark;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font: 14px/1.55 var(--sans);
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+	font-family: var(--serif);
+	font-weight: 400;
+	letter-spacing: -0.01em;
+	margin: 0;
+}
+
+a {
+	color: inherit;
+}
+
+code,
+.mono {
+	font-family: var(--mono);
+	font-size: 0.86em;
+}
+
+button,
+input,
+select {
+	font: inherit;
+	color: inherit;
+}
+
+.label {
+	font: 600 11px/14px var(--sans);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-3);
+}
+
+.muted {
+	color: var(--text-3);
+}
+
+.button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	border: 1px solid var(--line-strong);
+	background: var(--card);
+	border-radius: var(--radius);
+	padding: 0.3rem 0.7rem;
+	cursor: pointer;
+	text-decoration: none;
+	font-size: 13px;
+}
+.button:hover {
+	background: var(--surface-2);
+}
+.button.primary {
+	background: var(--text);
+	color: var(--bg);
+	border-color: var(--text);
+}
+
+/* Rendered markdown: a comfortable reading column. */
+.prose {
+	font: 16px/1.65 var(--serif);
+	color: var(--text);
+	max-width: 72ch;
+	overflow-wrap: anywhere;
+}
+.prose :is(h1, h2, h3, h4) {
+	font-family: var(--serif);
+	margin: 1.4em 0 0.5em;
+	line-height: 1.3;
+}
+.prose h1 {
+	font-size: 1.8em;
+}
+.prose h2 {
+	font-size: 1.4em;
+}
+.prose h3 {
+	font-size: 1.2em;
+}
+.prose h4 {
+	font: 600 15px var(--sans);
+}
+.prose p,
+.prose ul,
+.prose ol {
+	margin: 0.6em 0;
+}
+.prose code {
+	background: var(--surface-3);
+	padding: 0.05em 0.3em;
+	border-radius: 4px;
+}
+.prose pre {
+	background: var(--surface-2);
+	padding: 0.8rem 1rem;
+	border-radius: var(--radius);
+	overflow-x: auto;
+	font-size: 13px;
+	line-height: 1.5;
+}
+.prose pre code {
+	background: none;
+	padding: 0;
+}
+.prose table {
+	border-collapse: collapse;
+	font: 13px/1.45 var(--sans);
+	margin: 1em 0;
+	display: block;
+	overflow-x: auto;
+}
+.prose th,
+.prose td {
+	border-bottom: 1px solid var(--line);
+	padding: 0.4rem 0.6rem;
+	text-align: left;
+	vertical-align: top;
+}
+.prose th {
+	color: var(--text-2);
+	font-weight: 600;
+}
+.prose blockquote {
+	margin: 0.8em 0;
+	padding-left: 1em;
+	border-left: 3px solid var(--line-strong);
+	color: var(--text-2);
+}
+.prose a.ref {
+	font: 500 0.82em var(--mono);
+	text-decoration: none;
+	border-bottom: 1px dotted var(--text-3);
+}
+.prose hr {
+	border: 0;
+	border-top: 1px solid var(--line);
+	margin: 1.5em 0;
+}
+.prose > :first-child {
+	margin-top: 0;
+}

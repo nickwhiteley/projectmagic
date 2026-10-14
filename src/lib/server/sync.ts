@@ -11,28 +11,18 @@ import {
 	type Version
 } from '#lib/core/history.ts';
 import { parseProgress } from '#lib/core/progress.ts';
+import type { PrInfo } from '#lib/core/state.ts';
 import type postgres from 'postgres';
 import type { GitHubClient } from './github-client.ts';
 
 type Sql = postgres.Sql;
 
 /** Bump when a parser's output changes: every cached parse is redone on the next sync (§8). */
-export const PARSER_VERSION = 1;
+export const PARSER_VERSION = 2;
 
 const CONFIG_PATH = '.projectmagic.yml';
 
-export interface Pr {
-	number: number;
-	title: string;
-	body: string | null;
-	state: 'OPEN' | 'MERGED' | 'CLOSED';
-	isDraft: boolean;
-	url: string;
-	baseRefName: string;
-	headRefName: string;
-	createdAt: string;
-	mergedAt: string | null;
-}
+export type Pr = PrInfo;
 
 interface RefNode {
 	name: string;
@@ -173,7 +163,11 @@ export function parseBlob(
 	if (kind === 'backlog') {
 		const b = parseBacklog(text);
 		// Each item's source, for the item view's branch diffs (§7.2).
-		return { ...b, items: b.items.map((it) => ({ ...it, source: text.slice(it.start, it.end) })) };
+		return {
+			...b,
+			preambleText: text.slice(b.preamble.start, b.preamble.end),
+			items: b.items.map((it) => ({ ...it, source: text.slice(it.start, it.end) }))
+		};
 	}
 	if (kind === 'progress') {
 		const p = parseProgress(text);
