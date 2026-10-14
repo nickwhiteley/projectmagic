@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseBacklog, type Item } from './backlog';
-import { fixture } from './fixtures';
-import { parseProgress, type Task } from './progress';
-import { deriveStatus, type LinkedBranch, type StatusInput } from './status';
+import { parseBacklog, type Item } from './backlog.ts';
+import { fixture } from './fixtures.ts';
+import { parseProgress, type Task } from './progress.ts';
+import { deriveStatus, type LinkedBranch, type StatusInput } from './status.ts';
 
 const one = (src: string): Item => parseBacklog(src).items[0];
 const task = (number: string, status: Task['status']): Task => ({

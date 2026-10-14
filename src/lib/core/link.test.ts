@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parseBacklog } from './backlog';
-import { fixture } from './fixtures';
-import { link, type Edge } from './link';
-import { parseProgress } from './progress';
+import { parseBacklog } from './backlog.ts';
+import { fixture } from './fixtures.ts';
+import { link, type Edge } from './link.ts';
+import { parseProgress } from './progress.ts';
 
 const main = parseBacklog(`## Now
 ### NW9 DXF export

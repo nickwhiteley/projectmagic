@@ -1,8 +1,8 @@
 import { describe as group, expect, it } from 'vitest';
-import { parseBacklog } from './backlog';
-import { fixture } from './fixtures';
-import { parseMeta } from './meta';
-import { checkId, describe, splice, SpliceError, suggestId, type Op } from './splice';
+import { parseBacklog } from './backlog.ts';
+import { fixture } from './fixtures.ts';
+import { parseMeta } from './meta.ts';
+import { checkId, describe, splice, SpliceError, suggestId, type Op } from './splice.ts';
 
 const SAMPLE = `# Backlog
 

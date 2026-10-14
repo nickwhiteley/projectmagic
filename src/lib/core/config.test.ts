@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_DOCS, isProductionEnvironment, parseConfig } from './config';
-import { fixture } from './fixtures';
+import { DEFAULT_DOCS, isProductionEnvironment, parseConfig } from './config.ts';
+import { fixture } from './fixtures.ts';
 
 const repo = { name: 'orchard', defaultBranch: 'main' };
 

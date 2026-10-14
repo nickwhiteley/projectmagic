@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decrypt, encrypt, sign, unsign } from './crypto';
-import { readSession, sessionValue } from './session';
+import { decrypt, encrypt, sign, unsign } from './crypto.ts';
+import { readSession, sessionValue } from './session.ts';
 
 const key = Buffer.alloc(32, 7).toString('base64');
 

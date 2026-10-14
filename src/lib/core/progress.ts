@@ -2,7 +2,7 @@
 // a `Status` column. Each row is a task; its group is the nearest heading above the table. The
 // rest of the file is rendered as a document, not parsed.
 import type { Table } from 'mdast';
-import { endOf, lineIndex, parseMarkdown, plain, startOf } from './markdown';
+import { endOf, lineIndex, parseMarkdown, plain, startOf } from './markdown.ts';
 
 export const PLAN_STATUSES = [
 	'todo',

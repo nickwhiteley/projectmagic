@@ -1,6 +1,6 @@
 // Projects as the database holds them: one per repository the App is installed on (spec §4).
 import type { Project } from '#lib/core/access.ts';
-import { db } from './db';
+import { db } from './db.ts';
 
 export interface ProjectRow extends Project {
 	owner: string;

@@ -1,7 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ROUTES } from './routes';
+import { ROUTES } from './routes.ts';
 
 const ROOT = 'src/routes';
 const ENTRY = /^\+(page(\.server)?\.(ts|js|svelte)|server\.(ts|js))$/;

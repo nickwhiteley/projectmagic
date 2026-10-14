@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseBacklog, type Backlog } from './backlog';
-import { fixture } from './fixtures';
+import { parseBacklog, type Backlog } from './backlog.ts';
+import { fixture } from './fixtures.ts';
 
 const SAMPLE = `# Backlog
 

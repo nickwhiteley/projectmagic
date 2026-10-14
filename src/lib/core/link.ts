@@ -1,8 +1,8 @@
 // Linking (spec §6): items, plan tasks, branches and pull requests into edges. Links are derived,
 // never stored in the files beyond §5. Sources 1–5 are here; source 6, inferred links for older
 // branches, is plan task 4.8.
-import { EDIT_BRANCH, parseBranchName, parsePrText } from './branchref';
-import type { Item } from './backlog';
+import { EDIT_BRANCH, parseBranchName, parsePrText } from './branchref.ts';
+import type { Item } from './backlog.ts';
 
 /** 1 a task-number id · 2 a branch's ref · 3 a PR body · 4 an item's Branch:/Plan: keys · 5 a PR title. */
 export type LinkSource = 1 | 2 | 3 | 4 | 5;

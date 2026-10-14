@@ -1,8 +1,8 @@
 // Edits to `backlog.md` (spec §10.1), as pure functions of the text. Each finds its item by id in
 // the text it is given, never in a cache, and changes only that item's range, so a concurrent
 // change to another item survives and git can merge an agent's branch around it (spike 0.2).
-import { parseBacklog, type Backlog, type Item } from './backlog';
-import { formatMeta, LETTER_ID, TASK_ID, type MetaEntry } from './meta';
+import { parseBacklog, type Backlog, type Item } from './backlog.ts';
+import { formatMeta, LETTER_ID, TASK_ID, type MetaEntry } from './meta.ts';
 
 export type Position =
 	| { before: string }

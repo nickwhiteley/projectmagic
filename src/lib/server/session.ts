@@ -1,7 +1,7 @@
 // The session: an HTTP-only, signed cookie carrying the user id (spec §11.1). The user is
 // re-read on every request, so disabling them takes effect at once.
 import type { Cookies } from '@sveltejs/kit';
-import { sign, unsign } from './crypto';
+import { sign, unsign } from './crypto.ts';
 
 export const SESSION_COOKIE = 'pm_session';
 export const SESSION_DAYS = 30;

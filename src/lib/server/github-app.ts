@@ -7,14 +7,22 @@ import {
 	GITHUB_CLIENT_ID,
 	GITHUB_CLIENT_SECRET
 } from '$app/env/private';
-import { createSign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-export const API = 'https://api.github.com';
+import {
+	API,
+	appClient,
+	GitHubError,
+	installationToken as tokenFor,
+	tokenClient,
+	type GitHubClient
+} from './github-client.ts';
+
+export { GitHubError };
 const HEADERS = { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' };
 
 let key: string | null = null;
-function privateKey(): string {
+export function privateKey(): string {
 	if (key) return key;
 	if (GITHUB_APP_PRIVATE_KEY) key = GITHUB_APP_PRIVATE_KEY.replace(/\\n/g, '\n');
 	else if (GITHUB_APP_PRIVATE_KEY_PATH) key = readFileSync(GITHUB_APP_PRIVATE_KEY_PATH, 'utf8');
@@ -22,75 +30,18 @@ function privateKey(): string {
 	return key;
 }
 
-/** A JWT for the App itself, valid for nine minutes (GitHub allows ten), backdated for clock skew. */
-export function appJwt(now = Date.now()): string {
-	const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString('base64url');
-	const iat = Math.floor(now / 1000) - 60;
-	const body = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({ iat, exp: iat + 600, iss: GITHUB_APP_ID })}`;
-	return `${body}.${createSign('RSA-SHA256').update(body).sign(privateKey(), 'base64url')}`;
+/** Reads for one installation, as the App. */
+export function installationClient(installationId: number): GitHubClient {
+	return tokenClient(() => tokenFor(GITHUB_APP_ID, privateKey(), installationId));
 }
 
-export class GitHubError extends Error {
-	constructor(
-		readonly status: number,
-		message: string
-	) {
-		super(message);
-	}
+export function asApp(): GitHubClient {
+	return appClient(GITHUB_APP_ID, privateKey());
 }
 
 async function json<T>(res: Response): Promise<T> {
 	if (!res.ok) throw new GitHubError(res.status, `GitHub ${res.status}: ${await res.text()}`);
 	return (await res.json()) as T;
-}
-
-const cache = new Map<number, { token: string; expires: number }>();
-
-/** An installation token, reused until five minutes before it expires. */
-export async function installationToken(installationId: number): Promise<string> {
-	const hit = cache.get(installationId);
-	if (hit && hit.expires - Date.now() > 5 * 60_000) return hit.token;
-	const res = await fetch(`${API}/app/installations/${installationId}/access_tokens`, {
-		method: 'POST',
-		headers: { ...HEADERS, authorization: `Bearer ${appJwt()}` }
-	});
-	const t = await json<{ token: string; expires_at: string }>(res);
-	cache.set(installationId, { token: t.token, expires: Date.parse(t.expires_at) });
-	return t.token;
-}
-
-export interface Installation {
-	id: number;
-	account: { login: string };
-}
-
-export async function installations(): Promise<Installation[]> {
-	const res = await fetch(`${API}/app/installations?per_page=100`, {
-		headers: { ...HEADERS, authorization: `Bearer ${appJwt()}` }
-	});
-	return json<Installation[]>(res);
-}
-
-export interface InstalledRepo {
-	id: number;
-	name: string;
-	full_name: string;
-	owner: { login: string };
-	default_branch: string;
-	archived: boolean;
-}
-
-export async function installationRepos(installationId: number): Promise<InstalledRepo[]> {
-	const token = await installationToken(installationId);
-	const repos: InstalledRepo[] = [];
-	for (let page = 1; ; page++) {
-		const res = await fetch(`${API}/installation/repositories?per_page=100&page=${page}`, {
-			headers: { ...HEADERS, authorization: `token ${token}` }
-		});
-		const body = await json<{ repositories: InstalledRepo[]; total_count: number }>(res);
-		repos.push(...body.repositories);
-		if (repos.length >= body.total_count || !body.repositories.length) return repos;
-	}
 }
 
 // The user side: the App's OAuth flow, which signs people in and gives a token that acts as them.

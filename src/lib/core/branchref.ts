@@ -1,6 +1,6 @@
 // Branch names and pull request text (spec §5.3): `<type>/<ref>-<slug>`, and a PR body's
 // `Backlog:`, `Plan:`, `Bug:` and `Raised:` lines.
-import { LETTER_ID, TASK_ID } from './meta';
+import { LETTER_ID, TASK_ID } from './meta.ts';
 
 export const BRANCH_TYPES = ['feat', 'fix', 'spike', 'spec', 'chore', 'docs'] as const;
 export type BranchType = (typeof BRANCH_TYPES)[number];

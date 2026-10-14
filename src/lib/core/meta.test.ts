@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMeta, idKind, normaliseStatus, parseMeta } from './meta';
+import { formatMeta, idKind, normaliseStatus, parseMeta } from './meta.ts';
 
 describe('parseMeta', () => {
 	it('reads the known keys', () => {

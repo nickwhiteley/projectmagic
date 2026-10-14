@@ -3,7 +3,7 @@
 // versions. An id present before and absent after is done at that commit; an id that reappears
 // later is no longer done. Each step depends only on the versions, so results can be cached
 // forever and a later sync continues from the state it left.
-import { parseBacklog } from './backlog';
+import { parseBacklog } from './backlog.ts';
 
 export interface Version {
 	oid: string;

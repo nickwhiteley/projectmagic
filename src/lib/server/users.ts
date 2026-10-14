@@ -2,9 +2,9 @@
 // BOOTSTRAP_ADMIN_GITHUB_LOGIN, as an administrator, and only while no administrator exists.
 import { BOOTSTRAP_ADMIN_GITHUB_LOGIN, TOKEN_ENCRYPTION_KEY } from '$app/env/private';
 import type { Membership, User } from '#lib/core/access.ts';
-import { encrypt } from './crypto';
-import { db } from './db';
-import type { GitHubUser, UserTokens } from './github-app';
+import { encrypt } from './crypto.ts';
+import { db } from './db.ts';
+import type { GitHubUser, UserTokens } from './github-app.ts';
 
 export interface SessionUser extends User {
 	githubLogin: string;

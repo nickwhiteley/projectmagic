@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advanceHistory, emptyHistory, type Version } from './history';
+import { advanceHistory, emptyHistory, type Version } from './history.ts';
 
 const backlog = (...ids: string[]) =>
 	'## Now\n\n' +

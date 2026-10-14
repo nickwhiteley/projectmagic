@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fixture, type FixtureRepo } from './fixtures';
-import { parseProgress, parseStatusCell, type Plan } from './progress';
+import { fixture, type FixtureRepo } from './fixtures.ts';
+import { parseProgress, parseStatusCell, type Plan } from './progress.ts';
 
 describe('parseStatusCell', () => {
 	it.each([

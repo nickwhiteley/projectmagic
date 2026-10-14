@@ -8,7 +8,7 @@ import {
 	type Membership,
 	type Project,
 	type User
-} from './access';
+} from './access.ts';
 
 const project: Project = { id: 'p1', hidden: false };
 const hidden: Project = { id: 'p2', hidden: true };

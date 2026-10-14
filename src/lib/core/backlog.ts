@@ -2,8 +2,8 @@
 // their first token is an id and notes otherwise. Every part keeps its exact source range, so
 // splice.ts can rewrite one item and leave every other byte alone.
 import type { Heading, RootContent } from 'mdast';
-import { endOf, lineIndex, parseMarkdown, plain, startOf } from './markdown';
-import { idKind, parseMeta, type IdKind, type Meta } from './meta';
+import { endOf, lineIndex, parseMarkdown, plain, startOf } from './markdown.ts';
+import { idKind, parseMeta, type IdKind, type Meta } from './meta.ts';
 
 export interface Range {
 	start: number;

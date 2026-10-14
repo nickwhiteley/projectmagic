@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseBranchName, parsePrText } from './branchref';
+import { parseBranchName, parsePrText } from './branchref.ts';
 
 describe('parseBranchName', () => {
 	it.each([

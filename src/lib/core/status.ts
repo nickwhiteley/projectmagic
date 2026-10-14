@@ -1,8 +1,8 @@
 // An item's displayed status and where it came from (spec §7.2). The first rule that applies wins,
 // and the item's own meta line beats its plan task. Disagreements are reported, never resolved.
-import type { Item } from './backlog';
-import type { Status } from './meta';
-import type { PlanStatus, Task } from './progress';
+import type { Item } from './backlog.ts';
+import type { Status } from './meta.ts';
+import type { PlanStatus, Task } from './progress.ts';
 
 export interface LinkedBranch {
 	name: string;
