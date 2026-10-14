@@ -1,9 +1,23 @@
 node_modules/
+
+# Output
+.output
+.vercel/
+/.svelte-kit
+/build
+
+# Env
 .env
 .env.*
 !.env.example
-.svelte-kit/
-.vercel/
-build/
+!.env.test
+
+# Vite, Playwright
+vite.config.ts.timestamp-*
+test-results/
+playwright-report/
+
+# Spikes and editors
 spikes/*/out/
 .*.swp
+.DS_Store

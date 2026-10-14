@@ -9,4 +9,13 @@ what is planned, in flight and done, without asking an agent in each one.
 - `backlog.md` holds what comes after v0.1.
 - `specs/conventions.md` is the contract the agents in each tracked repository follow.
 
-Nothing is built yet. Phase 0's spikes are in `spikes/`.
+## Code
+
+SvelteKit (Svelte 5, TypeScript) on Vercel. `src/lib/core/` is the pure core (parsing, linking,
+status, splicing, access), with no I/O; `src/lib/server/` will hold GitHub, sync and the database;
+`src/routes/` the pages and endpoints. `test/fixtures/` holds frozen copies of real files for the
+core's tests, and `spikes/` phase 0's experiments.
+
+- `make dev`: the dev server.
+- `make test`: unit tests, type check and lint. `make test-e2e` runs Playwright.
+- `make build`: a production build with the Vercel adapter.

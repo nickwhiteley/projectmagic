@@ -1,0 +1,7 @@
+# Prose is formatted by hand; fixtures and generated designs are copies.
+*.md
+spikes/
+test/fixtures/
+design/stitch/
+static/
+package-lock.json

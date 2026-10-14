@@ -42,7 +42,7 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Status |
 |-----|------|--------|
-| 2.1 | Scaffold: SvelteKit (Svelte 5, TS), adapter-vercel, Vitest, Playwright, lint, Makefile (`make dev`, `make test`) | todo |
+| 2.1 | Scaffold: SvelteKit (Svelte 5, TS), adapter-vercel, Vitest, Playwright, lint, Makefile (`make dev`, `make test`) | **done**: `sv` 1.1 (SvelteKit 3, Svelte 5, Vite 8, Vitest 4); ESLint forbids I/O and server imports in `src/lib/core/`; `make test` runs unit tests, `svelte-check` and lint |
 | 2.2 | `backlog.ts` + `meta.ts`: preamble, sections, notes, items (both id forms, title, ★, job tag, meta with unknown keys kept, body, byte range), and warnings (no meta, duplicate id, bad id). Golden tests on both fixtures. **M** | todo |
 | 2.3 | `progress.ts`: plan tables (by the `#` + `Status` header rule), groups from headings, canonical status and note, and `unknown`. Golden tests. **S** | todo |
 | 2.4 | `config.ts`: `.projectmagic.yml` with defaults and validation. **S** | todo |
