@@ -54,6 +54,9 @@ function fake(
 		},
 		async rest() {
 			throw new Error('unused');
+		},
+		async send() {
+			throw new Error('unused');
 		}
 	};
 }

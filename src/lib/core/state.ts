@@ -101,6 +101,8 @@ export interface ItemView {
 	titleText: string;
 	star: boolean;
 	job: string | null;
+	/** The heading's own ` — WORD` tag, which an edit rewrites when the meta line has no Job. */
+	headingJob: string | null;
 	size: string | null;
 	section: number | null;
 	line: number;
@@ -181,6 +183,9 @@ export interface ProjectState {
 	health: Health;
 	/** The last commit on any branch. */
 	lastCommit: { branch: string; at: string; message: string } | null;
+	/** Every id in use or used before: main, every active branch, and done history (§10.1). */
+	usedIds: string[];
+	newIdPrefix: string | null;
 }
 
 const prLink = (p: PrInfo): PrLink => ({
@@ -289,6 +294,7 @@ export function assembleState(input: StateInput): ProjectState {
 			titleText: it.titleText,
 			star: it.star,
 			job: it.job,
+			headingJob: it.headingJob,
 			size: it.meta?.size ?? null,
 			section: it.section,
 			line: it.line,
@@ -423,6 +429,13 @@ export function assembleState(input: StateInput): ProjectState {
 		},
 		lastCommit: latest
 			? { branch: latest.name, at: latest.committedAt, message: latest.message }
-			: null
+			: null,
+		newIdPrefix: config.newIdPrefix,
+		usedIds: [
+			...new Set([
+				...active.flatMap((r) => r.backlog?.items.map((i) => i.id) ?? []),
+				...input.done.map((d) => d.itemId)
+			])
+		]
 	};
 }

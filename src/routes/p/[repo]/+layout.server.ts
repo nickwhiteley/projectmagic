@@ -1,9 +1,16 @@
+import { can } from '#lib/core/access.ts';
+import { db } from '#lib/server/db.ts';
 import { loadProjectState } from '#lib/server/project-state.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+	const project = locals.project!;
+	const s = await loadProjectState(project.id);
 	const h = s.health;
+	const [e] = await db()<
+		{ edit_state: string | null; edit_detail: string | null; edit_pr: number | null }[]
+	>`
+		select edit_state, edit_detail, edit_pr from project where id = ${project.id}`;
 	return {
 		project: {
 			repo: s.repo,
@@ -14,6 +21,9 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			lastError: h.lastError,
 			hasBacklog: s.hasBacklog,
 			hasPlan: !!s.plan,
+			canEdit: can(locals.user, 'edit', project, locals.memberships),
+			canMerge: can(locals.user, 'merge', project, locals.memberships),
+			edits: e?.edit_state ? { state: e.edit_state, detail: e.edit_detail, pr: e.edit_pr } : null,
 			counts: {
 				items: s.items.length,
 				done: s.done.length,

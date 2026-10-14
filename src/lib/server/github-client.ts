@@ -17,6 +17,8 @@ export interface GitHubClient {
 	graphql<T>(query: string, variables?: Record<string, unknown>): Promise<T>;
 	/** A REST GET, with the response's Link header for paging. */
 	rest<T>(path: string): Promise<{ body: T; next: string | null }>;
+	/** Any REST request. A 4xx comes back as a status, not an exception, so callers can act on it. */
+	send<T>(method: string, path: string, body?: unknown): Promise<{ status: number; body: T }>;
 }
 
 /** GitHub reports a missing `file(path:)` or `object(oid:)` as a NOT_FOUND error beside the data
@@ -44,6 +46,24 @@ export function tokenClient(token: () => Promise<string>): GitHubClient {
 					`GraphQL: ${fatal.map((e) => e.message).join('; ') || 'no data'}`
 				);
 			return body.data;
+		},
+		async send<T>(method: string, path: string, body?: unknown) {
+			const res = await fetch(`${API}${path}`, {
+				method,
+				headers: {
+					...HEADERS,
+					authorization: `token ${await token()}`,
+					'content-type': 'application/json'
+				},
+				body: body === undefined ? undefined : JSON.stringify(body)
+			});
+			if (res.status >= 500)
+				throw new GitHubError(
+					res.status,
+					`GitHub ${res.status} ${method} ${path}: ${await res.text()}`
+				);
+			const text = await res.text();
+			return { status: res.status, body: (text ? JSON.parse(text) : null) as T };
 		},
 		async rest<T>(path: string) {
 			const url = path.startsWith('https://') ? path : `${API}${path}`;
@@ -87,6 +107,7 @@ export function appClient(appId: string, privateKey: string): GitHubClient {
 	const c = tokenClient(async () => appJwt(appId, privateKey));
 	return {
 		graphql: c.graphql,
+		send: c.send,
 		async rest<T>(path: string) {
 			const url = path.startsWith('https://') ? path : `${API}${path}`;
 			const res = await fetch(url, {

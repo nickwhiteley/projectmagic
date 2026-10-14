@@ -2,9 +2,13 @@
 	import { page } from '$app/state';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago } from '#lib/format.ts';
+	import { dragHandlers, type MoveState } from '#lib/move.ts';
 
 	let { data } = $props();
 	const repo = $derived(page.params.repo!);
+	const moves = $state<MoveState>({ busy: null, message: null });
+	const canDrag = $derived(page.data.project.canEdit);
+	const drag = dragHandlers(page.params.repo!, moves, () => canDrag);
 	const totals = $derived(
 		data.columns.map((_, i) => data.lanes.reduce((n, l) => n + l.cells[i].length, 0))
 	);
@@ -17,7 +21,21 @@
 	backlog’s sections, in order.
 </p>
 
-<div class="board" style="--cols: {data.columns.length}">
+{#if moves.message}<p class="move-error" role="alert">{moves.message}</p>{/if}
+{#if canDrag}<p class="muted small">
+		Drag a card onto another to put it before that one, or onto a lane’s empty space to put it last
+		in that section. A card’s column comes from its status, so dragging between columns only
+		reorders.
+	</p>{/if}
+<div
+	class="board"
+	style="--cols: {data.columns.length}"
+	role="list"
+	ondragstart={drag.ondragstart}
+	ondragover={drag.ondragover}
+	ondragend={drag.ondragend}
+	ondrop={(e) => drag.ondrop(e)}
+>
 	<div class="colheads">
 		{#each data.columns as c, i (c)}
 			<div>
@@ -34,9 +52,15 @@
 			>
 			<div class="cells">
 				{#each lane.cells as cell, i (i)}
-					<div class="cell">
+					<div class="cell" data-to={lane.section === null ? undefined : `end:${lane.section}`}>
 						{#each cell as it (it.id)}
-							<a class="card" href="/p/{repo}/i/{encodeURIComponent(it.id)}">
+							<a
+								class="card"
+								class:busy={moves.busy === it.id}
+								href="/p/{repo}/i/{encodeURIComponent(it.id)}"
+								data-id={it.id}
+								draggable={canDrag}
+							>
 								<div class="top">
 									<span class="id">{it.id}</span>{#if it.star}<span class="star">★</span>{/if}
 									<span class="tags">
@@ -132,6 +156,18 @@
 	}
 	.card:hover {
 		border-color: var(--line-strong);
+	}
+	.card.busy {
+		opacity: 0.4;
+	}
+	:global(.drop-target) {
+		box-shadow: 0 -3px 0 var(--accent);
+	}
+	.cell:global(.drop-target) {
+		box-shadow: inset 0 0 0 2px var(--accent);
+	}
+	.move-error {
+		color: var(--danger);
 	}
 	.top {
 		display: flex;

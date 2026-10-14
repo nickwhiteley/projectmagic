@@ -114,3 +114,59 @@ export function parseMeta(line: string): Meta | null {
 export function formatMeta(entries: MetaEntry[]): string {
 	return entries.map((e) => `**${e.key}:** ${e.value}`).join(' · ');
 }
+
+/** The meta fields an edit form sets. Undefined leaves a key alone; '' or [] removes it. */
+export interface MetaFields {
+	status?: Status;
+	size?: string;
+	job?: string;
+	branch?: string;
+	plan?: string[];
+	waiting?: string;
+}
+
+const FIELD_KEYS: [keyof MetaFields, string][] = [
+	['status', 'Status'],
+	['size', 'Size'],
+	['job', 'Job'],
+	['branch', 'Branch'],
+	['plan', 'Plan'],
+	['waiting', 'Waiting']
+];
+
+/**
+ * A new meta line from the old one and the form's fields. Existing keys keep their place and
+ * spelling, so an edit changes as little of the line as it can; new keys are added in the usual
+ * order; unknown keys are kept.
+ */
+export function updateMeta(entries: MetaEntry[], fields: MetaFields): MetaEntry[] {
+	const out = entries.map((e) => ({ ...e }));
+	for (const [field, key] of FIELD_KEYS) {
+		const v = fields[field];
+		if (v === undefined) continue;
+		const value =
+			field === 'branch' && typeof v === 'string' && v.trim()
+				? `\`${v.trim().replace(/^`|`$/g, '')}\``
+				: Array.isArray(v)
+					? v
+							.map((x) => x.trim())
+							.filter(Boolean)
+							.join(', ')
+					: String(v).trim();
+		const i = out.findIndex((e) => e.key.toLowerCase() === field);
+		if (!value) {
+			if (i >= 0 && field !== 'status') out.splice(i, 1);
+		} else if (i >= 0) out[i].value = value;
+		else {
+			// After the last known key that comes before this one in the usual order.
+			const order = FIELD_KEYS.map(([f]) => f);
+			let at = 0;
+			out.forEach((e, j) => {
+				const k = order.indexOf(e.key.toLowerCase() as keyof MetaFields);
+				if (k >= 0 && k < order.indexOf(field)) at = j + 1;
+			});
+			out.splice(at, 0, { key, value });
+		}
+	}
+	return out;
+}
