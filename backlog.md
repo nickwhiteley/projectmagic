@@ -69,3 +69,13 @@ button on each built item in the founder queue (and on the item page) that marks
 an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
 branch, so it needs phase 5's write path. It turns the queue from something to read into
 something to clear.
+
+### PM11 Set an item's status by dropping it into a Board column
+**Status:** todo · **Size:** S · **Type:** feature
+
+Dropping a card into another column on the Board only reorders it today (task 5.3). Make a drop
+into **todo**, **blocked**, **built** or **done** also set `Status:` in the item's meta line, as an
+ordinary edit through the `projectmagic` branch (§10). **in progress** and **in review** come from
+branches and PRs (§7.2), so a drop there still only reorders, and the Board should say so. A drop
+into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 2026-10-14, after
+dragging E5 expecting its status to change.
