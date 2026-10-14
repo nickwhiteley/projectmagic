@@ -23,8 +23,10 @@ Keep to these conventions so it reads them correctly:
       **Status:** in progress · **Size:** M · **Branch:** `feat/nw9-dxf-export` · **Plan:** 35
 
   Status is one of `todo`, `in progress`, `blocked`, `in review`, `built` (merged, waiting on a
-  human acceptance check) or `done`. Use `**Waiting:**`
-  to say what a blocked item waits on. `Type` (`feature` or `bug`) and `Epic` are accepted too.
+  human acceptance check) or `done`. Use `**Waiting:**` to say what a blocked or built item
+  waits on, and `**Plan:**` for the `PROGRESS.md` tasks that build it. `Type` (`feature` or
+  `bug`) and `Epic` are accepted too. **Keep the meta line current** whenever the prose about
+  the item's state changes.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
   of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
   exists only on this machine is invisible to Project Magic.

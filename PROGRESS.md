@@ -34,9 +34,9 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 | #   | Task | Status |
 |-----|------|--------|
 | 1.1 | Settle the first draft's open questions with Nick, and fold the answers in | **done**: `spec.md` §14 (2026-10-14) |
-| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`, done by an agent in that repository. **M** | todo |
-| 1.3 | Lantern: commit the new `backlog.md` (currently untracked on `feat/sketch-editor`), then the same as 1.2. Give the *Later* headings `FM` ids, move each item's leading `**S–M. In progress.**` into its meta line, and add `.projectmagic.yml` with `new_id_prefix: FM`. **S** | todo |
-| 1.4 | Copy the post-migration files from both repositories into `fixtures/` | todo |
+| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`. **M** | **in progress**: orchard#35 is open. 55 items with meta lines and 0 warnings; NW21–NW31 assigned; E5 + E6 became E5; task 46's missing row restored. It found two spec rules: plan numbers repeat across tables, and an item's meta must beat its plan task (§5.2, §7.2). |
+| 1.3 | Lantern: commit the new `backlog.md` (currently untracked on `feat/sketch-editor`), then the same as 1.2. Give the *Later* headings `FM` ids, move each item's leading `**S–M. In progress.**` into its meta line, and add `.projectmagic.yml` with `new_id_prefix: FM`. **S** | **in progress**: lantern#70 is open. 24 items with meta lines and 0 warnings; FM6–FM9 assigned; `PROGRESS.md` needed no change. |
+| 1.4 | Copy the post-migration files from both repositories into `fixtures/`, once orchard#35 and lantern#70 merge | todo |
 
 ### Phase 2: the pure core (`src/lib/core/`)
 
@@ -92,3 +92,9 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
   task. Project Magic needs to be multi-repository, hosted, GitHub-backed and branch-aware, and to
   keep each repository's single prose `backlog.md`. We borrow Backlog.md's ideas (the status
   model, cross-branch "most advanced wins") but not its code.
+- **2026-10-14** Plan task numbers can repeat across tables (orchard restarts at 1 in v2), so
+  the later table wins, and earlier rows are history (`spec.md` §5.2).
+- **2026-10-14** An item's own meta line beats its linked plan task, because the task often
+  records only the phase that was built. Disagreements go to the health panel and are never
+  reconciled by the tool (`spec.md` §7.2).
+- **2026-10-14** UI designs come from Google Stitch before phase 4, from `design/stitch-prompt.md`.
