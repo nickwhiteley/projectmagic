@@ -60,3 +60,12 @@ has waited. A line on each overview card, and a Delivery tab. `spec.md` §16.
 The `Bug:` PR convention went into orchard#35 and lantern#70 on 2026-10-14, so
 production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and are counted as
 fixes, not production bugs.
+
+### PM10 Accept a built item from the founder queue
+**Status:** todo · **Size:** S · **Type:** feature
+
+From Stitch's *Awaiting Human Check* screen (`design/stitch/x-awaiting.png`): an **Accept**
+button on each built item in the founder queue (and on the item page) that marks it done. It is
+an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
+branch, so it needs phase 5's write path. It turns the queue from something to read into
+something to clear.
