@@ -642,7 +642,7 @@ without losing history.
 | **Item lead time** | an item first appearing in `backlog.md` to its removal or `done` | backlog history |
 | **Cycle time** | an item's first `in progress` evidence (meta or a linked branch) to done | backlog history and branches |
 | **The founder queue** | items in `built` or `blocked` whose waiting reason needs the owner: how many, and how long each has waited | current meta lines, and history for the age |
-| **Main health** | the share of CI runs on main that fail, and how long main stays red | GitHub Actions runs |
+| **Main health** | the share of CI runs on main that fail, and how long main stays red. **A run whose jobs never started** (no steps ran, as when Actions billing fails) **is not a failure**: it is left out, and the gap is shown | GitHub Actions runs and their jobs |
 
 **The founder queue is the measure most specific to agent-built projects.** Agents finish work
 faster than one person can accept it. Orchard has 14 items `built` and waiting on a step by
