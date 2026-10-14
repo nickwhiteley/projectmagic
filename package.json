@@ -43,6 +43,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@vercel/functions": "^3.10.1",
 		"postgres": "^3.4.9",
 		"remark-gfm": "^4.0.1",
 		"remark-parse": "^11.0.0",

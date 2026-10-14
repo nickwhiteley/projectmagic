@@ -7,7 +7,7 @@ export type RouteAccess =
 	| { kind: 'public' }
 	/** Any signed-in user; what they see is filtered by can(). */
 	| { kind: 'signed-in' }
-	/** A project from the `[owner]` and `[repo]` params; a project the user can't view is a 404. */
+	/** A project from the `[repo]` param; a project the user can't view is a 404. */
 	| { kind: 'project'; action: ProjectAction }
 	| { kind: 'system'; action: SystemAction }
 	/** Machine endpoints that verify their own caller: the webhook's signature, the cron's secret. */
@@ -18,5 +18,8 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },
-	'/auth/signout': { kind: 'public' }
+	'/auth/signout': { kind: 'public' },
+	'/api/github/webhook': { kind: 'machine' },
+	'/api/cron/sync': { kind: 'machine' },
+	'/p/[repo]/sync': { kind: 'project', action: 'view' }
 };

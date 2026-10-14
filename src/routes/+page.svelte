@@ -14,7 +14,11 @@
 	{#if data.projects.length}
 		<ul>
 			{#each data.projects as p (p.repo)}
-				<li>{p.owner}/{p.repo} · {p.lastSyncAt ? `synced ${p.lastSyncAt}` : 'not synced yet'}</li>
+				<li>
+					{p.owner}/{p.repo} · {p.lastSyncAt ? `synced ${p.lastSyncAt}` : 'not synced yet'}
+					{#if p.lastError}<span role="alert">· last sync failed: {p.lastError}</span>{/if}
+					<form method="POST" action="/p/{p.repo}/sync"><button>Refresh</button></form>
+				</li>
 			{/each}
 		</ul>
 	{:else}

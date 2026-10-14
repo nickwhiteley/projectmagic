@@ -2,7 +2,7 @@
 // route allows them (spec §11.2). The rule for each route is in #lib/server/routes.
 import { SESSION_SECRET } from '$app/env/private';
 import { can } from '#lib/core/access.ts';
-import { projectByName } from '#lib/server/projects.ts';
+import { projectByRepo } from '#lib/server/projects.ts';
 import { ROUTES } from '#lib/server/routes.ts';
 import { clearSession, readSession, SESSION_COOKIE } from '#lib/server/session.ts';
 import { membershipsOf, userById } from '#lib/server/users.ts';
@@ -38,8 +38,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 			break;
 		case 'project': {
 			if (!user) redirect(303, `/signin?next=${encodeURIComponent(event.url.pathname)}`);
-			const { owner, repo } = event.params;
-			const project = owner && repo ? await projectByName(owner, repo) : null;
+			const repo = event.params.repo;
+			const project = repo ? await projectByRepo(repo) : null;
 			// A project the user can't see doesn't exist for them: 404, not 403.
 			if (!project || !can(user, 'view', project, event.locals.memberships))
 				error(404, 'Not found');

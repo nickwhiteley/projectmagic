@@ -37,9 +37,18 @@ export async function allProjects(): Promise<ProjectRow[]> {
 	return rows.map(toProject);
 }
 
-export async function projectByName(owner: string, repo: string): Promise<ProjectRow | null> {
+/** Projects are addressed by repository name, `/p/{repo}` (§9). If two owners ever share a
+ * name, neither is found, rather than the wrong one. */
+export async function projectByRepo(repo: string): Promise<ProjectRow | null> {
+	const rows = await db()<Row[]>`
+		select id, owner, repo, installation_id, hidden, last_sync_at, last_error
+		from project where lower(repo) = lower(${repo})`;
+	return rows.length === 1 ? toProject(rows[0]) : null;
+}
+
+export async function projectByGitHubId(githubRepoId: number): Promise<ProjectRow | null> {
 	const [r] = await db()<Row[]>`
 		select id, owner, repo, installation_id, hidden, last_sync_at, last_error
-		from project where lower(owner) = lower(${owner}) and lower(repo) = lower(${repo})`;
+		from project where github_repo_id = ${githubRepoId}`;
 	return r ? toProject(r) : null;
 }
