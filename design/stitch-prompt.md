@@ -79,7 +79,7 @@ and done (the last 30 days). Horizontal swimlanes follow the backlog's sections 
 "To late October", "Nov–Dec"…), each collapsible with a count. Cards are compact: id, ★, title
 (two lines at most), job tag, size, and a one-line status source with a branch or PR icon.
 Blocked and built cards show their waiting reason in amber or teal small text. A card with
-pending edits in an open "Backlog edits" pull request has a small "pending" badge. Cards can be
+pending edits in the open "Project Magic edits" pull request has a small "pending" badge. Cards can be
 dragged to reorder within a lane or between lanes, which reorders the markdown file. Status
 can't be changed by dragging between columns, because status comes from the files.
 ```
@@ -106,9 +106,9 @@ Screen: the edit view for an item, as a right-hand drawer over the List. Fields:
 validated as unique, with a hint "next free: BP12"), title, job (select), size (select), status
 (select: todo, in progress, blocked, in review, built, done), waiting (text, shown when blocked
 or built), plan tasks (multi-select with numbers and titles), branch (text). Below them is a
-markdown editor with a preview toggle for the body. The footer says where the edit goes: either
-"Commits to main as you (nickwhiteley)" or "Adds to the open 'Backlog edits' PR #41, because
-main is protected", with Cancel and Save buttons. Show a conflict state too: a banner saying
+markdown editor with a preview toggle for the body. The footer says where the edit goes:
+"Adds to the open 'Project Magic edits' PR #41 (branch projectmagic, 3 edits pending), as
+nickwhiteley", with Cancel and Save buttons. Show a conflict state too: a banner saying
 "This item changed on main since you opened it", with three choices: keep mine, take theirs,
 or compare.
 ```

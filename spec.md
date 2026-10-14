@@ -104,7 +104,6 @@ docs_exclude:
   - specs/archive/**
 main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
-edit_mode: auto                  # auto | commit | pr (§10.3)
 new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
@@ -255,6 +254,9 @@ items, tasks, branches and PRs and produces edges `item ↔ branch`, `item ↔ P
 
    Inferred links are drawn dashed, labelled *inferred*, and never move an item to *in review*.
    Any link from sources 1–5 replaces them.
+
+**The `projectmagic` branch is excluded from linking** (§10.3): it holds pending edits, not
+work.
 
 A link to an id that doesn't exist is reported as a **dangling reference** on the project's
 health panel. It is not dropped silently.
@@ -417,41 +419,70 @@ edit button.
 
 Only main's `backlog.md` is edited. Editing `PROGRESS.md` and docs is out of scope for v0.1.
 
-### 10.2 The write path
+### 10.2 Every edit goes to the `projectmagic` branch
 
-1. Read the target branch's current `backlog.md` and its blob `oid`. The target is main, or
-   the open edit branch in `pr` mode (§10.3).
-2. Locate the item by id in **that** text, not in the cache, and splice the byte range
+**Project Magic never commits to main.** Every edit is a commit on a branch named exactly
+`projectmagic` in the managed repository, and reaches main through one open PR from it,
+*Project Magic edits*. The fixed name lets a repository exclude the tool's PRs from its
+workflows (§10.4). Edits accumulate on the branch while the PR is open, so a dozen small edits
+cost one review, not twelve.
+
+The branch's state decides what an edit does first:
+
+| The `projectmagic` branch                                   | Before the edit                              |
+| ----------------------------------------------------------- | -------------------------------------------- |
+| doesn't exist                                               | create it from main's head, and open the PR  |
+| has an open PR                                              | use it                                       |
+| has no open PR, and every commit on it is in main           | move it to main's head (nothing is lost), and open a new PR |
+| has no open PR, and commits that aren't in main             | **stop.** The project shows "edits not merged", with the commits, and a maintainer chooses to reopen a PR for them or discard them, with confirmation |
+
+**While the PR is open, main moves**, because agents merge their branches. Before each edit, if
+the branch is behind main, the tool merges main into it (`POST /repos/{owner}/{repo}/merges`) so
+the edit is made against the current backlog and the PR stays mergeable. If that merge
+conflicts, the project shows "edits need a merge by hand" with a link to the PR, and no further
+edit is accepted until it is resolved.
+
+### 10.3 The write path
+
+1. Bring the `projectmagic` branch up to date (§10.2). Read its `backlog.md` and blob `oid`.
+2. Locate the item by id in **that** text, not in the cache, and splice its range
    (`splice(text, op) → text`, a pure function).
-3. Commit it with the contents API, passing the blob `sha` as compare-and-swap, using the
-   **acting user's** token, so the commit is attributed to whoever made the edit. The commit
-   message is `Backlog: <op> <ID> <title>`, for example `Backlog: edit NW9 DXF export`.
+3. Commit it to `projectmagic` with the contents API, passing the blob `sha` as
+   compare-and-swap, using the **acting user's** token, so the commit is attributed to whoever
+   made the edit. The commit message is `Backlog: <op> <ID> <title>`, for example
+   `Backlog: edit NW9 DXF export`.
 4. On a 409, which means the file changed underneath, go back to step 1 and retry up to three
    times. Splices are by id, so a concurrent change to a different item is harmless. A
    concurrent change to **the same** item is shown to the user as a three-way choice and is
    never overwritten silently.
-5. Write `edit_log` and start a sync.
+5. Write `edit_log`, update the PR's body with the list of edits it holds, and start a sync.
+
+**Pending edits are visible.** Until the PR merges, each affected item carries a *pending* badge,
+and its page shows main's version beside the pending one. Views read main, so the board doesn't
+change until the edit is merged. **Merging** happens on GitHub, or with a *Merge* button for a
+project `maintainer` whose GitHub account may merge.
+
+**The `projectmagic` branch is never work.** It is excluded from linking (§6) and status
+derivation (§7.2), so a pending edit never makes an item look in progress.
 
 **Agents' branches carry stale copies of `backlog.md`.** When an agent's branch merges, git's
 three-way merge combines the user's edit with the agent's own change unless both touched the
 same lines. That is the same risk two agents already run today, and the PR shows it.
 
-### 10.3 `edit_mode`, per repository
+### 10.4 Excluding the tool's PRs from workflows
 
-Set in `.projectmagic.yml`, and shown on the project's page so it's clear where an edit will go.
+A managed repository opts its workflows out by branch name. For a PR-triggered job, such as
+the automated review in `pr-review.yml`:
 
-- **`commit`** commits straight to main.
-- **`pr`** collects edits on **one open edit branch per project**, `backlog/edits`, with one PR
-  (`Backlog edits`) that stays open while edits accumulate. The first edit creates the branch
-  from main and opens the PR. Later edits add commits to it. Merging the PR on GitHub, or with
-  a *Merge* button where the user's GitHub rights allow it, closes the batch, and the next edit
-  starts a new one. **The board shows pending edits** as a badge on each affected item until the
-  PR merges. This avoids a PR, and an automated AI review (`PR-REVIEW.md`), for every small edit.
-  A repository can also exclude PRs that only touch `backlog.md` from its review workflow.
-- **`auto`** (the default) tries `commit`. If GitHub refuses because main is protected (a
-  protected-branch error on the write), it switches to `pr` for that edit, records that the
-  project needs a PR, and uses `pr` from then on without trying again. This means no admin
-  permission is needed to read the branch protection rules.
+```yaml
+jobs:
+  review:
+    if: github.head_ref != 'projectmagic'
+```
+
+A job skipped by `if` reports success, so it doesn't block a required check. Push-triggered
+workflows use `branches-ignore: [projectmagic]`. Workflows on main still run when the PR
+merges, as they should.
 
 ## 11. Auth and security
 
@@ -548,8 +579,10 @@ repository's `backlog.md`.
 
 ## 14. Decisions on the first draft's questions (Nick, 2026-10-14)
 
-1. **Edit mode is chosen per repository**, because main may be protected. The default is
-   `auto` (§10.3).
+1. **Every edit goes to a branch named `projectmagic`**, never to main, so a repository can
+   exclude the tool's PRs from its GitHub Actions (§10.2, §10.4). This supersedes the first
+   answer, a per-repository `edit_mode`, because main may be protected and a fixed branch name
+   handles that case too (Nick, 2026-10-14).
 2. **Lantern's backlog** uses `FM` ids for added items and `PROGRESS.md` task numbers
    for items that hold a task's reasoning. Both id forms are accepted (§5.1).
 3. **Webhooks are the primary freshness mechanism** (§7.4). Daily cron is only a backstop.

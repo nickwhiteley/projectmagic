@@ -39,6 +39,8 @@ Keep to these conventions so it reads them correctly:
 - **In `PROGRESS.md` plan tables, every status cell begins with** `done`, `todo`,
   `in progress`, `blocked`, `built` (or `built*`) or `skipped` (bold is fine), with any note
   after a colon.
+- **Never use the branch name `projectmagic`.** It is reserved for Project Magic's own edits to
+  this repository, which reach main through a PR from it.
 - **Shipped items are still removed from `backlog.md`.** Their completion is read from git
   history.
 ```
