@@ -26,7 +26,7 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Proves | Status |
 |-----|------|--------|--------|
-| 0.1 | One GraphQL query per repository: all branches with ahead and behind counts and PRs, plus `backlog.md`/`PROGRESS.md` text on main and every active branch, against Orchard and Lantern. Record the query cost, latency and the pagination needed. **S** | §7.1 fits in one or two calls and well inside the rate limit | todo |
+| 0.1 | One GraphQL query per repository: all branches with ahead and behind counts and PRs, plus `backlog.md`/`PROGRESS.md` text on main and every active branch, against Orchard and Lantern. Record the query cost, latency and the pagination needed. **S** | §7.1 fits in one or two calls and well inside the rate limit | **done**: passed. Two calls and 2 points per repository, about 1.7 s, and a webhook sync is usually one call. Only pushed branches are visible, so the conventions now ask for a push at the start. See `spikes/0.1-graphql/RESULT.md`. |
 | 0.2 | Parse today's Orchard `backlog.md` with remark, locate every `###` item by byte offset, and show that a no-op splice of each item round-trips byte for byte. **S** | §2 "edits are surgical" is achievable with remark's positions | todo |
 
 ### Phase 1: conventions in the real repositories

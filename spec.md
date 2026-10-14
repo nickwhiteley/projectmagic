@@ -247,20 +247,24 @@ health panel. It is not dropped silently.
 
 ### 7.1 What is fetched
 
-For each project, one GraphQL query (paginated past 100 refs) fetches:
+**Only branches pushed to GitHub exist for the tool** (spike 0.1). For each project, one GraphQL
+query (paginated past 100 refs) fetches:
 
 - every branch: name, head commit, commit date, `aheadBy` and `behindBy` against main, and
   associated PRs (number, title, body, state, draft, URL);
-- on main and on every **active** branch (ahead of main and committed within
-  `active_branch_days`, or with an open PR): the blob `oid` and text of `backlog.md`,
-  `PROGRESS.md` and `.projectmagic.yml`, using aliased
-  `object(expression: "<branch>:<path>")` fields.
+- on every branch: the blob `oid` of `backlog.md`, `PROGRESS.md` and `.projectmagic.yml`
+  (`file(path:)` on the head commit), with text fetched only for **active** branches. A branch
+  is active if it is main, has an open PR, or is ahead of main and was committed to within
+  `active_branch_days`.
 
 Docs are fetched lazily on first view, by tree listing on main and blob by `oid`, then cached by
 `oid`.
 
-**Parsing is keyed by blob `oid`.** Sixty branches that all carry an unchanged `backlog.md`
-mean one parse. The spike (task 0.1) confirms the query cost against both real repositories.
+The first query fetches only blob **oids** for each branch. A second query fetches text, by
+`object(oid:)`, only for oids not already parsed. **Parsing is keyed by blob `oid`**, so sixty
+branches carrying an unchanged `backlog.md` mean one fetch and one parse. Spike 0.1 measured two
+calls and 2 rate-limit points per repository, and a webhook sync is usually one call
+(`spikes/0.1-graphql/RESULT.md`).
 
 ### 7.2 Status derivation
 
