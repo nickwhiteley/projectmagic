@@ -14,7 +14,8 @@ export type RouteAccess =
 	| { kind: 'machine' };
 
 export const ROUTES: Record<string, RouteAccess> = {
-	'/': { kind: 'signed-in' },
+	// Signed out, the home page; signed in, the overview.
+	'/': { kind: 'public' },
 	'/search': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },

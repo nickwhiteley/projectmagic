@@ -85,9 +85,7 @@ describe('link on the fixtures', () => {
 		const items = parseBacklog(fixture('lantern', 'backlog.md')).items;
 		const tasks = [
 			...parseProgress(fixture('lantern', 'PROGRESS.md')).byNumber.keys(),
-			...parseProgress(
-				fixture('lantern', 'PROGRESS.md', 'feat-sketch-editor')
-			).byNumber.keys()
+			...parseProgress(fixture('lantern', 'PROGRESS.md', 'feat-sketch-editor')).byNumber.keys()
 		];
 		const { edges, dangling } = link({
 			items,
@@ -105,7 +103,7 @@ describe('link on the fixtures', () => {
 			.map((e) => (e.from.kind === 'item' ? e.from.id : ''))
 			.sort();
 		expect(toSketch).toEqual(['5.10', '5.11', '5.7', '5.8', '5.9']);
-		expect(edges.filter((e) => e.source === 1)).toHaveLength(15);
+		expect(edges.filter((e) => e.source === 1)).toHaveLength(12);
 		expect(dangling).toEqual([]);
 	});
 });

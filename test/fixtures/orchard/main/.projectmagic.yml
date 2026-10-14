@@ -1,0 +1,9 @@
+# Read by Project Magic. Every key is optional; see its spec.md §4.
+name: Orchard
+new_id_prefix: BP
+docs:
+  - README.md
+  - spec.md
+  - specs/**/*.md
+docs_exclude:
+  - specs/archive/**

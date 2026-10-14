@@ -6,23 +6,21 @@ Magic can read its own backlog.
 
 ## After v0.1
 
-### PM12 A home page that explains Project Magic, and a README fit for a public repository
-**Status:** todo · **Size:** M · **Type:** feature
+### PM12 A home page that explains Project Magic, and a README for strangers
+**Status:** in review · **Branch:** `feat/pm12-home-and-readme` · **Size:** M · **Type:** feature
 
-Next: Nick is making the repository public so that others can use it. Two parts:
-
-- **`/` for a signed-out visitor** becomes a home page instead of a redirect to sign in: what
-  Project Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in
-  markdown in GitHub), why it helps (see every project's state without asking an agent in each
-  repository; what is waiting on you; edits that land on main as ordinary commits), and the setup
-  at a high level (the conventions, a GitHub App, a Postgres database, Vercel), linking to the
-  README for the detail. Signed in, `/` stays the overview. In the look of `design/README.md`.
-- **The README** is written for a stranger: what it is and who it is for, a screenshot, how the
-  conventions work (`specs/conventions.md`), setting up the GitHub App, the database and the
-  environment, running locally, deploying, and the project's layout and status. Before going
-  public, check that nothing private is in the repository or its history: `.env` and the App's
-  key are ignored, but the fixtures, golden files and `design/stitch/` hold copies of Orchard's
-  and Lantern's backlogs and plans.
+- **`/` for a signed-out visitor** is a home page instead of a redirect to sign in: what Project
+  Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in markdown in
+  GitHub), why it helps (see every project's state without asking an agent in each repository;
+  what is waiting on you; edits that land on main as ordinary commits), and the setup at a high
+  level, linking to the README for the detail. Signed in, `/` stays the overview. In the look of
+  `design/README.md`, with an example built from made-up data.
+- **The README** is written for a stranger: what it is and who it is for, an image, how it works,
+  the conventions, setting up the GitHub App, the database and the environment, running locally,
+  deploying, adding a repository, developing, and where things are. MIT licence.
+- **The current files hold nothing private**: the fixtures are two made-up projects (Orchard and
+  Lantern), the Stitch exports are gone, and the real projects' names and details are replaced.
+  The history still holds them; that is PM14.
 
 ### PM13 Show that a navigation is under way
 **Status:** todo · **Size:** S · **Type:** feature
@@ -34,6 +32,25 @@ link marked as current and busy, and a thin progress bar at the top while Svelte
 than only hiding it: a project page reads the cached state from Postgres and should not call
 GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
 project's state) and fix what dominates.
+
+### PM14 Make the repository public
+**Status:** todo · **Size:** M · **Type:** chore
+
+Nick has decided to keep the repository private for now (2026-10-14). The current files are
+clean (PM12), but the history and GitHub still hold two private projects' backlogs and plans:
+
+- **The git history**: every earlier commit has the old fixtures, golden files and Stitch exports,
+  and the projects' names and details in the spec, the plan and the tests. A rewrite removes the
+  paths and applies the same replacement map PM12 used (Orchard → Orchard, Lantern →
+  Lantern, and so on).
+- **GitHub's pull requests**: closed and merged PRs keep their descriptions, their diffs and the
+  commits behind them, which a force-push doesn't reach. PR #6's diff holds both backlogs in full,
+  and many descriptions quote them. Only deleting the repository removes them.
+
+So going public is one of: delete the repository and push the rewritten history to a new one with
+the same name (losing the PR history; the GitHub App is reinstalled and Vercel reconnected, since
+the repository's id changes), or keep this one private as the full record and publish the
+rewritten history as a new repository under another name. Nick chooses when the time comes.
 
 ### PM1 Epics
 **Status:** todo · **Size:** M · **Type:** feature
@@ -93,7 +110,7 @@ fixes, not production bugs.
 ### PM10 Accept a built item from the founder queue
 **Status:** todo · **Size:** S · **Type:** feature
 
-From Stitch's *Awaiting Human Check* screen (`design/stitch/x-awaiting.png`): an **Accept**
+From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
 an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
 branch, so it needs phase 5's write path. It turns the queue from something to read into

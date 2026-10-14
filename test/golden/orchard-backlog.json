@@ -1,0 +1,250 @@
+{
+	"sections": [
+		{
+			"title": "Now — days",
+			"line": 15
+		},
+		{
+			"title": "To late October",
+			"line": 54
+		},
+		{
+			"title": "Nov–Dec",
+			"line": 80
+		},
+		{
+			"title": "Jan–May",
+			"line": 109
+		},
+		{
+			"title": "Later",
+			"line": 123
+		}
+	],
+	"notes": [
+		{
+			"title": "Start here, 1 October 2026",
+			"line": 10
+		}
+	],
+	"items": [
+		{
+			"id": "NW7",
+			"line": 19,
+			"title": "A renewal reminder every six months",
+			"job": "MONEY",
+			"section": 0,
+			"meta": {
+				"Status": "built",
+				"Size": "S–M",
+				"Plan": "35",
+				"Waiting": "the lawyer's confirmation of the notice period"
+			}
+		},
+		{
+			"id": "NW9",
+			"line": 29,
+			"title": "Export a plan to CSV",
+			"job": "PRO",
+			"section": 0,
+			"meta": {
+				"Status": "built",
+				"Size": "S–M",
+				"Plan": "46",
+				"Waiting": "the three sample files opened in a spreadsheet"
+			}
+		},
+		{
+			"id": "A1a",
+			"line": 40,
+			"title": "The whole of billing, against a stub provider",
+			"star": true,
+			"job": "MONEY",
+			"section": 0,
+			"meta": {
+				"Status": "built",
+				"Plan": "21",
+				"Waiting": "the full lifecycle driven by hand on a preview deployment"
+			}
+		},
+		{
+			"id": "F9",
+			"line": 46,
+			"title": "Photographs at volume, phase 2",
+			"job": "DOOR",
+			"section": 0,
+			"meta": {
+				"Status": "in progress",
+				"Plan": "26"
+			}
+		},
+		{
+			"id": "C2",
+			"line": 58,
+			"title": "Make the pages good, not merely present",
+			"star": true,
+			"job": "DOOR",
+			"section": 1,
+			"meta": {
+				"Status": "in progress",
+				"Size": "L",
+				"Plan": "24"
+			}
+		},
+		{
+			"id": "C3",
+			"line": 69,
+			"title": "Pages for a situation that end at a tool",
+			"star": true,
+			"job": "DOOR",
+			"section": 1,
+			"meta": {
+				"Status": "todo",
+				"Size": "M"
+			}
+		},
+		{
+			"id": "E1",
+			"line": 75,
+			"title": "Terms, privacy and cookie consent",
+			"star": true,
+			"job": "TRUST",
+			"section": 1,
+			"meta": {
+				"Status": "blocked",
+				"Size": "S",
+				"Waiting": "the lawyer's read of the terms"
+			}
+		},
+		{
+			"id": "A1b",
+			"line": 84,
+			"title": "The payment provider's adapter",
+			"star": true,
+			"job": "MONEY",
+			"section": 2,
+			"meta": {
+				"Status": "blocked",
+				"Size": "S",
+				"Waiting": "the business bank account"
+			}
+		},
+		{
+			"id": "B4",
+			"line": 89,
+			"title": "A plant specification on the element",
+			"star": true,
+			"job": "PRO",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "M",
+				"Plan": "10"
+			}
+		},
+		{
+			"id": "B12",
+			"line": 94,
+			"title": "Element status: existing, retained, removed, proposed",
+			"job": "PRO",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "S",
+				"Plan": "11"
+			}
+		},
+		{
+			"id": "NW2",
+			"line": 97,
+			"title": "Hide the plants, and print without them",
+			"job": "PRO",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "S",
+				"Plan": "30"
+			}
+		},
+		{
+			"id": "NW3",
+			"line": 100,
+			"title": "Existing plants and new plants",
+			"job": "PRO",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "S",
+				"Plan": "32"
+			}
+		},
+		{
+			"id": "NW4",
+			"line": 103,
+			"title": "A shopping list, with variety and price",
+			"job": "PRO",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "M",
+				"Plan": "33"
+			}
+		},
+		{
+			"id": "E2",
+			"line": 106,
+			"title": "End-to-end tests on the paths that now carry money",
+			"star": true,
+			"job": "TRUST",
+			"section": 2,
+			"meta": {
+				"Status": "done",
+				"Size": "M",
+				"Plan": "36"
+			}
+		},
+		{
+			"id": "B10",
+			"line": 113,
+			"title": "A survey underlay, an image with scale calibration",
+			"job": "PRO",
+			"section": 3,
+			"meta": {
+				"Status": "todo",
+				"Size": "M"
+			}
+		},
+		{
+			"id": "NW10",
+			"line": 118,
+			"title": "Buildings beyond the boundary: context, then shade",
+			"job": "PRO",
+			"section": 3,
+			"meta": {
+				"Status": "done",
+				"Size": "M, and M for the shade study",
+				"Plan": "49, 50, 52"
+			}
+		},
+		{
+			"id": "BP3",
+			"line": 125,
+			"title": "Filtering the plant palette",
+			"section": 4,
+			"meta": {
+				"Status": "todo"
+			}
+		},
+		{
+			"id": "BP11",
+			"line": 130,
+			"title": "Suggestions for planting",
+			"section": 4,
+			"meta": {
+				"Status": "todo",
+				"Plan": "9"
+			}
+		}
+	],
+	"warnings": []
+}

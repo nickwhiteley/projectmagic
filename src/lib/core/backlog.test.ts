@@ -163,8 +163,8 @@ describe('the fixtures in particular', () => {
 	it('orchard', () => {
 		const b = parseBacklog(fixture('orchard', 'backlog.md'));
 		const nw9 = b.items.find((i) => i.id === 'NW9')!;
-		expect(b.items).toHaveLength(55);
-		expect(nw9).toMatchObject({ title: 'DXF export', job: 'PRO' });
+		expect(b.items).toHaveLength(18);
+		expect(nw9).toMatchObject({ title: 'Export a plan to CSV', job: 'PRO' });
 		expect(nw9.meta).toMatchObject({ status: 'built', plan: ['46'] });
 		expect(b.items.find((i) => i.id === 'A1b')!.meta!.status).toBe('blocked');
 		expect(b.notes.map((n) => n.titleText)).toEqual(['Start here, 1 October 2026']);
@@ -172,11 +172,11 @@ describe('the fixtures in particular', () => {
 
 	it('lantern', () => {
 		const b = parseBacklog(fixture('lantern', 'backlog.md'));
-		expect(b.items).toHaveLength(24);
-		expect(b.items.filter((i) => i.idKind === 'task')).toHaveLength(15);
-		const snug = b.items.find((i) => i.id === '9.1')!;
-		expect(snug).toMatchObject({ star: true, job: 'TRUST' });
-		expect(snug.meta!.status).toBe('blocked');
+		expect(b.items).toHaveLength(16);
+		expect(b.items.filter((i) => i.idKind === 'task')).toHaveLength(12);
+		const workshop = b.items.find((i) => i.id === '9.1')!;
+		expect(workshop).toMatchObject({ star: true, job: 'TRUST' });
+		expect(workshop.meta!.status).toBe('blocked');
 		expect(b.items.find((i) => i.id === '5.8')!.meta!.branches).toEqual(['feat/sketch-editor']);
 	});
 });

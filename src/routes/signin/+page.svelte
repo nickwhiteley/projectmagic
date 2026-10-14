@@ -5,7 +5,71 @@
 <svelte:head><title>Sign in · Project Magic</title></svelte:head>
 
 <main>
-	<h1>Project Magic</h1>
-	{#if data.message}<p role="alert">{data.message}</p>{/if}
-	<a href={data.href}>Sign in with GitHub</a>
+	<a class="brand" href="/"><span class="mark">M</span><span>Project Magic</span></a>
+	<div class="card">
+		<h1>Sign in</h1>
+		{#if data.message}<p class="error" role="alert">{data.message}</p>{/if}
+		<a class="button primary" href={data.href}>Sign in with GitHub</a>
+		<p class="muted small">
+			This instance is for the people its owner has invited. To follow your own projects, run your
+			own:
+			<a href="https://github.com/nickwhiteley/projectmagic#setting-up">the setup guide</a>.
+		</p>
+	</div>
 </main>
+
+<style>
+	main {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5rem;
+		padding: 1.5rem;
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		font: 400 22px var(--serif);
+		text-decoration: none;
+	}
+	.mark {
+		display: grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border-radius: 6px;
+		background: var(--text);
+		color: var(--bg);
+		font: 700 19px var(--serif);
+	}
+	.card {
+		background: var(--card);
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		padding: 1.6rem 1.8rem;
+		max-width: 26rem;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		align-items: start;
+	}
+	h1 {
+		font-size: 28px;
+	}
+	.button {
+		padding: 0.55rem 1rem;
+		font-size: 14px;
+	}
+	.error {
+		color: var(--danger);
+		margin: 0;
+	}
+	.small {
+		font-size: 13px;
+		margin: 0;
+	}
+</style>

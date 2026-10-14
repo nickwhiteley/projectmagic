@@ -1,22 +1,13 @@
 # Design
 
-`stitch-prompt.md` holds the prompts. `stitch/` holds what Google Stitch made from them on
-2026-10-14 (Stitch project *Project Magic Dashboard*, `10283283995411976360`): a 1280-wide
-screenshot and the generated HTML for each screen. `spec.md` §9 and §16 remain the authority on
-what each screen contains; the designs are the authority on how it looks, with the corrections
-below.
+`stitch-prompt.md` holds the prompts given to Google Stitch on 2026-10-14. Its screens (a
+screenshot and generated HTML for each) guided phase 4; they are not kept in the repository,
+because their sample data came from private projects. `spec.md` §9 and §16 are the authority on
+what each screen contains; the notes below record what was kept from the designs, and what was
+corrected.
 
-| Screen | Files |
-| ------ | ----- |
-| 1 Overview | `stitch/1-overview.*` |
-| 2 List | `stitch/2-list.*` |
-| 3 Board | `stitch/3-board.*` |
-| 4 Item | `stitch/4-item.*` |
-| 5 Edit drawer | `stitch/5-edit.*`, regenerated, with the conflict state inline |
-| 6 Plan | `stitch/6-plan.*` |
-| 7 Docs | `stitch/7-docs.*` |
-| 8 Delivery | `stitch/8-delivery.*` |
-| Extras, off-brief | `stitch/x-hyperscale.*`, `stitch/x-cutline.*`, `stitch/x-awaiting.*` |
+Screens: 1 Overview, 2 List, 3 Board, 4 Item, 5 Edit drawer, 6 Plan, 7 Docs, 8 Delivery, and three
+off-brief extras (an acceptance queue, a cut-line view and a project dashboard).
 
 ## Keep
 

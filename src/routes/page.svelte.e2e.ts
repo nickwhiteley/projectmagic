@@ -1,11 +1,19 @@
 import { expect, test } from '@playwright/test';
 
-test('signed out, the home page sends you to sign in', async ({ page }) => {
+test('signed out, the home page explains Project Magic', async ({ page }) => {
 	await page.goto('/');
-	await expect(page).toHaveURL(/\/signin\?next=%2F$/);
+	await expect(page.locator('h1')).toHaveText(
+		'See every project your agents are building, without asking each one.'
+	);
+	await expect(page.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/signin');
+});
+
+test('the sign-in page starts the GitHub sign-in, and project pages need it', async ({ page }) => {
+	await page.goto('/p/anything');
+	await expect(page).toHaveURL(/\/signin\?next=%2Fp%2Fanything$/);
 	await expect(page.getByRole('link', { name: 'Sign in with GitHub' })).toHaveAttribute(
 		'href',
-		'/auth/github?next=%2F'
+		'/auth/github?next=%2Fp%2Fanything'
 	);
 });
 
