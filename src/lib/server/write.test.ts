@@ -41,7 +41,15 @@ const blob = (text: string) => createHash('sha1').update(text).digest('hex');
 class FakeRepo implements GitHubClient {
 	commits = new Map<string, { parents: string[]; text: string }>();
 	refs = new Map<string, string>();
-	pulls: { number: number; head: string; state: 'open' | 'closed' }[] = [];
+	pulls: {
+		number: number;
+		head: string;
+		state: 'open' | 'closed';
+		mergedAt?: string;
+		headSha?: string;
+	}[] = [];
+	/** GitHub repositories can delete a merged PR's branch; this one is told not to, or fails to. */
+	keepBranchAfterMerge = false;
 	calls: string[] = [];
 	refuseMerge = false;
 	forbid = new Set<string>();
@@ -111,13 +119,21 @@ class FakeRepo implements GitHubClient {
 			const sha = this.refs.get(decodeURIComponent(m[1]));
 			return sha ? r(200, { object: { sha } }) : r(404, { message: 'Not Found' });
 		}
-		if (method === 'GET' && p.startsWith('/pulls?'))
+		if (method === 'GET' && p.startsWith('/pulls?')) {
+			const state = new URLSearchParams(p.split('?')[1]).get('state');
 			return r(
 				200,
 				this.pulls
-					.filter((x) => x.state === 'open' && x.head === 'projectmagic')
-					.map((x) => ({ number: x.number, html_url: '', body: '' }))
+					.filter((x) => x.state === state && x.head === 'projectmagic')
+					.map((x) => ({
+						number: x.number,
+						html_url: '',
+						body: '',
+						merged_at: x.mergedAt ?? null,
+						head: { sha: x.headSha ?? '' }
+					}))
 			);
+		}
 		if (method === 'POST' && p === '/git/refs') {
 			this.refs.set(String(body!.ref).replace('refs/heads/', ''), String(body!.sha));
 			return r(201, {});
@@ -126,6 +142,8 @@ class FakeRepo implements GitHubClient {
 			this.refs.set(m[1], String(body!.sha));
 			return r(200, {});
 		}
+		if (method === 'DELETE' && this.keepBranchAfterMerge && p.endsWith('/projectmagic'))
+			return r(204);
 		if (method === 'DELETE' && (m = p.match(/^\/git\/refs\/heads\/(.+)$/))) {
 			this.refs.delete(m[1]);
 			return r(204);
@@ -182,7 +200,14 @@ class FakeRepo implements GitHubClient {
 			const branch = this.refs.get('projectmagic')!;
 			const sha = this.commit([this.refs.get('main')!], this.commits.get(branch)!.text);
 			this.refs.set('main', sha);
-			this.pulls.find((x) => x.number === Number(m![1]))!.state = 'closed';
+			Object.assign(
+				this.pulls.find((x) => x.number === Number(m![1]))!,
+				{
+					state: 'closed',
+					mergedAt: '2026-10-14T13:00:00Z',
+					headSha: branch
+				}
+			);
 			return r(200, { sha, merged: true });
 		}
 		throw new Error(`fake GitHub: no route for ${method} ${p}`);
@@ -319,6 +344,36 @@ describe('applyEdit', () => {
 		const res = await applyEdit(gh, { ...target, autoMerge: false }, setStatus('NW9', 'done'));
 		expect(res).toMatchObject({ kind: 'pending', reason: 'auto_merge is off' });
 		expect(gh.calls).not.toContain('PUT /pulls/41/merge');
+	});
+});
+
+describe('applyEdit: what it leaves behind', () => {
+	it('deletes a branch it created when the edit ends in a conflict', async () => {
+		const gh = new FakeRepo(BACKLOG);
+		const res = await applyEdit(gh, target, setStatus('NW9', 'done'), 'not what main has');
+		expect(res.kind).toBe('conflict');
+		expect(gh.refs.has('projectmagic')).toBe(false);
+	});
+
+	it('starts again from main when the branch was left behind by a squash merge', async () => {
+		const gh = new FakeRepo(BACKLOG);
+		gh.keepBranchAfterMerge = true;
+		expect((await applyEdit(gh, target, setStatus('NW9', 'done'))).kind).toBe('merged');
+		// The branch's own commit is not in main's history after a squash.
+		expect(gh.refs.has('projectmagic')).toBe(true);
+		const next = await applyEdit(gh, target, setStatus('NW7', 'blocked'));
+		expect(next.kind).toBe('merged');
+		expect(gh.text('main')).toContain('**Status:** done');
+		expect(gh.text('main')).toContain('### NW7 Renewal reminder\n**Status:** blocked');
+	});
+});
+
+describe('readBase', () => {
+	it('undoes the CRLF line endings browsers send', async () => {
+		const { readBase } = await import('./item-form.ts');
+		const form = new FormData();
+		form.set('base', '### NW9 DXF\r\n**Status:** built\r\n');
+		expect(readBase(form)).toBe('### NW9 DXF\n**Status:** built\n');
 	});
 });
 

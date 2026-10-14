@@ -21,6 +21,11 @@ export function readItemForm(form: FormData): ItemFormValues {
 	};
 }
 
+/** The item's source as the form opened it. Browsers send form fields with CRLF line endings. */
+export function readBase(form: FormData): string {
+	return String(form.get('base') ?? '').replace(/\r\n/g, '\n');
+}
+
 export function problems(v: ItemFormValues): string | null {
 	if (!v.title) return 'A title is needed.';
 	if (/^###|\n/.test(v.title)) return 'The title is one line of text.';

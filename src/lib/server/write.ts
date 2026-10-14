@@ -91,6 +91,13 @@ export async function applyEdit(
 		`${repo}/pulls?state=open&head=${enc(`${t.owner}:${EDIT_BRANCH}`)}&base=${enc(t.main)}`
 	);
 	let pr: Pull | null = ok(open.status) && open.body.length ? open.body[0] : null;
+	// A branch this call creates is deleted again if the call ends without committing to it, so a
+	// conflict or a refusal leaves nothing behind.
+	let created = false;
+	const cleanup = async (result: WriteResult): Promise<WriteResult> => {
+		if (created) await gh.send('DELETE', `${repo}/git/refs/heads/${EDIT_BRANCH}`);
+		return result;
+	};
 
 	if (branch.status === 404) {
 		const made = await gh.send('POST', `${repo}/git/refs`, {
@@ -98,6 +105,7 @@ export async function applyEdit(
 			sha: mainSha
 		});
 		if (!ok(made.status)) return refusal(made.status, made.body, 'create the projectmagic branch');
+		created = true;
 		pr = null;
 	} else if (!ok(branch.status)) {
 		return refusal(branch.status, branch.body, 'read the projectmagic branch');
@@ -131,7 +139,17 @@ export async function applyEdit(
 			`${repo}/compare/${enc(t.main)}...${EDIT_BRANCH}`
 		);
 		if (!ok(cmp.status)) return refusal(cmp.status, cmp.body, 'compare the edits branch with main');
-		if (cmp.body.ahead_by > 0)
+		// A squash merge never makes the branch's own commits part of main's history, so a branch
+		// left behind after one looks unmerged. If its last PR was merged at exactly this commit,
+		// nothing on it is lost by starting again.
+		const closed = await gh.send<{ merged_at: string | null; head: { sha: string } }[]>(
+			'GET',
+			`${repo}/pulls?state=closed&head=${enc(`${t.owner}:${EDIT_BRANCH}`)}&base=${enc(t.main)}&sort=updated&direction=desc&per_page=5`
+		);
+		const squashed =
+			ok(closed.status) &&
+			closed.body.some((p) => p.merged_at && p.head.sha === branch.body.object.sha);
+		if (cmp.body.ahead_by > 0 && !squashed)
 			return {
 				kind: 'blocked',
 				state: 'edits-not-merged',
@@ -155,22 +173,25 @@ export async function applyEdit(
 			'GET',
 			`${repo}/contents/${t.path.split('/').map(enc).join('/')}?ref=${EDIT_BRANCH}`
 		);
-		if (!ok(file.status)) return refusal(file.status, file.body, `read ${t.path}`);
+		if (!ok(file.status)) return cleanup(refusal(file.status, file.body, `read ${t.path}`));
 		const text = Buffer.from(file.body.content, 'base64').toString('utf8');
 		baseOid = file.body.sha;
 
 		if (base !== null && op.op !== 'add') {
 			const now = itemSource(text, op.id);
-			if (now !== base) return { kind: 'conflict', theirs: now, baseOid };
+			if (now !== base) return cleanup({ kind: 'conflict', theirs: now, baseOid });
 		}
 		let next: string;
 		try {
 			next = splice(text, op);
 		} catch (e) {
-			if (e instanceof SpliceError) throw new WriteError(e.message);
+			if (e instanceof SpliceError) {
+				await cleanup({ kind: 'unchanged' });
+				throw new WriteError(e.message);
+			}
 			throw e;
 		}
-		if (next === text) return { kind: 'unchanged' };
+		if (next === text) return cleanup({ kind: 'unchanged' });
 		message = describe(op, parseBacklog(text));
 
 		const put = await gh.send<{ commit: { sha: string } }>(
@@ -188,7 +209,7 @@ export async function applyEdit(
 			break;
 		}
 		if ((put.status === 409 || put.status === 422) && attempt < 2) continue;
-		return refusal(put.status, put.body, `commit to ${t.path}`);
+		return cleanup(refusal(put.status, put.body, `commit to ${t.path}`));
 	}
 
 	// 5. The PR that carries the edits to main.

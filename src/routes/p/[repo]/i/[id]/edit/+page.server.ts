@@ -3,7 +3,7 @@ import { editChange, formValues } from '#lib/core/edit-form.ts';
 import { updateMeta } from '#lib/core/meta.ts';
 import { edits } from '#lib/server/edits.ts';
 import { asMessage, conflictDiffs, respond } from '#lib/server/edit-actions.ts';
-import { problems, readItemForm } from '#lib/server/item-form.ts';
+import { problems, readBase, readItemForm } from '#lib/server/item-form.ts';
 import { loadProjectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -34,7 +34,7 @@ export const actions: Actions = {
 	save: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const v = readItemForm(form);
-		const base = String(form.get('base') ?? '');
+		const base = readBase(form);
 		const { s, it } = await context(locals.project!.id, params.id);
 		const bad = problems(v) ?? (v.id !== it.id ? checkId(v.id, s.usedIds) : null);
 		if (bad) return fail(400, { values: v, base, message: bad, reauth: false });
