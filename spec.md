@@ -104,8 +104,10 @@ docs_exclude:
   - specs/archive/**
 main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
-edit_mode: auto                  # auto | commit | pr (§10.3)
-new_id_prefix: NW                # the prefix suggested for a new item (§10.1)
+new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
+auto_merge: true                 # merge each edit's PR straight away (§10.2)
+production_environments:         # default: GitHub deployment environments named Production*
+  - "Production – orchard-web"   # (§16.6)
 ```
 
 The file lives in the repository, where it is versioned and the agents can see it. The tool
@@ -157,6 +159,8 @@ The prose, exactly as today …
   | `Plan`     | `PROGRESS.md` task numbers, comma-separated                    | links (§6)          |
   | `Waiting`  | free text: who or what it waits on                             | shown with blocked  |
   | `Type`     | `feature` (default) · `bug`                                    | kept; v0.2 (§13)    |
+  | `Found`    | for a bug: `production` · `preview` · `development`            | kept; §16.4         |
+  | `Raised`   | for a bug: when it was first noticed                           | kept; §16.4         |
   | `Epic`     | an epic id                                                     | kept; v0.2 (§13)    |
 
   Unknown keys are kept and shown as-is. **A missing meta line is not an error.** The item is
@@ -215,7 +219,9 @@ feat/5.7-sketch-part-editor
 item's `Branch` key or a PR body.
 
 **A pull request body names what it works on** with a line `Backlog: NW9` and/or
-`Plan: 5.7`. Several ids are separated by commas.
+`Plan: 5.7`. Several ids are separated by commas. **A PR that fixes a bug says where the bug
+was found**, `Bug: production`, `Bug: preview` or `Bug: development`, and, for production,
+`Raised: <date and time>` when it was first noticed, if known (§16.4).
 
 Existing branches keep their names. They link through `Branch:` on the item, or not at all.
 
@@ -249,6 +255,9 @@ items, tasks, branches and PRs and produces edges `item ↔ branch`, `item ↔ P
 
    Inferred links are drawn dashed, labelled *inferred*, and never move an item to *in review*.
    Any link from sources 1–5 replaces them.
+
+**The `projectmagic` branch is excluded from linking** (§10.3): it holds pending edits, not
+work.
 
 A link to an id that doesn't exist is reported as a **dangling reference** on the project's
 health panel. It is not dropped silently.
@@ -411,41 +420,98 @@ edit button.
 
 Only main's `backlog.md` is edited. Editing `PROGRESS.md` and docs is out of scope for v0.1.
 
-### 10.2 The write path
+### 10.2 Every edit goes to the `projectmagic` branch
 
-1. Read the target branch's current `backlog.md` and its blob `oid`. The target is main, or
-   the open edit branch in `pr` mode (§10.3).
-2. Locate the item by id in **that** text, not in the cache, and splice the byte range
+**Project Magic never commits to main.** Every edit is a commit on a branch named exactly
+`projectmagic` in the managed repository, and reaches main through a PR from it, *Project Magic
+edits*. The fixed name lets a repository exclude the tool's PRs from its workflows (§10.4).
+
+**The PR is merged straight away** (`auto_merge: true`, the default), so main, which agents
+branch from and the views read, is never behind the owner's edits. After the commit, the tool
+merges the PR itself with the acting user's token (`PUT /pulls/{n}/merge`, squash, titled with
+the edit's commit message) and deletes the branch. Each edit therefore becomes one commit on main,
+such as `Backlog: edit NW9 DXF export (#41)`. It doesn't use GitHub's own auto-merge, which only
+waits for required checks, and neither managed repository has any. It needs nothing from GitHub
+Actions either.
+
+**If the merge is refused** (a branch protection rule added later, a required review, or a race
+with an agent's merge that conflicts), the PR stays open, its edits show as pending (§10.3), and
+the project shows why. The next edit goes onto the same open PR.
+
+With `auto_merge: false`, edits accumulate on the open PR until someone merges it, for a
+repository whose owner wants to batch and read them first.
+
+The branch's state decides what an edit does first:
+
+| The `projectmagic` branch                                   | Before the edit                              |
+| ----------------------------------------------------------- | -------------------------------------------- |
+| doesn't exist                                               | create it from main's head, and open the PR  |
+| has an open PR                                              | use it                                       |
+| has no open PR, and every commit on it is in main           | move it to main's head (nothing is lost), and open a new PR. This happens when someone merged it on GitHub without deleting it |
+| has no open PR, and commits that aren't in main             | **stop.** The project shows "edits not merged", with the commits, and a maintainer chooses to reopen a PR for them or discard them, with confirmation |
+
+**While a PR is open (with `auto_merge: false`, or after a refused merge), main moves**, because
+agents merge their branches. Before each edit, if
+the branch is behind main, the tool merges main into it (`POST /repos/{owner}/{repo}/merges`) so
+the edit is made against the current backlog and the PR stays mergeable. If that merge
+conflicts, the project shows "edits need a merge by hand" with a link to the PR, and no further
+edit is accepted until it is resolved.
+
+### 10.3 The write path
+
+1. Bring the `projectmagic` branch up to date (§10.2). Read its `backlog.md` and blob `oid`.
+2. Locate the item by id in **that** text, not in the cache, and splice its range
    (`splice(text, op) → text`, a pure function).
-3. Commit it with the contents API, passing the blob `sha` as compare-and-swap, using the
-   **acting user's** token, so the commit is attributed to whoever made the edit. The commit
-   message is `Backlog: <op> <ID> <title>`, for example `Backlog: edit NW9 DXF export`.
+3. Commit it to `projectmagic` with the contents API, passing the blob `sha` as
+   compare-and-swap, using the **acting user's** token, so the commit is attributed to whoever
+   made the edit. The commit message is `Backlog: <op> <ID> <title>`, for example
+   `Backlog: edit NW9 DXF export`.
 4. On a 409, which means the file changed underneath, go back to step 1 and retry up to three
    times. Splices are by id, so a concurrent change to a different item is harmless. A
    concurrent change to **the same** item is shown to the user as a three-way choice and is
    never overwritten silently.
-5. Write `edit_log` and start a sync.
+5. Write `edit_log` and update the PR's body with the list of edits it holds.
+6. With `auto_merge`, merge the PR and delete the branch. Then start a sync.
+
+**Pending edits are visible.** While a PR is open, each affected item carries a *pending* badge,
+and its page shows main's version beside the pending one. Views read main, so the board doesn't
+change until the edit is merged. **Merging** happens on GitHub, or with a *Merge* button for a
+project `maintainer` whose GitHub account may merge.
+
+**The `projectmagic` branch is never work.** It is excluded from linking (§6) and status
+derivation (§7.2), so a pending edit never makes an item look in progress.
 
 **Agents' branches carry stale copies of `backlog.md`.** When an agent's branch merges, git's
 three-way merge combines the user's edit with the agent's own change unless both touched the
 same lines. That is the same risk two agents already run today, and the PR shows it.
 
-### 10.3 `edit_mode`, per repository
+### 10.4 Excluding the tool's PRs from workflows
 
-Set in `.projectmagic.yml`, and shown on the project's page so it's clear where an edit will go.
+A managed repository opts its workflows out by branch name. For a PR-triggered job, such as
+the automated review in `pr-review.yml`:
 
-- **`commit`** commits straight to main.
-- **`pr`** collects edits on **one open edit branch per project**, `backlog/edits`, with one PR
-  (`Backlog edits`) that stays open while edits accumulate. The first edit creates the branch
-  from main and opens the PR. Later edits add commits to it. Merging the PR on GitHub, or with
-  a *Merge* button where the user's GitHub rights allow it, closes the batch, and the next edit
-  starts a new one. **The board shows pending edits** as a badge on each affected item until the
-  PR merges. This avoids a PR, and an automated AI review (`PR-REVIEW.md`), for every small edit.
-  A repository can also exclude PRs that only touch `backlog.md` from its review workflow.
-- **`auto`** (the default) tries `commit`. If GitHub refuses because main is protected (a
-  protected-branch error on the write), it switches to `pr` for that edit, records that the
-  project needs a PR, and uses `pr` from then on without trying again. This means no admin
-  permission is needed to read the branch protection rules.
+```yaml
+jobs:
+  review:
+    if: github.head_ref != 'projectmagic'
+```
+
+A job skipped by `if` reports success, so it doesn't block a required check. **CI does the same
+on every job**, because a `pull_request` trigger filters on the base branch and can't filter on
+the head. A merged edit changes only `backlog.md`, so the push to main is skipped with
+`paths-ignore: [backlog.md]`. Both managed repositories carry these rules (orchard#36,
+lantern#71).
+
+**Vercel deploys every branch and every push to main**, so an edit causes a preview deploy of
+`projectmagic` and, once merged, a production deploy that changes nothing. Each Vercel project can
+skip both with an Ignored Build Step that exits 0 when a commit touches nothing but
+`backlog.md`:
+
+```sh
+git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'
+```
+
+Until that is set, §16 doesn't count deploys whose commit is a Project Magic edit.
 
 ## 11. Auth and security
 
@@ -534,14 +600,18 @@ repository's `backlog.md`.
 - **Ask across projects**: a question box answered from the cached parses, such as "what is
   blocked on the lawyer?"
 - **Activity feed**: recent commits across all projects, grouped by linked item.
+- **Delivery and quality** (§16): deployment frequency, lead time, change failure rate, time to
+  restore, throughput, and the founder queue.
 - **Editing `PROGRESS.md` status cells and docs.**
 - **More users**: invitations, the member list and role management, on top of the §11.2
   model that v0.1 already enforces.
 
 ## 14. Decisions on the first draft's questions (Nick, 2026-10-14)
 
-1. **Edit mode is chosen per repository**, because main may be protected. The default is
-   `auto` (§10.3).
+1. **Every edit goes to a branch named `projectmagic`**, never to main, so a repository can
+   exclude the tool's PRs from its GitHub Actions (§10.2, §10.4). This supersedes the first
+   answer, a per-repository `edit_mode`, because main may be protected and a fixed branch name
+   handles that case too (Nick, 2026-10-14).
 2. **Lantern's backlog** uses `FM` ids for added items and `PROGRESS.md` task numbers
    for items that hold a task's reasoning. Both id forms are accepted (§5.1).
 3. **Webhooks are the primary freshness mechanism** (§7.4). Daily cron is only a backstop.
@@ -552,3 +622,82 @@ repository's `backlog.md`.
 ## 15. Open questions
 
 None that block phase 0.
+
+## 16. Delivery and quality (after v0.1)
+
+**A view of how fast each project moves and how often it breaks production, inspired by DORA
+but sized for one person and a team of agents.** It is backlog item PM9. Nothing here needs
+collecting in advance: every source below can be backfilled from GitHub, so it can follow v0.1
+without losing history.
+
+### 16.1 What is measured
+
+| Measure | How | Source |
+| ------- | --- | ------ |
+| **Deployment frequency** | production deploys per week, **leaving out deploys of a Project Magic edit** (a squash commit from a `projectmagic` PR), which change nothing that runs | GitHub Deployments, which Vercel writes (`Production – <project>` environments) |
+| **Lead time for changes** | a merged PR's first commit to the production deploy that contains its merge commit | PRs and Deployments, matched by sha ancestry |
+| **Change failure rate** | production bug-fix PRs over production deploys, over a rolling 4 weeks | PRs with `Bug: production` (§5.3) |
+| **Time to restore** | `Raised:` (or the fix branch's first commit, if absent) to the production deploy containing the fix | the same PRs, and Deployments |
+| **Throughput** | items done per week, **weighted by size** (S = 1, M = 3, L = 8; ranges take the midpoint), and plan tasks done per week | backlog and `PROGRESS.md` history (§7.3) |
+| **Item lead time** | an item first appearing in `backlog.md` to its removal or `done` | backlog history |
+| **Cycle time** | an item's first `in progress` evidence (meta or a linked branch) to done | backlog history and branches |
+| **The founder queue** | items in `built` or `blocked` whose waiting reason needs the owner: how many, and how long each has waited | current meta lines, and history for the age |
+| **Main health** | the share of CI runs on main that fail, and how long main stays red. **A run whose jobs never started** (no steps ran, as when Actions billing fails) **is not a failure**: it is left out, and the gap is shown | GitHub Actions runs and their jobs |
+
+**The founder queue is the measure most specific to agent-built projects.** Agents finish work
+faster than one person can accept it. Orchard has 14 items `built` and waiting on a step by
+hand, such as opening DXF files in three CAD programs, a console change or the lawyer. The
+bottleneck is the owner, and this shows its size and age.
+
+### 16.2 What is deliberately not measured
+
+- **PR counts, commits and lines of code as velocity.** Agents make them cheap, so they measure
+  the agents' verbosity, not progress. They are shown as context, never as a headline.
+- **Story points.** Size is a rough weight, used only to stop ten S items looking like ten L ones.
+- **Comparisons between projects.** Each project's figures are shown against its own past.
+
+### 16.3 Honest numbers
+
+- **Small counts are shown as counts.** A rate is shown only when its denominator is at least
+  10. "2 of 7 deploys" is more honest than "29%".
+- **Trends, not targets**: weekly bars with a 4-week rolling line, and no red or green
+  thresholds.
+- **Every figure links to its evidence**: the deploys, PRs or items it counts.
+
+### 16.4 Bugs
+
+A production bug is a **merged PR whose body says `Bug: production`** (§5.3), which is how an
+agent fixes one today: on a `fix/` branch, usually straight away. A bug that isn't fixed
+straight away is a backlog item with `Type: bug`, plus `Found: production` and `Raised:` on its
+meta line. Its fix PR cites it with `Backlog:`, so the item's `Raised:` date is the start of
+time to restore. This joins PM2: bug items are the backlog half, and bug-fix PRs are the
+measured half.
+
+`fix/` PRs without a `Bug:` line, such as a broken build on main, are fixes but not production
+bugs, and count only towards main health. That matters: lantern's eight `fix/` PRs so
+far include both kinds.
+
+**Later sources**, once the convention has proved itself: lantern's failure log
+(`PROGRESS.md` 8.8) and orchard's alerts, each read through a small read-only endpoint, would
+show production faults that no PR has fixed yet.
+
+### 16.5 Where it appears
+
+- **On the overview card**: one line of four figures per project (deploys this week, median lead
+  time, production bugs in the last four weeks, the founder queue), each a link.
+- **A Delivery tab per project**: the charts in §16.1, a list of production bugs with time to
+  restore, and the founder queue, oldest first.
+
+### 16.6 Data
+
+The sync (§7) adds two fetches, both cheap and both incremental:
+
+- **Deployments.** `deployments(environments: [...], first: 100)` with statuses. Only
+  production environments, and only those in `.projectmagic.yml`'s
+  `production_environments` (default: any environment whose name starts with `Production`).
+- **Workflow runs** on main, through REST, newest first, until a run already stored is reached.
+
+A new `event` table holds `(project_id, kind, at, sha, ref, data)` for deploys, merged PRs, CI
+runs and status changes, keyed so that a re-sync is idempotent. The backlog history walk (§7.3)
+records **every status change** per item, not only removals, which is what cycle time and the
+founder queue's ages need.

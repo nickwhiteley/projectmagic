@@ -33,10 +33,14 @@ Keep to these conventions so it reads them correctly:
 - **Name branches `<type>/<ref>-<slug>`**: the type is `feat`, `fix`, `spike`, `spec`,
   `chore` or `docs`, and the ref is the item id in lower case or the `PROGRESS.md` task
   number. For example, `feat/nw9-dxf-export` or `feat/5.7-sketch-part-editor`.
-- **Every PR body includes `Backlog: <ids>` and/or `Plan: <task numbers>`.**
+- **Every PR body includes `Backlog: <ids>` and/or `Plan: <task numbers>`.** A PR that fixes a
+  bug also says where the bug was found, `Bug: production`, `Bug: preview` or `Bug: development`,
+  and, for production, `Raised: <date and time>` when it was first noticed, if known.
 - **In `PROGRESS.md` plan tables, every status cell begins with** `done`, `todo`,
   `in progress`, `blocked`, `built` (or `built*`) or `skipped` (bold is fine), with any note
   after a colon.
+- **Never use the branch name `projectmagic`.** It is reserved for Project Magic's own edits to
+  this repository, which reach main through a PR from it.
 - **Shipped items are still removed from `backlog.md`.** Their completion is read from git
   history.
 ```

@@ -16,8 +16,9 @@ are an epic roll-up across its items' statuses, and an epic filter on the Board 
 ### PM2 Bug items
 **Status:** todo · **Size:** S · **Type:** feature
 
-`Type: bug` on an item, with an optional `bugs.md` as a second backlog file with a `BUG`
-prefix. The board gains a type filter and a bug lane. `spec.md` §13.
+`Type: bug` on an item, with `Found:` and `Raised:`, and an optional `bugs.md` as a second
+backlog file with a `BUG` prefix. The board gains a type filter and a bug lane. `spec.md` §13
+and §16.4. PM9 measures the bugs that PRs fix; this shows the ones still open.
 
 ### PM3 Inferred status for items with no meta line
 **Status:** todo · **Size:** M · **Type:** feature
@@ -46,3 +47,16 @@ login, the member list for each project, changing a role, and disabling a user.
 
 ### PM8 Mermaid in rendered docs
 **Status:** todo · **Size:** S · **Type:** feature
+
+### PM9 Delivery and quality
+**Status:** todo · **Size:** M · **Type:** feature
+
+DORA's four measures sized for one person and a team of agents: deployment frequency, lead time
+for changes, change failure rate and time to restore, from Vercel's GitHub deployments and
+`Bug: production` PRs. Plus size-weighted throughput, item lead and cycle time, main's CI health,
+and **the founder queue**: the built and blocked items waiting on the owner, and how long each
+has waited. A line on each overview card, and a Delivery tab. `spec.md` §16.
+
+The `Bug:` PR convention went into orchard#35 and lantern#70 on 2026-10-14, so
+production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and are counted as
+fixes, not production bugs.

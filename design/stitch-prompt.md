@@ -79,7 +79,7 @@ and done (the last 30 days). Horizontal swimlanes follow the backlog's sections 
 "To late October", "Nov–Dec"…), each collapsible with a count. Cards are compact: id, ★, title
 (two lines at most), job tag, size, and a one-line status source with a branch or PR icon.
 Blocked and built cards show their waiting reason in amber or teal small text. A card with
-pending edits in an open "Backlog edits" pull request has a small "pending" badge. Cards can be
+pending edits in the open "Project Magic edits" pull request has a small "pending" badge. Cards can be
 dragged to reorder within a lane or between lanes, which reorders the markdown file. Status
 can't be changed by dragging between columns, because status comes from the files.
 ```
@@ -103,12 +103,12 @@ feat/nw9-dxf-export's version, in red and green lines, as in a code review.
 
 ```
 Screen: the edit view for an item, as a right-hand drawer over the List. Fields: id (monospace,
-validated as unique, with a hint "next free: NW32"), title, job (select), size (select), status
+validated as unique, with a hint "next free: BP12"), title, job (select), size (select), status
 (select: todo, in progress, blocked, in review, built, done), waiting (text, shown when blocked
 or built), plan tasks (multi-select with numbers and titles), branch (text). Below them is a
-markdown editor with a preview toggle for the body. The footer says where the edit goes: either
-"Commits to main as you (nickwhiteley)" or "Adds to the open 'Backlog edits' PR #41, because
-main is protected", with Cancel and Save buttons. Show a conflict state too: a banner saying
+markdown editor with a preview toggle for the body. The footer says where the edit goes:
+"Adds to the open 'Project Magic edits' PR #41 (branch projectmagic, 3 edits pending), as
+nickwhiteley", with Cancel and Save buttons. Show a conflict state too: a banner saying
 "This item changed on main since you opened it", with three choices: keep mine, take theirs,
 or compare.
 ```
@@ -135,4 +135,21 @@ above it ("main ▾"), and a rendered markdown document in a comfortable reading
 72 characters, with a sticky table of contents on the right built from the headings. Item ids
 and task numbers in the text ("see 5.8", "NW9") are subtle links with a hover card that shows
 the item's title and status.
+```
+
+## Screen 8: delivery and quality
+
+```
+Screen: the Delivery tab for Orchard. Across the top is a row of four figures, each with a
+small 12-week sparkline and a link "see the 11 deploys": production deploys this week (3),
+median lead time from first commit to production (1.8 days), production bugs in the last four
+weeks ("2 of 14 deploys", shown as a count, not a percentage), and median time to restore
+(5 h). Below are weekly bar charts with a 4-week rolling line for throughput (items done,
+weighted by size, with a toggle for plan tasks) and for main's CI (runs passed and failed, with
+the hours main was red). No red or green thresholds: these are trends, not targets.
+A prominent panel, "The founder queue: 14 items waiting on you", lists built and blocked items
+oldest first, each with id, title, waiting reason and age ("NW7 A renewal reminder · the
+lawyer's confirmation · 14 days"), so the owner can see their own bottleneck. Under it, a
+table of production bugs: the fix PR, when it was raised, when the fix reached production, and
+time to restore.
 ```

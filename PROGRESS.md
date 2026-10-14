@@ -34,7 +34,7 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 | #   | Task | Status |
 |-----|------|--------|
 | 1.1 | Settle the first draft's open questions with Nick, and fold the answers in | **done**: `spec.md` §14 (2026-10-14) |
-| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`. **M** | **in progress**: orchard#35 is open. 55 items with meta lines and 0 warnings; NW21–NW31 assigned; E5 + E6 became E5; task 46's missing row restored. It found two spec rules: plan numbers repeat across tables, and an item's meta must beat its plan task (§5.2, §7.2). |
+| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`. **M** | **in progress**: orchard#35 is open. 55 items with meta lines and 0 warnings; BP1–BP11 assigned, and `BP` is the prefix for new items; E5 + E6 became E5; task 46's missing row restored. It found two spec rules: plan numbers repeat across tables, and an item's meta must beat its plan task (§5.2, §7.2). |
 | 1.3 | Lantern: commit the new `backlog.md` (currently untracked on `feat/sketch-editor`), then the same as 1.2. Give the *Later* headings `FM` ids, move each item's leading `**S–M. In progress.**` into its meta line, and add `.projectmagic.yml` with `new_id_prefix: FM`. **S** | **in progress**: lantern#70 is open. 24 items with meta lines and 0 warnings; FM6–FM9 assigned; `PROGRESS.md` needed no change. |
 | 1.4 | Copy the post-migration files from both repositories into `fixtures/`, once orchard#35 and lantern#70 merge | todo |
 
@@ -78,11 +78,11 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Status |
 |-----|------|--------|
-| 5.1 | The write path (§10.2): the acting user's token, compare-and-swap, retry, `edit_log`, then a sync. `edit_mode: commit`. | todo |
+| 5.1 | The write path (§10.2–§10.3): the `projectmagic` branch's four states, the acting user's token, compare-and-swap, retry, `edit_log` and the PR body, then **merge the PR at once (squash) and delete the branch**, falling back to an open PR when the merge is refused. Then a sync. **M** | todo |
 | 5.2 | The edit and add forms (meta as fields, body as markdown), with id uniqueness against main, branches and history | todo |
 | 5.3 | Move (drag in List and Board) and remove (done-and-prune or delete), with confirmation | todo |
 | 5.4 | The same-item conflict view (three-way choice) | todo |
-| 5.5 | `edit_mode: pr` (one open `backlog/edits` branch and PR per project, pending-edit badges, *Merge* for maintainers) and `auto` (fall back on a protected-branch refusal, and remember it). **M** | todo |
+| 5.5 | `auto_merge: false` and refused merges: merging main into an open branch before each edit, pending-edit badges and the main-versus-pending view, *Merge* for maintainers, and the "edits not merged" and "needs a merge by hand" states. **M** | todo |
 | 5.6 | Playwright walk against a throwaway repository. **Deploy v0.1.** | todo |
 
 ## Decisions log
@@ -98,3 +98,9 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
   records only the phase that was built. Disagreements go to the health panel and are never
   reconciled by the tool (`spec.md` §7.2).
 - **2026-10-14** UI designs come from Google Stitch before phase 4, from `design/stitch-prompt.md`.
+- **2026-10-14** Every edit to a managed repository goes to a branch named `projectmagic`, with
+  one open PR, never to main, so repositories can exclude the tool's PRs from their workflows.
+  This replaces the per-repository `edit_mode` (`spec.md` §10.2).
+- **2026-10-14** The tool merges each edit's PR straight away, so main stays current (`auto_merge`,
+  default on). CI and the review skip the `projectmagic` branch, and CI skips pushes to main that
+  change only `backlog.md` (`spec.md` §10.2, §10.4).
