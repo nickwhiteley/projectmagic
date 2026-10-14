@@ -1,4 +1,4 @@
-.PHONY: install dev test test-unit test-e2e check lint format build
+.PHONY: install dev test test-unit test-e2e check lint format build migrate sync
 
 install: node_modules
 node_modules: package.json package-lock.json
@@ -27,3 +27,11 @@ format: install
 
 build: install
 	npm run build
+
+# Applies migrations/*.sql to DATABASE_URL (from the environment or .env).
+migrate: install
+	node scripts/migrate.ts
+
+# Syncs every installed repository into the database, outside the app (or name some: make sync REPOS=orchard).
+sync: install
+	node scripts/sync.ts $(REPOS)

@@ -21,3 +21,6 @@ playwright-report/
 spikes/*/out/
 .*.swp
 .DS_Store
+
+# The GitHub App private key
+*.pem

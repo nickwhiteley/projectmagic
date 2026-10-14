@@ -293,7 +293,7 @@ An item's **displayed status** is decided by the first rule that applies:
 | - | -------------------------------------------------------------------------- | ----------- |
 | 1 | removed from main's `backlog.md` (§7.3), or `done` in main's meta line     | done        |
 | 2 | a linked **open** PR                                                       | in review   |
-| 3 | main's meta says `todo` or `blocked`, and there is a linked active branch or `in progress` on a branch's copy | in progress |
+| 3 | main's meta says `todo` or `blocked`, or there is no meta line, and there is a linked active branch or `in progress` on a branch's copy | in progress |
 | 4 | main's meta line                                                           | its status  |
 | 5 | no meta line: the linked plan task's status, or the least advanced of several | that status |
 | 6 | otherwise                                                                  | todo        |
@@ -377,7 +377,8 @@ shows:
 - the in-flight list: each active branch with its linked item, ahead and behind counts, PR
   state and last commit message;
 - the plan's progress (done over total for the current group) and its **next task**: the first
-  task in document order that isn't done;
+  task in document order that is in progress or todo (a built task waits on a person, not an
+  agent);
 - health: items with no meta, dangling references, unparseable status cells and sync errors.
 
 **A project (`/p/{repo}`)** has tabs:
@@ -544,6 +545,8 @@ other, except that an administrator is treated as `maintainer` everywhere.
   route and asserts which action it checks.
 - **A project the user can't see is a 404**, not a 403, and is absent from the overview and
   from search.
+- **A hidden project** is seen only by its maintainers and administrators, so one of them can
+  unhide it.
 - **GitHub has the last word on writes.** Edits use the user's own token, so a project
   `editor` without push access to the repository gets GitHub's refusal, shown as "your GitHub
   account can't write to this repository". Project Magic never uses the App's token to write on
@@ -552,15 +555,47 @@ other, except that an administrator is treated as `maintainer` everywhere.
   `can()` and its tests exist. Invitations and the member list come with PM7.
 
 ### 11.3 GitHub and transport
-- **App permissions**: contents read and write, pull requests read and write, metadata read.
-  Nothing else.
+- **App permissions**: contents read and write, pull requests read and write, metadata read,
+  and, for PM9's delivery measures (§16), deployments read and actions read, granted up front so
+  PM9 needs no new approval. Nothing else.
 - Webhooks are verified against `GITHUB_WEBHOOK_SECRET`.
 - Rendered markdown is sanitised. The documents come from repositories you own, but a branch
   can contain anything an agent wrote.
 
-Environment: `DATABASE_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_CLIENT_ID`,
-`GITHUB_CLIENT_SECRET`, `GITHUB_WEBHOOK_SECRET`, `SESSION_SECRET`, `TOKEN_ENCRYPTION_KEY`,
-`BOOTSTRAP_ADMIN_GITHUB_LOGIN`.
+**Registering the App** (GitHub → Settings → Developer settings → GitHub Apps → New):
+
+| Setting | Value |
+| ------- | ----- |
+| Name | `Project Magic (nickwhiteley)`: App names are unique across GitHub |
+| Homepage URL | `https://github.com/nickwhiteley/projectmagic` (required, unused) |
+| Callback URLs | `http://localhost:5173/auth/github/callback`, and `https://<deployment>/auth/github/callback` once deployed |
+| Expire user authorization tokens | on: sign-in returns a refresh token, stored encrypted (§11.1) |
+| Request user authorization during installation | off: users sign in separately |
+| Device flow | off |
+| Setup URL | none |
+| Webhook | `https://<deployment>/api/github/webhook`, with the secret; inactive until the first deploy (4.7), since GitHub needs a public URL. Until then, syncs come from page loads, the refresh button and the cron (§7.4) |
+| SSL verification | on |
+| Repository permissions | as above; account permissions none |
+| Events | push, pull request, create, delete (§7.4) |
+| Installable by | only this account |
+
+After creating it: note the App ID and client ID, generate a client secret and a private key,
+and install it on the chosen repositories (*Only select repositories*).
+
+**Environment** (`.env.example` lists it):
+
+| Variable | What |
+| -------- | ---- |
+| `DATABASE_URL` | Neon Postgres, pooled |
+| `GITHUB_APP_ID` | the App's id |
+| `GITHUB_APP_PRIVATE_KEY` | the `.pem`'s contents; on Vercel |
+| `GITHUB_APP_PRIVATE_KEY_PATH` | or a path to the `.pem`; for local development |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | the App's user OAuth credentials |
+| `GITHUB_WEBHOOK_SECRET` | the webhook's secret (`openssl rand -hex 32`) |
+| `SESSION_SECRET` | signs the session cookie (`openssl rand -hex 32`) |
+| `TOKEN_ENCRYPTION_KEY` | encrypts refresh tokens: 32 bytes, base64 (`openssl rand -base64 32`) |
+| `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | the first administrator's GitHub login (§11.1) |
+| `CRON_SECRET` | set by Vercel; the daily cron route checks it |
 
 ## 12. Code layout and testing
 
