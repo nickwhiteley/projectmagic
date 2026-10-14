@@ -105,7 +105,7 @@ docs_exclude:
 main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 edit_mode: auto                  # auto | commit | pr (§10.3)
-new_id_prefix: NW                # the prefix suggested for a new item (§10.1)
+new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
 ```

@@ -103,7 +103,7 @@ feat/nw9-dxf-export's version, in red and green lines, as in a code review.
 
 ```
 Screen: the edit view for an item, as a right-hand drawer over the List. Fields: id (monospace,
-validated as unique, with a hint "next free: NW32"), title, job (select), size (select), status
+validated as unique, with a hint "next free: BP12"), title, job (select), size (select), status
 (select: todo, in progress, blocked, in review, built, done), waiting (text, shown when blocked
 or built), plan tasks (multi-select with numbers and titles), branch (text). Below them is a
 markdown editor with a preview toggle for the body. The footer says where the edit goes: either
