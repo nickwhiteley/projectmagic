@@ -45,7 +45,7 @@ export default defineConfig(
 					patterns: [
 						{ group: ['node:*', 'fs', 'path', 'http', 'https'], message: 'The core does no I/O.' },
 						{
-							group: ['$lib/server/*', '#lib/server/*', '../server/*'],
+							group: ['#lib/server/*', '#lib/server/*', '../server/*'],
 							message: 'The core is pure.'
 						}
 					]
