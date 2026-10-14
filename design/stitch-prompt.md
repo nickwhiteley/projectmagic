@@ -136,3 +136,20 @@ above it ("main ▾"), and a rendered markdown document in a comfortable reading
 and task numbers in the text ("see 5.8", "NW9") are subtle links with a hover card that shows
 the item's title and status.
 ```
+
+## Screen 8: delivery and quality
+
+```
+Screen: the Delivery tab for Orchard. Across the top is a row of four figures, each with a
+small 12-week sparkline and a link "see the 11 deploys": production deploys this week (3),
+median lead time from first commit to production (1.8 days), production bugs in the last four
+weeks ("2 of 14 deploys", shown as a count, not a percentage), and median time to restore
+(5 h). Below are weekly bar charts with a 4-week rolling line for throughput (items done,
+weighted by size, with a toggle for plan tasks) and for main's CI (runs passed and failed, with
+the hours main was red). No red or green thresholds: these are trends, not targets.
+A prominent panel, "The founder queue: 14 items waiting on you", lists built and blocked items
+oldest first, each with id, title, waiting reason and age ("NW7 A renewal reminder · the
+lawyer's confirmation · 14 days"), so the owner can see their own bottleneck. Under it, a
+table of production bugs: the fix PR, when it was raised, when the fix reached production, and
+time to restore.
+```
