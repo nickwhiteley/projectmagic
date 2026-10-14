@@ -186,6 +186,11 @@ order by default and never re-sorts silently.
 nearest heading above the table (`Phase 3: engine depth`, `v2: the spec set`). Every other
 column is kept and shown.
 
+**When a number appears in more than one plan table, the later table wins.** Earlier rows with
+that number are shown as history and are never linked. Orchard restarts at 1 in its v2 table,
+so its `9` is "Catalogue sorting and filtering", not the prototype's "Auth and catalogue
+endpoints" (found in migration, task 1.2).
+
 **The status cell starts with a canonical word**, optionally in bold: `done`, `todo`,
 `in progress`, `blocked`, `built` (or `built*`), `skipped`. Whatever follows (`**done**: passed on 18.6 …`) is the
 note. Both repositories already almost follow this, and the tool shows a cell that starts any
@@ -273,20 +278,27 @@ calls and 2 rate-limit points per repository, and a webhook sync is usually one 
 
 ### 7.2 Status derivation
 
-An item's **displayed status** comes from the most advanced evidence:
+An item's **displayed status** is decided by the first rule that applies:
 
-| Evidence                                            | Status        |
-| --------------------------------------------------- | ------------- |
-| removed from main's `backlog.md` (§7.3), `done` on main, or its plan task `done` on main | done |
-| `built` on main, or its plan task `built` on main   | built         |
-| a linked **open** PR                                | in review     |
-| a linked active branch, `in progress` on any copy, or its plan task `in progress` | in progress |
-| `blocked` on the most recently committed copy, or its plan task `blocked` | blocked |
-| otherwise                                           | todo          |
+| # | Evidence                                                                   | Status      |
+| - | -------------------------------------------------------------------------- | ----------- |
+| 1 | removed from main's `backlog.md` (§7.3), or `done` in main's meta line     | done        |
+| 2 | a linked **open** PR                                                       | in review   |
+| 3 | main's meta says `todo` or `blocked`, and there is a linked active branch or `in progress` on a branch's copy | in progress |
+| 4 | main's meta line                                                           | its status  |
+| 5 | no meta line: the linked plan task's status, or the least advanced of several | that status |
+| 6 | otherwise                                                                  | todo        |
 
-When an item's meta and its plan task disagree (`todo` in `backlog.md`, `done` in
-`PROGRESS.md`), the more advanced status is shown and the disagreement is listed on the health
-panel. The tool never resolves it by editing either file.
+**The item's own meta line beats its plan task.** A plan task often records the phase that was
+built, while the item carries what is left. Orchard's F9 links task 26, which built phases
+1–5 (`built*`), while the item is phase 6, a run by hand that is `in progress`. An earlier draft
+of this rule took the most advanced evidence, and would have shown F9 as built (found in
+migration, task 1.2).
+
+**Disagreements are shown, never resolved.** When the meta line and a linked plan task differ,
+the health panel lists it, for example "NW7: backlog says built, plan task 35 says done". The
+tool never edits either file to reconcile them. `blocked` against `todo` is not a disagreement,
+because `blocked` is a `todo` with a reason.
 
 `blocked` is also a **flag** shown on in-progress and in-review cards, with `Waiting:` text, so
 a blocked item with a branch reads as both.
