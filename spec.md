@@ -545,6 +545,8 @@ other, except that an administrator is treated as `maintainer` everywhere.
   route and asserts which action it checks.
 - **A project the user can't see is a 404**, not a 403, and is absent from the overview and
   from search.
+- **A hidden project** is seen only by its maintainers and administrators, so one of them can
+  unhide it.
 - **GitHub has the last word on writes.** Edits use the user's own token, so a project
   `editor` without push access to the repository gets GitHub's refusal, shown as "your GitHub
   account can't write to this repository". Project Magic never uses the App's token to write on
