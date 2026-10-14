@@ -34,9 +34,9 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 | #   | Task | Status |
 |-----|------|--------|
 | 1.1 | Settle the first draft's open questions with Nick, and fold the answers in | **done**: `spec.md` §14 (2026-10-14) |
-| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`. **M** | **in progress**: orchard#35 is open. 55 items with meta lines and 0 warnings; BP1–BP11 assigned, and `BP` is the prefix for new items; E5 + E6 became E5; task 46's missing row restored. It found two spec rules: plan numbers repeat across tables, and an item's meta must beat its plan task (§5.2, §7.2). |
-| 1.3 | Lantern: commit the new `backlog.md` (currently untracked on `feat/sketch-editor`), then the same as 1.2. Give the *Later* headings `FM` ids, move each item's leading `**S–M. In progress.**` into its meta line, and add `.projectmagic.yml` with `new_id_prefix: FM`. **S** | **in progress**: lantern#70 is open. 24 items with meta lines and 0 warnings; FM6–FM9 assigned; `PROGRESS.md` needed no change. |
-| 1.4 | Copy the post-migration files from both repositories into `fixtures/`, once orchard#35 and lantern#70 merge | todo |
+| 1.2 | Orchard: migrate `backlog.md` (one id per heading, meta lines, `Branch:` on in-flight items), normalise `PROGRESS.md` status cells, add the `CLAUDE.md` block. One PR on `chore/backlog-conventions`. **M** | **done**: orchard#35 merged 2026-10-14, then #36 (CI and review skip the `projectmagic` branch). 55 items with meta lines and 0 warnings; BP1–BP11 assigned, and `BP` is the prefix for new items; E5 + E6 became E5; task 46's missing row restored. It found two spec rules: plan numbers repeat across tables, and an item's meta must beat its plan task (§5.2, §7.2). |
+| 1.3 | Lantern: commit the new `backlog.md` (currently untracked on `feat/sketch-editor`), then the same as 1.2. Give the *Later* headings `FM` ids, move each item's leading `**S–M. In progress.**` into its meta line, and add `.projectmagic.yml` with `new_id_prefix: FM`. **S** | **done**: lantern#70 merged 2026-10-14, then #71. 24 items with meta lines and 0 warnings; FM6–FM9 assigned; `PROGRESS.md` needed no change. |
+| 1.4 | Copy the post-migration files from both repositories into `test/fixtures/`, once orchard#35 and lantern#70 merge | **done**: `test/fixtures/`, with sources and commits in its README |
 
 ### Phase 2: the pure core (`src/lib/core/`)
 
