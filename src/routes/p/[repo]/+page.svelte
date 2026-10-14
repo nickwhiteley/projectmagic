@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import ItemRow from '#lib/components/ItemRow.svelte';
+	import { dragHandlers, type MoveState } from '#lib/move.ts';
 	import { plural, STATUS_ORDER } from '#lib/format.ts';
 
 	let { data } = $props();
@@ -29,6 +30,10 @@
 	const shown = (it: { status: string; job: string | null }) =>
 		(!status || it.status === status) && (!job || it.job === job);
 	const filtered = $derived(!!status || !!job);
+	const moves = $state<MoveState>({ busy: null, message: null });
+	// Reordering needs the whole list in view: not while filtered.
+	const canDrag = $derived(page.data.project.canEdit && !filtered);
+	const drag = dragHandlers(page.params.repo!, moves, () => canDrag);
 </script>
 
 <svelte:head><title>{page.data.project.name} · Project Magic</title></svelte:head>
@@ -55,6 +60,7 @@
 				{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
 			</select>
 		</label>
+		{#if page.data.project.canEdit}<a class="button" href="/p/{repo}/new">Add item</a>{/if}
 	</div>
 
 	{#if notices}
@@ -88,7 +94,16 @@
 	{#snippet entries(list: typeof data.top)}
 		{#each list as e (e.start)}
 			{#if e.kind === 'item'}
-				{#if shown(e.item)}<ItemRow item={e.item} {repo} />{/if}
+				{#if shown(e.item)}
+					<div
+						data-id={e.item.id}
+						draggable={canDrag}
+						class="drag"
+						class:busy={moves.busy === e.item.id}
+					>
+						<ItemRow item={e.item} {repo} />
+					</div>
+				{/if}
 			{:else if !filtered}
 				<details class="note">
 					<summary>{e.title}</summary>
@@ -98,16 +113,31 @@
 		{/each}
 	{/snippet}
 
-	{@render entries(data.top)}
-	{#each data.sections as sec, i (i)}
-		{#if !filtered || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
-			<section>
-				<h2>{sec.title}</h2>
-				{#if sec.introHtml}<p class="intro">{@html sec.introHtml}</p>{/if}
-				{@render entries(sec.entries)}
-			</section>
-		{/if}
-	{/each}
+	{#if moves.message}<p class="move-error" role="alert">{moves.message}</p>{/if}
+	{#if canDrag}<p class="muted small hint">
+			Drag a row onto another to put it just before that one.
+		</p>{/if}
+	<div
+		role="list"
+		ondragstart={drag.ondragstart}
+		ondragover={drag.ondragover}
+		ondragend={drag.ondragend}
+		ondrop={(e) => drag.ondrop(e)}
+	>
+		{@render entries(data.top)}
+		{#each data.sections as sec, i (i)}
+			{#if !filtered || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
+				<section>
+					<h2>{sec.title}</h2>
+					{#if sec.introHtml}<p class="intro">{@html sec.introHtml}</p>{/if}
+					{@render entries(sec.entries)}
+					{#if canDrag}<div class="zone" data-to="end:{i}">
+							Drop here to put it last in {sec.title}
+						</div>{/if}
+				</section>
+			{/if}
+		{/each}
+	</div>
 {/if}
 
 <style>
@@ -179,6 +209,32 @@
 	}
 	section {
 		margin-top: 2rem;
+	}
+	.drag[draggable='true'] {
+		cursor: grab;
+	}
+	.drag.busy {
+		opacity: 0.4;
+	}
+	:global(.drop-target) {
+		box-shadow: inset 0 3px 0 var(--accent);
+	}
+	.zone {
+		font-size: 12px;
+		color: var(--text-3);
+		padding: 0.4rem 0.25rem;
+		border: 1px dashed transparent;
+		border-radius: var(--radius);
+	}
+	.zone:global(.drop-target) {
+		border-color: var(--accent);
+		box-shadow: none;
+	}
+	.hint {
+		margin: 0 0 0.5rem;
+	}
+	.move-error {
+		color: var(--danger);
 	}
 	h2 {
 		font-size: 26px;

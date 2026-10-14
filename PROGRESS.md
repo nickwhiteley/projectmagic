@@ -78,11 +78,11 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 
 | #   | Task | Status |
 |-----|------|--------|
-| 5.1 | The write path (§10.2–§10.3): the `projectmagic` branch's four states, the acting user's token, compare-and-swap, retry, `edit_log` and the PR body, then **merge the PR at once (squash) and delete the branch**, falling back to an open PR when the merge is refused. Then a sync. **M** | todo |
-| 5.2 | The edit and add forms (meta as fields, body as markdown), with id uniqueness against main, branches and history | todo |
-| 5.3 | Move (drag in List and Board) and remove (done-and-prune or delete), with confirmation | todo |
-| 5.4 | The same-item conflict view (three-way choice) | todo |
-| 5.5 | `auto_merge: false` and refused merges: merging main into an open branch before each edit, pending-edit badges and the main-versus-pending view, *Merge* for maintainers, and the "edits not merged" and "needs a merge by hand" states. **M** | todo |
+| 5.1 | The write path (§10.2–§10.3): the `projectmagic` branch's four states, the acting user's token, compare-and-swap, retry, `edit_log` and the PR body, then **merge the PR at once (squash) and delete the branch**, falling back to an open PR when the merge is refused. Then a sync. **M** | **done** (against a fake GitHub; not yet against a real repository, see 5.6): `write.ts` takes all four branch states, compare-and-swap with three tries, the same-item check, squash-merge and delete, and a refused merge leaving the PR open; `user-token.ts` refreshes and rotates the user's token; `edits.ts` writes `edit_log`, the PR body and the project's edit state, then syncs. 10 tests on a fake repository with commits, refs, a line-level three-way merge and PRs |
+| 5.2 | The edit and add forms (meta as fields, body as markdown), with id uniqueness against main, branches and history | **done**: only what changed is in the edit (`core/edit-form.ts`), so saving an untouched form changes nothing for any of the 79 real items, and a status change is a one-line diff; existing meta keys keep their place; markdown preview; the next free id (BP12 on Orchard) |
+| 5.3 | Move (drag in List and Board) and remove (done-and-prune or delete), with confirmation | **done**: drag onto an item to go before it, or onto a section's end zone; a move form on the edit page as well; remove asks which kind and a tick |
+| 5.4 | The same-item conflict view (three-way choice) | **done**: what changed on main, what the edit would change, then keep mine (save again), take theirs (reopen) or combine |
+| 5.5 | `auto_merge: false` and refused merges: merging main into an open branch before each edit, pending-edit badges and the main-versus-pending view, *Merge* for maintainers, and the "edits not merged" and "needs a merge by hand" states. **M** | **done**: the project banner shows each state from `project.edit_state` (migration 002), with *Merge* for maintainers; pending badges and the main-versus-branch diffs were already in phase 4 |
 | 5.6 | Playwright walk against a throwaway repository. **Deploy v0.1.** | todo |
 
 ## Decisions log

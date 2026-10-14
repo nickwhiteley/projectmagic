@@ -29,5 +29,8 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/p/[repo]/branches': { kind: 'project', action: 'view' },
 	'/p/[repo]/docs/[...path]': { kind: 'project', action: 'view' },
 	'/p/[repo]/i/[id]': { kind: 'project', action: 'view' },
+	'/p/[repo]/i/[id]/edit': { kind: 'project', action: 'edit' },
+	'/p/[repo]/new': { kind: 'project', action: 'edit' },
+	'/p/[repo]/edits/merge': { kind: 'project', action: 'merge' },
 	'/p/[repo]/sync': { kind: 'project', action: 'view' }
 };

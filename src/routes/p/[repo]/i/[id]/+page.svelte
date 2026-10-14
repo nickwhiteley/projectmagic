@@ -45,7 +45,16 @@
 				{#if it.size}<span class="tag mono">{it.size}</span>{/if}
 				{#if it.pending}<span class="tag pending">pending edit</span>{/if}
 			</p>
-			<h2>{@html it.titleHtml}</h2>
+			<div class="title-row">
+				<h2>{@html it.titleHtml}</h2>
+				{#if page.data.project.canEdit}<a
+						class="button"
+						href="/p/{repo}/i/{encodeURIComponent(it.id)}/edit">Edit</a
+					>{/if}
+			</div>
+			{#if page.url.searchParams.get('pending')}<p class="muted small">
+					Saved. It reaches {data.main} when the edits PR is merged.
+				</p>{/if}
 			<div class="prose">{@html it.bodyHtml}</div>
 
 			{#if it.olderCopies.length}
@@ -161,6 +170,15 @@
 	h2 {
 		font-size: 32px;
 		margin: 0.3rem 0 1.25rem;
+	}
+	.title-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: start;
+		gap: 1rem;
+	}
+	.title-row .button {
+		margin-top: 0.6rem;
 	}
 	.meta-line {
 		display: flex;

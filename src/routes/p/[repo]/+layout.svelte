@@ -31,6 +31,33 @@
 	</div>
 </div>
 {#if p.lastError}<p class="error" role="alert">Last sync failed: {p.lastError}</p>{/if}
+{#if page.url.searchParams.get('merge')}<p class="note">
+		{page.url.searchParams.get('merge')}
+	</p>{/if}
+{#if p.edits}
+	<div class="edits" role="status">
+		{#if p.edits.state === 'pending'}
+			<span>
+				Edits are waiting in
+				<a href="https://github.com/{p.owner}/{p.repo}/pull/{p.edits.pr}">PR #{p.edits.pr}</a>
+				and aren’t on {p.main} yet: {p.edits.detail}
+			</span>
+			{#if p.canMerge}
+				<form method="POST" action="{base}/edits/merge"><button class="button">Merge</button></form>
+			{/if}
+		{:else if p.edits.state === 'edits-not-merged'}
+			<span><strong>Edits not merged.</strong> {p.edits.detail}</span>
+		{:else}
+			<span
+				><strong>Edits need a merge by hand.</strong>
+				{p.edits.detail}
+				{#if p.edits.pr}<a href="https://github.com/{p.owner}/{p.repo}/pull/{p.edits.pr}"
+						>PR #{p.edits.pr}</a
+					>{/if}</span
+			>
+		{/if}
+	</div>
+{/if}
 
 <nav class="tabs" aria-label="Project">
 	{#each tabs.filter((t) => !t.hide) as t (t.href)}
@@ -68,6 +95,24 @@
 	}
 	.error {
 		color: var(--danger);
+	}
+	.note {
+		background: var(--surface-2);
+		padding: 0.5rem 0.8rem;
+		border-radius: var(--radius);
+		font-size: 13px;
+	}
+	.edits {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		background: var(--st-review-bg);
+		color: var(--st-review);
+		padding: 0.55rem 0.9rem;
+		border-radius: var(--radius);
+		margin-top: 0.75rem;
+		font-size: 13.5px;
 	}
 	.tabs {
 		display: flex;

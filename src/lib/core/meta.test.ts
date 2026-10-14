@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMeta, idKind, normaliseStatus, parseMeta } from './meta.ts';
+import { formatMeta, idKind, normaliseStatus, parseMeta, updateMeta } from './meta.ts';
 
 describe('parseMeta', () => {
 	it('reads the known keys', () => {
@@ -69,4 +69,36 @@ describe('idKind', () => {
 		['NWXYZ1', null],
 		['Start', null]
 	])('%s → %s', (token, want) => expect(idKind(token)).toBe(want));
+});
+
+describe('updateMeta', () => {
+	const line = '**Status:** todo · **Size:** M · **Owner:** Nick · **Plan:** 46';
+	const entries = parseMeta(line)!.entries;
+
+	it('changes values in place and keeps unknown keys', () => {
+		expect(formatMeta(updateMeta(entries, { status: 'in progress', size: 'M' }))).toBe(
+			'**Status:** in progress · **Size:** M · **Owner:** Nick · **Plan:** 46'
+		);
+	});
+
+	it('adds new keys in the usual order, and removes emptied ones', () => {
+		expect(
+			formatMeta(
+				updateMeta(entries, {
+					status: 'blocked',
+					branch: 'feat/nw9-dxf',
+					waiting: 'the bank',
+					plan: []
+				})
+			)
+		).toBe(
+			'**Status:** blocked · **Size:** M · **Branch:** `feat/nw9-dxf` · **Waiting:** the bank · **Owner:** Nick'
+		);
+	});
+
+	it('builds a line from nothing', () => {
+		expect(formatMeta(updateMeta([], { status: 'todo', size: 'S', plan: ['5.8', ' 5.9 '] }))).toBe(
+			'**Status:** todo · **Size:** S · **Plan:** 5.8, 5.9'
+		);
+	});
 });

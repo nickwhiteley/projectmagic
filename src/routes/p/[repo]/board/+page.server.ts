@@ -9,6 +9,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const rows = s.items.map((i) => row(s, i));
 	const lane = (section: number | null, title: string) => ({
 		title,
+		section,
 		cells: COLUMNS.map((c) => rows.filter((r) => r.section === section && r.status === c))
 	});
 	const lanes = [
