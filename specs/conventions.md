@@ -17,11 +17,13 @@ Keep to these conventions so it reads them correctly:
   `PROGRESS.md` task, that task's number (`### 5.8 New sketch piece — DESIGN`). Never reuse an
   id, even after the item ships. One id per heading. Headings without an id are notes, not
   items, so give every real item an id.
-- **The first line under the heading is the meta line**: `**Key:** value` pairs joined by ` · `:
+- **The first line under the heading is the meta line**. It begins with `**Status:**`, then
+  `**Key:** value` pairs joined by ` · `:
 
       **Status:** in progress · **Size:** M · **Branch:** `feat/nw9-dxf-export` · **Plan:** 35
 
-  Status is one of `todo`, `in progress`, `blocked`, `in review` or `done`. Use `**Waiting:**`
+  Status is one of `todo`, `in progress`, `blocked`, `in review`, `built` (merged, waiting on a
+  human acceptance check) or `done`. Use `**Waiting:**`
   to say what a blocked item waits on. `Type` (`feature` or `bug`) and `Epic` are accepted too.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
   of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
@@ -31,7 +33,8 @@ Keep to these conventions so it reads them correctly:
   number. For example, `feat/nw9-dxf-export` or `feat/5.7-sketch-part-editor`.
 - **Every PR body includes `Backlog: <ids>` and/or `Plan: <task numbers>`.**
 - **In `PROGRESS.md` plan tables, every status cell begins with** `done`, `todo`,
-  `in progress`, `blocked` or `skipped` (bold is fine), with any note after a colon.
+  `in progress`, `blocked`, `built` (or `built*`) or `skipped` (bold is fine), with any note
+  after a colon.
 - **Shipped items are still removed from `backlog.md`.** Their completion is read from git
   history.
 ```
@@ -43,7 +46,8 @@ Keep to these conventions so it reads them correctly:
 Do this once per repository, on a branch `chore/backlog-conventions`, as one reviewed PR:
 
 1. Give every item heading exactly one id. Split or renumber compound headings like
-   `E5 + E6 residual`.
+   `E5 + E6 residual`. Give ids to the items under *Later* that have none (11 in orchard,
+   4 in lantern).
 2. Add a meta line under each item, and move a leading size and status out of the prose
    (`**S–M. In progress.**`) into it. Take the status from the prose:
    - "Built … waits on the lawyer" becomes `blocked` with a `Waiting:` key;

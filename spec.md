@@ -53,8 +53,8 @@ access, means adding rows and screens, not reworking the code.
   cut line, the open and decided questions. The conventions in §5 add one machine-readable
   line per item and change nothing else. A human or an agent reading `backlog.md` on GitHub
   should barely notice them.
-- **Edits are surgical.** An edit replaces the exact byte range of one item's section and
-  leaves every other byte of the file untouched. The file is never re-serialised from a parsed
+- **Edits are surgical.** An edit replaces the exact range of one item's section and leaves
+  every other byte of the file untouched (spike 0.2). The file is never re-serialised from a parsed
   model.
 - **Functional core, imperative shell.** Parsing, linking, status derivation, done detection
   and splicing are pure functions over strings and plain data, tested without a network. The
@@ -143,12 +143,14 @@ The prose, exactly as today …
 - **The title** is the rest of the heading. A trailing ` — WORD` is read as the job tag, and a
   leading `★` marks an item on the cut line. Both are existing Orchard idioms, kept as they
   are.
-- **The meta line** is the first non-blank line after the heading. It is a run of
-  `**Key:** value` pairs separated by ` · `. Keys are case-insensitive. Known keys:
+- **The meta line** is the first non-blank line after the heading, and it **begins with
+  `**Status:**`**. It is a run of `**Key:** value` pairs separated by ` · `. Keys are
+  case-insensitive. A paragraph that opens with any other bold key, such as `**Specced:**`,
+  `**Open:**` or `**Decided:**`, is prose (spike 0.2). Known keys:
 
   | Key        | Values                                                         | v0.1 use            |
   | ---------- | -------------------------------------------------------------- | ------------------- |
-  | `Status`   | `todo` · `in progress` · `blocked` · `in review` · `done`      | the card's column   |
+  | `Status`   | `todo` · `in progress` · `blocked` · `in review` · `built` · `done` | the card's column |
   | `Size`     | `S` · `M` · `L` · ranges like `S–M`                            | shown               |
   | `Job`      | free text; overrides the heading tag                          | shown, filterable   |
   | `Branch`   | a branch name, in backticks                                    | links (§6)          |
@@ -160,7 +162,10 @@ The prose, exactly as today …
   Unknown keys are kept and shown as-is. **A missing meta line is not an error.** The item is
   `todo` unless a branch or PR says otherwise, and the item is flagged "no meta" so the user
   can see which items the agents haven't annotated.
-- **The body** is everything up to the next heading of level 3 or above.
+- **The body** runs to its last content block before the next heading of level 3 or above. A
+  trailing `---` and blank lines belong to the gap between items, not to the item.
+- **`built`** means merged but waiting on a human acceptance check, such as opening the DXF
+  output in AutoCAD or the lawyer's read. Orchard writes it `built*`, which is accepted.
 - **Headings without an id are notes**, for example `### Start here, 1 October 2026`. They are
   shown as prose in place and are not items. The health panel lists them for information,
   because some are really items that were never given an id (Lantern's *Later*
@@ -182,7 +187,7 @@ nearest heading above the table (`Phase 3: engine depth`, `v2: the spec set`). E
 column is kept and shown.
 
 **The status cell starts with a canonical word**, optionally in bold: `done`, `todo`,
-`in progress`, `blocked`, `skipped`. Whatever follows (`**done**: passed on 18.6 …`) is the
+`in progress`, `blocked`, `built` (or `built*`), `skipped`. Whatever follows (`**done**: passed on 18.6 …`) is the
 note. Both repositories already almost follow this, and the tool shows a cell that starts any
 other way as `unknown`.
 
@@ -273,6 +278,7 @@ An item's **displayed status** comes from the most advanced evidence:
 | Evidence                                            | Status        |
 | --------------------------------------------------- | ------------- |
 | removed from main's `backlog.md` (§7.3), `done` on main, or its plan task `done` on main | done |
+| `built` on main, or its plan task `built` on main   | built         |
 | a linked **open** PR                                | in review     |
 | a linked active branch, `in progress` on any copy, or its plan task `in progress` | in progress |
 | `blocked` on the most recently committed copy, or its plan task `blocked` | blocked |
@@ -345,7 +351,7 @@ Everything else is cache, and can be truncated and rebuilt.
 shows:
 
 - the project's name and its last commit on any branch, with its age;
-- counts of in progress, in review, blocked and todo in the current first section, and done in
+- counts of in progress, in review, built, blocked and todo in the current first section, and done in
   the last 14 days;
 - the in-flight list: each active branch with its linked item, ahead and behind counts, PR
   state and last commit message;
@@ -355,8 +361,8 @@ shows:
 
 **A project (`/p/{repo}`)** has tabs:
 
-- **Board**: columns todo · in progress · in review · blocked · done (the done column covers the
-  last 30 days), with swimlanes from the backlog's `##` sections. Cards show id, title, ★, size,
+- **Board**: columns todo · in progress · blocked · in review · built · done (the done column
+  covers the last 30 days), with swimlanes from the backlog's `##` sections. Cards show id, title, ★, size,
   job and the status source.
 - **List**: the backlog in document order, as written, including the preamble and notes. This
   is the default, because order is priority.
@@ -384,8 +390,10 @@ edit button.
   and can be changed. A plan task number can be entered as the id, to add the reasoning for an
   existing `PROGRESS.md` task. Uniqueness is checked
   against main, every active branch **and** done history, so a shipped id is never reused.
-- **Move an item**: within its section or to another. This is a cut and an insert of its exact
-  byte range.
+- **Move an item**: before or after another item, within its section or into another. This is
+  a cut and an insert of its exact range. Both `before` and `after` are needed, because only
+  `after` can place an item last in a section. When the item is last in the file, the cut takes
+  the blank line before it (spike 0.2).
 - **Remove an item**: by marking it `done` and pruning it, or by deleting it outright. Both ask
   for confirmation.
 
