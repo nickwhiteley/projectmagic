@@ -568,12 +568,12 @@ other, except that an administrator is treated as `maintainer` everywhere.
 | ------- | ----- |
 | Name | `Project Magic (nickwhiteley)`: App names are unique across GitHub |
 | Homepage URL | `https://github.com/nickwhiteley/projectmagic` (required, unused) |
-| Callback URLs | `http://localhost:5173/auth/github/callback`, and `https://<deployment>/auth/github/callback` once deployed |
+| Callback URLs | `http://localhost:5173/auth/github/callback`, and `https://www.projectmagic.work/auth/github/callback` once deployed |
 | Expire user authorization tokens | on: sign-in returns a refresh token, stored encrypted (§11.1) |
 | Request user authorization during installation | off: users sign in separately |
 | Device flow | off |
 | Setup URL | none |
-| Webhook | `https://<deployment>/api/github/webhook`, with the secret; inactive until the first deploy (4.7), since GitHub needs a public URL. Until then, syncs come from page loads, the refresh button and the cron (§7.4) |
+| Webhook | `https://www.projectmagic.work/api/github/webhook`, with the secret; inactive until the first deploy (4.7), since GitHub needs a public URL. Until then, syncs come from page loads, the refresh button and the cron (§7.4) |
 | SSL verification | on |
 | Repository permissions | as above; account permissions none |
 | Events | push, pull request, create, delete (§7.4) |
