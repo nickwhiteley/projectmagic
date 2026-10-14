@@ -6,6 +6,7 @@ import { revalidate } from '#lib/server/sync-runner.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
+	if (!locals.user) return { landing: true as const };
 	const projects = visibleProjects(locals.user, await allProjects(), locals.memberships);
 	await revalidate(projects.map((p) => p.id));
 	const states = await Promise.all(projects.map((p) => loadProjectState(p.id)));
@@ -13,5 +14,5 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const cards = states
 		.map((s) => summarise(s))
 		.sort((a, b) => Number(b.hasBacklog) - Number(a.hasBacklog));
-	return { cards, now: Date.now() };
+	return { landing: false as const, cards, now: Date.now() };
 };

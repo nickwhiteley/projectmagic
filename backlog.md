@@ -7,7 +7,7 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM12 A home page that explains Project Magic, and a README fit for a public repository
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** in review · **Branch:** `feat/pm12-home-and-readme` · **Size:** M · **Type:** feature
 
 Next: Nick is making the repository public so that others can use it. Two parts:
 
