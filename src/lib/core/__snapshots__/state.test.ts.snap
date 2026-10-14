@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`assembleState: lantern > derives each item’s status, and says where it came from 1`] = `
+[
+  "2.6 in progress",
+  "FM1 todo",
+  "7.7 todo",
+  "5.8 in progress",
+  "5.7 in progress",
+  "5.9 in progress",
+  "5.10 in progress",
+  "3.7 todo",
+  "5.11 in progress",
+  "9.1 blocked",
+  "8.5 todo",
+  "8.6 todo",
+  "8.7 todo",
+  "8.4 todo",
+  "9.2 todo",
+  "9.3 todo",
+  "FM2 todo",
+  "FM3 todo",
+  "FM4 todo",
+  "FM5 todo",
+  "FM6 todo",
+  "FM7 todo",
+  "FM8 todo",
+  "FM9 todo",
+]
+`;

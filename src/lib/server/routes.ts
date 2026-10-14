@@ -15,11 +15,19 @@ export type RouteAccess =
 
 export const ROUTES: Record<string, RouteAccess> = {
 	'/': { kind: 'signed-in' },
+	'/search': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },
 	'/auth/signout': { kind: 'public' },
 	'/api/github/webhook': { kind: 'machine' },
 	'/api/cron/sync': { kind: 'machine' },
+	'/p/[repo]': { kind: 'project', action: 'view' },
+	'/p/[repo]/board': { kind: 'project', action: 'view' },
+	'/p/[repo]/plan': { kind: 'project', action: 'view' },
+	'/p/[repo]/done': { kind: 'project', action: 'view' },
+	'/p/[repo]/branches': { kind: 'project', action: 'view' },
+	'/p/[repo]/docs/[...path]': { kind: 'project', action: 'view' },
+	'/p/[repo]/i/[id]': { kind: 'project', action: 'view' },
 	'/p/[repo]/sync': { kind: 'project', action: 'view' }
 };

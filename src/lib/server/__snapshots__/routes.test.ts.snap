@@ -8,7 +8,15 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/auth/github": "public",
   "/auth/github/callback": "public",
   "/auth/signout": "public",
+  "/p/[repo]": "project: view",
+  "/p/[repo]/board": "project: view",
+  "/p/[repo]/branches": "project: view",
+  "/p/[repo]/docs/[...path]": "project: view",
+  "/p/[repo]/done": "project: view",
+  "/p/[repo]/i/[id]": "project: view",
+  "/p/[repo]/plan": "project: view",
   "/p/[repo]/sync": "project: view",
+  "/search": "signed-in",
   "/signin": "public",
 }
 `;
