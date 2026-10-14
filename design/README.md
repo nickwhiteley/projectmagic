@@ -12,7 +12,7 @@ below.
 | 2 List | `stitch/2-list.*` |
 | 3 Board | `stitch/3-board.*` |
 | 4 Item | `stitch/4-item.*` |
-| 5 Edit drawer | `stitch/5-edit.*`, incomplete: to regenerate |
+| 5 Edit drawer | `stitch/5-edit.*`, regenerated, with the conflict state inline |
 | 6 Plan | `stitch/6-plan.*` |
 | 7 Docs | `stitch/7-docs.*` |
 | 8 Delivery | `stitch/8-delivery.*` |
@@ -37,7 +37,8 @@ below.
 
 ## Ignore or correct
 
-- **Agent control that Project Magic doesn't have.** Drop "autonomous dispatch", Run Swarm,
+- **Agent control that Project Magic doesn't have.** Drop "autonomous dispatch" (also under
+  the logo), Run Swarm,
   Dispatch Next Cycle, Approve Direction, Pause Ingestion, agent names and activity, token burn,
   PRs per day, release tags. Project Magic reads the files and edits them, nothing more.
 - **Status colours.** Exactly six statuses, each one colour (§9, base prompt): todo neutral, in
@@ -45,10 +46,9 @@ below.
   blue, blocked sometimes red, and invent "parked".
 - **The cut line as a divider.** In the backlogs ★ marks individual items; there is no line
   between sections. Keep the per-item ★ and drop the divider.
-- **Edit drawer (5).** Only the conflict banner and the footer were drawn; it needs the fields
-  and the markdown editor. Its footer is wrong: edits go to `main` through the `projectmagic`
-  branch, whose PR merges straight away (§10), not a "Backlog edits" PR "because main is
-  protected".
+- **Edit drawer (5).** The select fields' text is clipped in the mock (a rendering fault, not
+  the design). The conflict diff shows the item's markdown, meta line included, not YAML-like
+  `status:` lines.
 - **Delivery (8).** Size weights are S=1, M=3, L=8 (§16), not 1, 2, 4. No red or green on the CI
   chart: trends, not targets.
 - **Plan (6).** Disagreement cards may link to the edit, but nothing resolves one automatically
