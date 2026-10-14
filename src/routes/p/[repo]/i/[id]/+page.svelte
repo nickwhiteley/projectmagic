@@ -103,7 +103,9 @@
 
 			<section>
 				<div class="label">Linked</div>
-				{#if !it.branches.length && !it.prs.length && !it.tasks.length}<p class="muted small">
+				{#if !it.branches.length && !it.prs.length && !it.tasks.length && !it.inferredBranches.length}<p
+						class="muted small"
+					>
 						Nothing yet.
 					</p>{/if}
 				<ul>
@@ -113,6 +115,12 @@
 							<span class="muted"
 								>{b.ahead} ahead · {ago(b.committedAt)}{b.active ? '' : ' · stale'}</span
 							>
+						</li>
+					{/each}
+					{#each it.inferredBranches as b (b)}
+						<li class="inferred">
+							<a href="{data.repoUrl}/tree/{b}"><code>{b}</code></a>
+							<span class="muted">inferred from the branch’s name; not used for status</span>
 						</li>
 					{/each}
 					{#each it.prs as p (p.number)}
@@ -231,6 +239,10 @@
 	}
 	.diffs {
 		margin-top: 2.5rem;
+	}
+	.inferred {
+		border-left: 2px dashed var(--line-strong);
+		padding-left: 0.4rem;
 	}
 	.older {
 		margin-top: 2rem;

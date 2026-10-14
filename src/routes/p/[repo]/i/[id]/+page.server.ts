@@ -45,6 +45,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			noMeta: !it.meta,
 			bodyHtml: md(s, it.body),
 			branches: it.branches,
+			inferredBranches: it.inferredBranches,
 			prs: it.prs,
 			tasks: it.tasks.map((t) => ({ ...t, titleHtml: inline(s, t.title) })),
 			disagreements: it.disagreements,

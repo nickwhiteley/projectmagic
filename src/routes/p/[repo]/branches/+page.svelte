@@ -38,6 +38,11 @@
 							>{/each}
 					{:else if b.tasks.length}
 						plan {b.tasks.join(', ')}
+					{:else if b.inferred}
+						<a class="inferred" href="/p/{repo}/i/{encodeURIComponent(b.inferred)}"
+							><code>{b.inferred}</code></a
+						>
+						<span class="muted">inferred</span>
 					{:else if b.unlinked}
 						<span class="warn">not in the backlog</span>
 					{/if}
@@ -100,6 +105,9 @@
 	}
 	.warn {
 		color: var(--warn);
+	}
+	.inferred {
+		border-bottom: 1px dashed var(--text-3);
 	}
 	.mono {
 		font-family: var(--mono);

@@ -121,10 +121,14 @@ export interface ItemView {
 	differs: { branch: string; source: string }[];
 	/** Changed in the open Project Magic edits PR (§10.3). */
 	pending: boolean;
+	/** Older branches probably about this item (§6, source 6): shown, never used for status. */
+	inferredBranches: string[];
 }
 
 export interface BranchView extends BranchLink {
 	isMain: boolean;
+	/** An item this older branch is probably about (§6, source 6). */
+	inferred: string | null;
 	prs: PrLink[];
 	items: string[];
 	tasks: string[];
@@ -221,8 +225,15 @@ export function assembleState(input: StateInput): ProjectState {
 		})),
 		copies
 	});
+	// Inferred links (source 6) are shown, labelled, but never feed status (§6).
 	const edgesOf = (id: string) =>
-		links.edges.filter((e) => e.from.kind === 'item' && e.from.id === id);
+		links.edges.filter((e) => e.from.kind === 'item' && e.from.id === id && e.source !== 6);
+	const inferredOf = (id: string) =>
+		links.edges.flatMap((e) =>
+			e.source === 6 && e.from.kind === 'item' && e.from.id === id && e.to.kind === 'branch'
+				? [e.to.name]
+				: []
+		);
 	const branchLink = (r: RefInput): BranchLink => ({
 		name: r.name,
 		ahead: r.ahead,
@@ -300,7 +311,8 @@ export function assembleState(input: StateInput): ProjectState {
 			disagreements: d.disagreements,
 			hints: d.hints,
 			differs: d.differs.map((c) => ({ branch: c.branch, source: c.text })),
-			pending: !!edits?.active && (editCopy?.source ?? null) !== it.source
+			pending: !!edits?.active && (editCopy?.source ?? null) !== it.source,
+			inferredBranches: inferredOf(it.id)
 		};
 	});
 
@@ -314,7 +326,11 @@ export function assembleState(input: StateInput): ProjectState {
 					(e.to.kind === 'branch' && e.to.name === r.name) ||
 					(e.to.kind === 'pr' && prs.get(e.to.number)?.headRefName === r.name)
 			);
-			const itemIds = [...new Set(es.flatMap((e) => (e.from.kind === 'item' ? [e.from.id] : [])))];
+			const confident = es.filter((e) => e.source !== 6);
+			const inferred = es.find((e) => e.source === 6 && e.from.kind === 'item');
+			const itemIds = [
+				...new Set(confident.flatMap((e) => (e.from.kind === 'item' ? [e.from.id] : [])))
+			];
 			const taskIds = [
 				...new Set(es.flatMap((e) => (e.from.kind === 'task' ? [e.from.number] : [])))
 			];
@@ -329,6 +345,7 @@ export function assembleState(input: StateInput): ProjectState {
 				prs: r.prs.filter((p) => p.headRefName === r.name).map(prLink),
 				items: itemIds,
 				tasks: taskIds,
+				inferred: inferred && inferred.from.kind === 'item' ? inferred.from.id : null,
 				unlinked: r.active && !isMain && !isEdits && !isDeploy && !itemIds.length && !taskIds.length
 			};
 		})

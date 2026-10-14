@@ -4,8 +4,9 @@
 import { EDIT_BRANCH, parseBranchName, parsePrText } from './branchref.ts';
 import type { Item } from './backlog.ts';
 
-/** 1 a task-number id · 2 a branch's ref · 3 a PR body · 4 an item's Branch:/Plan: keys · 5 a PR title. */
-export type LinkSource = 1 | 2 | 3 | 4 | 5;
+/** 1 a task-number id · 2 a branch's ref · 3 a PR body · 4 an item's Branch:/Plan: keys · 5 a PR
+ * title · 6 inferred, for older branches: never moves an item's status (§6). */
+export type LinkSource = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type LinkNode =
 	| { kind: 'item'; id: string }
@@ -148,6 +149,17 @@ export function link(input: LinkInput): Links {
 		}
 	}
 
+	// 6. Inferred links for branches nothing else links: a spec file one item cites, named like the
+	// branch, or else a strong overlap between the branch's words and exactly one item's title.
+	const linkedBranches = new Set(
+		[...best.values()].flatMap((e) => (e.to.kind === 'branch' ? [e.to.name] : []))
+	);
+	for (const name of branchNames) {
+		if (linkedBranches.has(name)) continue;
+		const target = inferItem(name, input.items);
+		if (target) add({ kind: 'item', id: target }, { kind: 'branch', name }, 6);
+	}
+
 	const seen = new Set<string>();
 	return {
 		edges: [...best.values()],
@@ -158,4 +170,53 @@ export function link(input: LinkInput): Links {
 			return true;
 		})
 	};
+}
+
+const STOP = new Set([
+	'a',
+	'an',
+	'and',
+	'the',
+	'of',
+	'to',
+	'in',
+	'on',
+	'for',
+	'with',
+	'v1',
+	'v2',
+	'fix',
+	'wip',
+	'new'
+]);
+const words = (s: string) =>
+	s
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter((w) => w.length > 1 && !STOP.has(w));
+
+/** The one item an older branch is probably about, or null when there is no clear single answer. */
+export function inferItem(branch: string, items: Item[]): string | null {
+	const slug = parseBranchName(branch)?.slug ?? branch.slice(branch.lastIndexOf('/') + 1);
+	if (!slug || slug === 'main') return null;
+	// A spec file named like the branch, cited by exactly one item (`specs/dxf-export.md` for `dxf-export`).
+	const cite = new RegExp(
+		`(^|[\\s\`(/])${slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.md\\b`,
+		'i'
+	);
+	const citing = items.filter((it) => cite.test(it.body));
+	if (citing.length === 1) return citing[0].id;
+	if (citing.length > 1) return null;
+	// Words: at least two shared, covering most of the branch's words, and one item clearly best.
+	const bw = new Set(words(slug));
+	if (bw.size < 2) return null;
+	const scored = items
+		.map((it) => {
+			const tw = new Set(words(it.titleText));
+			return { id: it.id, shared: [...bw].filter((w) => tw.has(w)).length };
+		})
+		.filter((x) => x.shared >= 2 && x.shared >= Math.ceil((bw.size * 2) / 3))
+		.sort((a, b) => b.shared - a.shared);
+	if (!scored.length || scored[1]?.shared === scored[0].shared) return null;
+	return scored[0].id;
 }

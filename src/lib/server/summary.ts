@@ -43,7 +43,8 @@ export function summarise(s: ProjectState, now = Date.now()) {
 				pr: b.prs.find((p) => p.state === 'OPEN') ?? null,
 				items: b.items.map((id) => ({ id, title: titleOf.get(id) ?? '' })),
 				tasks: b.tasks,
-				unlinked: b.unlinked
+				inferred: b.inferred ? { id: b.inferred, title: titleOf.get(b.inferred) ?? '' } : null,
+				unlinked: b.unlinked && !b.inferred
 			})),
 		plan:
 			group && next

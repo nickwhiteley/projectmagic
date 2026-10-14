@@ -84,6 +84,12 @@
 													href="/p/{c.repo}/i/{it.id}"><code>{it.id}</code> {it.title}</a
 												>{/each}</span
 										>
+									{:else if b.inferred}
+										<span
+											>→ <a class="inferred" href="/p/{c.repo}/i/{b.inferred.id}"
+												><code>{b.inferred.id}</code> {b.inferred.title}</a
+											> <span class="muted">(inferred)</span></span
+										>
 									{:else if b.tasks.length}
 										<span>→ plan {b.tasks.join(', ')}</span>
 									{:else}
@@ -258,6 +264,9 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.25rem 0.5rem;
+	}
+	.inferred {
+		border-bottom: 1px dashed var(--text-3);
 	}
 	.warn-text {
 		color: var(--warn);

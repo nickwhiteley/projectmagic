@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseBacklog } from './backlog.ts';
 import { fixture } from './fixtures.ts';
-import { link, type Edge } from './link.ts';
+import { inferItem, link, type Edge } from './link.ts';
 import { parseProgress } from './progress.ts';
 
 const main = parseBacklog(`## Now
@@ -107,5 +107,57 @@ describe('link on the fixtures', () => {
 		expect(toSketch).toEqual(['5.10', '5.11', '5.7', '5.8', '5.9']);
 		expect(edges.filter((e) => e.source === 1)).toHaveLength(15);
 		expect(dangling).toEqual([]);
+	});
+});
+
+describe('inferred links (source 6)', () => {
+	const items = parseBacklog(`## Now
+### NW9 DXF export
+**Status:** built
+
+**Specced:** \`specs/dxf-export.md\`.
+
+### NW20 Garden gates: an opening in a fence, a wall or the boundary
+**Status:** todo
+
+### NW21 Garden gates, the second kind
+**Status:** todo
+`).items;
+
+	it('links an older branch to the one item citing its spec, or with a strong title match', () => {
+		expect(inferItem('dxf-export', items)).toBe('NW9');
+		expect(inferItem('feat/dxf-export', items)).toBe('NW9');
+		expect(inferItem('garden-gates-fence', items)).toBe('NW20');
+	});
+
+	it('gives up when nothing or more than one item is close', () => {
+		expect(inferItem('garden-gates', items)).toBeNull();
+		expect(inferItem('vercel', items)).toBeNull();
+		expect(inferItem('product-notes-2', items)).toBeNull();
+	});
+
+	it('only infers for branches nothing else links, and marks the edge source 6', () => {
+		const { edges } = link({
+			items,
+			tasks: [],
+			branches: [
+				{ name: 'dxf-export' },
+				{ name: 'feat/nw20-gates' },
+				{ name: 'garden-gates-fence' }
+			],
+			prs: [],
+			copies: []
+		});
+		expect(
+			edges.map((e) => [
+				e.from.kind === 'item' && e.from.id,
+				e.to.kind === 'branch' && e.to.name,
+				e.source
+			])
+		).toEqual([
+			['NW20', 'feat/nw20-gates', 2],
+			['NW9', 'dxf-export', 6],
+			['NW20', 'garden-gates-fence', 6]
+		]);
 	});
 });
