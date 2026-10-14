@@ -293,7 +293,7 @@ An item's **displayed status** is decided by the first rule that applies:
 | - | -------------------------------------------------------------------------- | ----------- |
 | 1 | removed from main's `backlog.md` (§7.3), or `done` in main's meta line     | done        |
 | 2 | a linked **open** PR                                                       | in review   |
-| 3 | main's meta says `todo` or `blocked`, and there is a linked active branch or `in progress` on a branch's copy | in progress |
+| 3 | main's meta says `todo` or `blocked`, or there is no meta line, and there is a linked active branch or `in progress` on a branch's copy | in progress |
 | 4 | main's meta line                                                           | its status  |
 | 5 | no meta line: the linked plan task's status, or the least advanced of several | that status |
 | 6 | otherwise                                                                  | todo        |
@@ -377,7 +377,8 @@ shows:
 - the in-flight list: each active branch with its linked item, ahead and behind counts, PR
   state and last commit message;
 - the plan's progress (done over total for the current group) and its **next task**: the first
-  task in document order that isn't done;
+  task in document order that is in progress or todo (a built task waits on a person, not an
+  agent);
 - health: items with no meta, dangling references, unparseable status cells and sync errors.
 
 **A project (`/p/{repo}`)** has tabs:
