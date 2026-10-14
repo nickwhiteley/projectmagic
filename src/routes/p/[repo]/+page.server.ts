@@ -1,10 +1,10 @@
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { row } from '#lib/server/item-view.ts';
 import { inline, md } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const s = await projectState({ locals, params });
 	// Items and notes in file order, under their sections: order is priority (§5.1).
 	type Entry =
 		| { kind: 'item'; start: number; item: ReturnType<typeof row> }
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		top: entries(null),
 		sections: s.sections.map((sec) => ({
 			title: sec.titleText,
-			introHtml: sec.intro ? inline(s, sec.intro) : null,
+			introHtml: sec.intro ? md(s, sec.intro) : null,
 			entries: entries(sec.index)
 		})),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),

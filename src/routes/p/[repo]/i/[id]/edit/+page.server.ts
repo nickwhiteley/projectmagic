@@ -16,6 +16,7 @@ async function context(projectId: string, id: string) {
 }
 
 export const load: PageServerLoad = async ({ locals, params }) => {
+	void params.repo; // a dependency, so moving between projects re-runs this load
 	const { s, it } = await context(locals.project!.id, params.id);
 	const values = formValues(it);
 	return {

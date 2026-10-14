@@ -5,25 +5,31 @@ import { can } from '#lib/core/access.ts';
 import { projectByRepo } from '#lib/server/projects.ts';
 import { ROUTES } from '#lib/server/routes.ts';
 import { clearSession, readSession, SESSION_COOKIE } from '#lib/server/session.ts';
-import { membershipsOf, userById } from '#lib/server/users.ts';
+import { sessionUser } from '#lib/server/users.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const userId = readSession(event.cookies.get(SESSION_COOKIE), SESSION_SECRET);
-	let user = userId ? await userById(userId) : null;
-	if (user?.disabledAt || (userId && !user)) {
-		clearSession(event.cookies);
-		user = null;
-	}
-	event.locals.user = user;
-	event.locals.memberships = user ? await membershipsOf(user.id) : [];
+	event.locals.user = null;
+	event.locals.memberships = [];
 	event.locals.project = null;
+	event.locals.states = new Map();
 
 	const id = event.route.id;
-	if (id === null) return resolve(event); // no route: SvelteKit's 404
-	const access = ROUTES[id];
-	if (!access) error(500, `Route ${id} has no access rule`);
+	const access = id === null ? null : ROUTES[id];
+	if (id !== null && !access) error(500, `Route ${id} has no access rule`);
+
+	// Machine endpoints check their own caller; everything else needs to know who is signed in.
+	if (access?.kind !== 'machine') {
+		const userId = readSession(event.cookies.get(SESSION_COOKIE), SESSION_SECRET);
+		const found = userId ? await sessionUser(userId) : null;
+		if (found && !found.user.disabledAt) {
+			event.locals.user = found.user;
+			event.locals.memberships = found.memberships;
+		} else if (userId) clearSession(event.cookies);
+	}
+	const user = event.locals.user;
+	if (!access) return resolve(event); // no route: SvelteKit's 404
 
 	switch (access.kind) {
 		case 'public':

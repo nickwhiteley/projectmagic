@@ -1,10 +1,10 @@
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { inline } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const s = await projectState({ locals, params });
 	if (!s.plan) error(404, 'This project has no plan');
 	const task = (t: (typeof s.plan.tasks)[number]) => ({
 		number: t.number,

@@ -1,9 +1,9 @@
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { inline } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const s = await projectState({ locals, params });
 	return {
 		repoUrl: `https://github.com/${s.owner}/${s.repo}`,
 		done: s.done.map((d) => ({

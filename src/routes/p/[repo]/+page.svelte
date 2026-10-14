@@ -129,7 +129,7 @@
 			{#if !filtered || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
 				<section>
 					<h2>{sec.title}</h2>
-					{#if sec.introHtml}<p class="intro">{@html sec.introHtml}</p>{/if}
+					{#if sec.introHtml}<div class="intro">{@html sec.introHtml}</div>{/if}
 					{@render entries(sec.entries)}
 					{#if canDrag}<div class="zone" data-to="end:{i}">
 							Drop here to put it last in {sec.title}
@@ -244,5 +244,8 @@
 		font: italic 15px var(--serif);
 		color: var(--text-2);
 		margin: 0.2rem 0 0.5rem;
+	}
+	.intro :global(p) {
+		margin: 0.2rem 0;
 	}
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import { ago } from '#lib/format.ts';
 	import type { LayoutProps } from './$types';
 
@@ -14,6 +14,10 @@
 		{ href: `${base}/branches`, label: 'Branches', count: p.counts.branches },
 		{ href: `${base}/docs`, label: 'Docs' }
 	]);
+	const going = $derived(navigating.to?.url.pathname ?? null);
+	const from = $derived(navigating.from?.url.pathname ?? null);
+	const busy = (href: string) =>
+		!!going && going !== from && (href === base ? going === base : going.startsWith(href));
 	const current = (href: string) =>
 		href === base ? page.url.pathname === base : page.url.pathname.startsWith(href);
 </script>
@@ -61,7 +65,11 @@
 
 <nav class="tabs" aria-label="Project">
 	{#each tabs.filter((t) => !t.hide) as t (t.href)}
-		<a href={t.href} aria-current={current(t.href) ? 'page' : undefined}>
+		<a
+			href={t.href}
+			aria-current={current(t.href) ? 'page' : undefined}
+			aria-busy={busy(t.href) || undefined}
+		>
 			{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}
 		</a>
 	{/each}
@@ -128,6 +136,10 @@
 		border-bottom: 2px solid transparent;
 		margin-bottom: -1px;
 		white-space: nowrap;
+	}
+	.tabs a[aria-busy='true'] {
+		color: var(--text);
+		border-bottom-color: var(--accent);
 	}
 	.tabs a[aria-current='page'] {
 		color: var(--text);

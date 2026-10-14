@@ -1,11 +1,11 @@
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { projectState } from '#lib/server/project-state.ts';
 import { row } from '#lib/server/item-view.ts';
 import type { PageServerLoad } from './$types';
 
 const COLUMNS = ['todo', 'in progress', 'blocked', 'in review', 'built', 'done'] as const;
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const s = await loadProjectState(locals.project!.id);
+export const load: PageServerLoad = async ({ locals, params }) => {
+	const s = await projectState({ locals, params });
 	const rows = s.items.map((i) => row(s, i));
 	const lane = (section: number | null, title: string) => ({
 		title,

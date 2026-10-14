@@ -23,7 +23,7 @@ Magic can read its own backlog.
   The history still holds them; that is PM14.
 
 ### PM13 Show that a navigation is under way
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
 
 Straight after PM12. Clicking a project in the left navigation can take seconds before anything
 changes, so people click again and again. Show at once that something is happening: the clicked
