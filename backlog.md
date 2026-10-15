@@ -68,49 +68,6 @@ the `edit_log` rows are there. Spec §7.3 and the Done view (§9) say so.
 the bottom of the Done tab. A `dropped` status, for deletes made outside Project Magic, waits
 until it is needed.
 
-### PM16 Assign items to a person or an agent, and filter by it
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
-
-So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
-2026-10-15.
-
-**The assignment is a meta key, `For:`, in `backlog.md`**, where agents read it too:
-
-    **Status:** todo · **Size:** S · **For:** person.nickwhiteley
-
-- **The value is a dotted path**, free text whose first part is `person` or `agent`:
-  `person` (any person), `person.nickwhiteley` (a GitHub login), `agent` (any agent),
-  `agent.claude` (any Anthropic agent), `agent.claude.opus` (one model family). Anything else is
-  kept, shown, and flagged in the health panel.
-- **Agents name themselves `agent.<maker>.<family>`**, worked out from their own model, with no
-  version: Claude Opus 5.5 is `agent.claude.opus`. A version would add dots, and dots are levels.
-- **One value per item.** The hierarchy covers "any of these".
-- **No `For:` means anyone's.**
-
-**What matches what.** An item belongs to everyone its path covers, and to everyone below that:
-
-- A filter shows items for that path or below it, items for a more general path above it, and
-  unassigned ones. Nick's "mine" (`person.nickwhiteley`) is items for `person.nickwhiteley`,
-  for `person`, and for no one.
-- So an agent running as `agent.claude.opus` may take items for `agent.claude.opus`,
-  `agent.claude`, `agent` or no one, and not `agent.claude.sonnet` or anything for a person.
-
-**What it adds:**
-
-- **The parser** reads `For:` (no change to status derivation), and checks its first part.
-- **The List and the Board** get a *For* filter: *Mine*, *People*, *Agents*, and each value in
-  use, mirrored in the URL like the List's other filters. The value shows on rows and cards.
-- **The add and edit forms** get a *For* field, suggesting the values in use, empty by default.
-- **`specs/conventions.md`**, for agents:
-  - work only on items for you, for a path above you, or for no one;
-  - you may hand an item to a person, such as one you are blocked on, by setting `For:` to
-    them;
-  - take an item assigned to a person only when that person says so, and then set `For:` to
-    yourself;
-  - when you set an item to `built` and it needs a person to check it, set `For:` to that
-    person (`person`, or `person.<login>` when you know who).
-- **`spec.md`** §5.1 (the key) and §9 (the filter).
-
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
@@ -335,3 +292,46 @@ sign-up and installing the App, then invitations within an organisation.
 - **Can a person belong to more than one organisation?** And who creates one: anyone who signs
   in, or only people you approve?
 - **Does single-owner self-hosting stay supported** as it is today?
+
+### PM16 Assign items to a person or an agent, and filter by it
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+
+So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
+2026-10-15.
+
+**The assignment is a meta key, `For:`, in `backlog.md`**, where agents read it too:
+
+    **Status:** todo · **Size:** S · **For:** person.nickwhiteley
+
+- **The value is a dotted path**, free text whose first part is `person` or `agent`:
+  `person` (any person), `person.nickwhiteley` (a GitHub login), `agent` (any agent),
+  `agent.claude` (any Anthropic agent), `agent.claude.opus` (one model family). Anything else is
+  kept, shown, and flagged in the health panel.
+- **Agents name themselves `agent.<maker>.<family>`**, worked out from their own model, with no
+  version: Claude Opus 5.5 is `agent.claude.opus`. A version would add dots, and dots are levels.
+- **One value per item.** The hierarchy covers "any of these".
+- **No `For:` means anyone's.**
+
+**What matches what.** An item belongs to everyone its path covers, and to everyone below that:
+
+- A filter shows items for that path or below it, items for a more general path above it, and
+  unassigned ones. Nick's "mine" (`person.nickwhiteley`) is items for `person.nickwhiteley`,
+  for `person`, and for no one.
+- So an agent running as `agent.claude.opus` may take items for `agent.claude.opus`,
+  `agent.claude`, `agent` or no one, and not `agent.claude.sonnet` or anything for a person.
+
+**What it adds:**
+
+- **The parser** reads `For:` (no change to status derivation), and checks its first part.
+- **The List and the Board** get a *For* filter: *Mine*, *People*, *Agents*, and each value in
+  use, mirrored in the URL like the List's other filters. The value shows on rows and cards.
+- **The add and edit forms** get a *For* field, suggesting the values in use, empty by default.
+- **`specs/conventions.md`**, for agents:
+  - work only on items for you, for a path above you, or for no one;
+  - you may hand an item to a person, such as one you are blocked on, by setting `For:` to
+    them;
+  - take an item assigned to a person only when that person says so, and then set `For:` to
+    yourself;
+  - when you set an item to `built` and it needs a person to check it, set `For:` to that
+    person (`person`, or `person.<login>` when you know who).
+- **`spec.md`** §5.1 (the key) and §9 (the filter).
