@@ -145,3 +145,8 @@ Make projects great again
 **Status:** todo · **Size:** S
 
 I should be able to add a "bug" item type.
+
+### PM19 List view click to edit
+**Status:** todo
+
+On the list view I should be able to click through to edit the item.  It concetinas open and shows the task detail, add a button to go to edit the item at the bottom of the detail panel.
