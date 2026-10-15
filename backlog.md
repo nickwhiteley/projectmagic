@@ -125,3 +125,8 @@ ordinary edit through the `projectmagic` branch (§10). **in progress** and **in
 branches and PRs (§7.2), so a drop there still only reorders, and the Board should say so. A drop
 into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 2026-10-14, after
 dragging E5 expecting its status to change.
+
+### PM15 Test item
+**Status:** todo · **Size:** S–M
+
+Make projects great again
