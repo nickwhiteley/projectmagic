@@ -6,23 +6,91 @@ Magic can read its own backlog.
 
 ## After v0.1
 
-### PM17 404 for new items
-**Status:** todo · **Size:** S
+### PM17 A new item can 404 after Add, with nothing shown while it saves
+**Status:** todo · **Size:** S · **Type:** bug
 
-When I create a new item there is no feedback that it is working and then after a while I get redirected to a new page for the item ID but it returns a 404 error.  It looks like timing as going into the list view shows the new item. THis is intermittent, sometimes it works as intended.
+Reported by Nick on 2026-10-15. After **Add** on the add item screen nothing happens on screen for
+several seconds, then the browser goes to the new item's page and it says 404. Opening the list
+shows the item, so it was added. It happens only some of the time.
 
-### PM16 Select items by actor
-**Status:** todo · **Size:** S
+**The 404 is a race between the edit's sync and a webhook's.** An add commits to the
+`projectmagic` branch, opens a PR and merges it, and each of those sends GitHub webhooks that
+start a background sync. Then `edits.edit()` calls `syncNow()`. If a webhook's sync is already
+running, `syncNow()` doesn't wait for it: it marks the project to sync again and returns
+`'queued'` at once. The action redirects, the item page reads the cache from before the merge,
+and the item isn't there yet. Whether a webhook gets in first is down to timing, hence
+intermittent. GitHub's API can also return main's old head for a moment after a merge, which
+fails the same way.
 
-Add filtering on each bulk view to allow "Human" or "AI Agent" selection.  This filter should be by user too once we are mulit-user so design for that. Add Item screen should also have assignment of task to a person or an agent.  In time we may also have agents with different models (cheaper, deeper thinker) so consider this in the design.
+The fix:
 
-### PM19 List view click to edit
-**Status:** todo
+- **After an edit, wait for a sync that includes the merge**: `syncNow()` gains a way to wait
+  for the queued run to finish (polling `sync_started_at` until it clears, with a limit of about
+  ten seconds), and the sync checks that main's head is the merge commit, retrying once if
+  GitHub still returns the old one.
+- **The item page doesn't 404 for an item just added**: if the item is missing but `edit_log`
+  holds an add of that id in the last minute, show "Being added" and refresh, rather than an
+  error.
+- **The form shows that it is saving**: `use:enhance` with the button disabled and saying
+  *Adding…* (*Saving…* on the edit screen) until the response, like PM13's navigation feedback.
+- **A test** for `syncNow()` returning `'queued'` during an edit: the edit still waits until the
+  item is in the state.
 
-On the list view I should be able to click through to edit the item.  It concetinas open and shows the task detail, add a button to go to edit the item at the bottom of the detail panel.
+### PM16 Filter and assign items by who does them
+**Status:** todo · **Size:** M · **Type:** feature
+
+Filter the List and the Board by who does an item: a person or an AI agent, and later a
+particular person once there are more users (PM7), or a particular agent or model (a cheap one
+or one that thinks harder). The add and edit screens assign an item to someone.
+
+The files are the record, so the assignment has to be written in `backlog.md`, where agents can
+read it too. The likely shape is a new meta key, `**Owner:** @nickwhiteley` for a person and
+`**Owner:** agent` or `**Owner:** agent:claude-opus` for an agent, added to
+`specs/conventions.md` and the parser, shown on rows and cards, and filterable.
+
+**Questions for Nick:**
+
+- **Assigned, or actually working?** Is this who an item is meant for, or who is working on it
+  now? The second can be inferred from who pushed the item's branch, with no new key.
+- **How fine-grained for agents?** Just "agent", or the model as well? If the model, from a
+  fixed list (one per project in `.projectmagic.yml`) or free text?
+- **What should an agent do with it?** Should the conventions tell agents to pick up only items
+  owned by `agent`, and leave items owned by a person alone?
+- **What does an item with no owner count as?** Anyone's, or a third filter value,
+  *unassigned*?
+
+### PM19 An Edit button in the expanded list row
+**Status:** todo · **Size:** S · **Type:** feature
+
+On the List, a row opens to show the item's detail, but editing means opening the item's page
+first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
+shown only to people who can edit the project.
+
+**Question for Nick:** should the Board's cards get the same button?
+
+### PM22 Make the item form explain itself, and add Type
+**Status:** todo · **Size:** S · **Type:** feature
+
+Raised by Nick on 2026-10-15: the add item screen has no **Type**, and **Job** and **Plan tasks**
+don't say what they are.
+
+- **Type**: a select with `feature`, `bug` and `chore`, written as `**Type:**` on the meta line.
+  The conventions already accept it; the form just never offered it. PM2 builds on it.
+- **Job**: the area of the product an item belongs to, written as a trailing ` — WORD` on the
+  heading (`### OR12 Invoices as PDF — MONEY`) and filterable on the List. Rename the field
+  **Area**, or keep *Job* with a hint under it: "The part of the product this belongs to, such
+  as MONEY. It is shown after the title."
+- **Plan tasks**: the `PROGRESS.md` task numbers that build the item, written as `**Plan:**`.
+  Add a hint ("Which tasks in the plan build this, such as 3.4") and hide the field when the
+  project has no plan.
+- **A one-line hint** under every field that isn't obvious, in the same words as
+  `specs/conventions.md`.
+
+**Question for Nick:** rename Job to Area everywhere (heading tag, filter, form), or only
+explain it on the form?
 
 ### PM12 A home page that explains Project Magic, and a README for strangers
-**Status:** in review · **Branch:** `feat/pm12-home-and-readme` · **Size:** M · **Type:** feature
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature
 
 - **`/` for a signed-out visitor** is a home page instead of a redirect to sign in: what Project
   Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in markdown in
@@ -141,7 +209,7 @@ into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 
 dragging E5 expecting its status to change.
 
 ### PM13 Show that a navigation is under way
-**Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature
 
 Straight after PM12. Clicking a project in the left navigation can take seconds before anything
 changes, so people click again and again. Show at once that something is happening: the clicked
@@ -151,7 +219,33 @@ than only hiding it: a project page reads the cached state from Postgres and sho
 GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
 project's state) and fix what dominates.
 
-### PM20 Multi-tenant
-**Status:** todo · **Size:** M–L
+### PM20 Organisations: one Project Magic for many teams
+**Status:** todo · **Size:** L · **Type:** feature
 
-Add multi-tenancy where the Github config is stored in the database with a relationship to the logged in user.  This allows any person to setup a ProjectMagic dashboard for their own organisation and invite otehr users of tehir organisation to contribute.
+Anyone could set up Project Magic for their own organisation and invite their colleagues,
+without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
+credentials are environment variables, and every installation's repositories belong to it.
+
+There are two ways to do it, and the choice decides most of the work:
+
+- **One public GitHub App that any organisation installs.** Each installation becomes an
+  organisation in Project Magic. Projects are already keyed by `installation_id`, so this mostly
+  adds an `organisation` table, ties memberships and projects to it, and scopes every query and
+  `can()` check to the signed-in user's organisations. No secrets are stored per organisation.
+- **Each organisation registers its own GitHub App** and its id, private key and webhook secret
+  are stored in the database, encrypted. More isolation, but every organisation does the App
+  set-up from the README, and the app has to route webhooks and sign tokens per organisation.
+
+It needs PM7's invitations first, and probably splits into: the organisation model and scoping,
+sign-up and installing the App, then invitations within an organisation.
+
+**Questions for Nick:**
+
+- **Hosted or self-hosted?** Is this a service you run for other people, or a self-hosted copy
+  that serves several organisations? A hosted service brings billing, terms, privacy and support,
+  and changes what the README promises ("it runs on your own accounts").
+- **One App or one per organisation?** The first is much less work; is there a reason to need
+  the second?
+- **Can a person belong to more than one organisation?** And who creates one: anyone who signs
+  in, or only people you approve?
+- **Does single-owner self-hosting stay supported** as it is today?
