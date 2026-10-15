@@ -1,5 +1,5 @@
 import { projectState } from '#lib/server/project-state.ts';
-import { assigneesInUse, row } from '#lib/server/item-view.ts';
+import { assigneesInUse, epicsInUse, row } from '#lib/server/item-view.ts';
 import { md } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
@@ -33,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			entries: entries(sec.index)
 		})),
 		assignees: assigneesInUse(s),
+		epics: epicsInUse(s),
 		doneCount: s.items.filter((i) => i.status === 'done').length,
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		health: {
@@ -42,6 +43,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			unknownTasks: h.unknownTasks,
 			configWarnings: h.configWarnings,
 			assignees: h.assignees,
+			epics: h.epics,
 			notes: h.notes
 		}
 	};

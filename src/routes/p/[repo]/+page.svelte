@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
+	import EpicFilter from '#lib/components/EpicFilter.svelte';
 	import ItemRow from '#lib/components/ItemRow.svelte';
 	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import { dragHandlers, type MoveState } from '#lib/move.ts';
@@ -13,6 +14,7 @@
 	let status = $state(page.url.searchParams.get('status') ?? '');
 	let job = $state(page.url.searchParams.get('job') ?? '');
 	let assignee = $state(page.url.searchParams.get('for') ?? '');
+	let epic = $state(page.url.searchParams.get('epic') ?? '');
 	// Done items are hidden unless asked for (PM26), by the toggle or by choosing the done status.
 	let showDone = $state(page.url.searchParams.get('done') === '1');
 	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
@@ -23,12 +25,14 @@
 			h.dangling.length +
 			h.unknownTasks.length +
 			h.configWarnings.length +
-			h.assignees.length
+			h.assignees.length +
+			h.epics.length
 	);
 
-	function filter(key: 'status' | 'job' | 'for', value: string) {
+	function filter(key: 'status' | 'job' | 'for' | 'epic', value: string) {
 		if (key === 'status') status = value;
 		else if (key === 'job') job = value;
+		else if (key === 'epic') epic = value;
 		else assignee = value;
 		const u = new URL(page.url.href);
 		if (value) u.searchParams.set(key, value);
@@ -43,11 +47,17 @@
 		goto(u.href, { replace: true, shallow: true });
 	}
 	const hidingDone = $derived(!showDone && !status);
-	const shown = (it: { status: string; job: string | null; assignee: string | null }) =>
+	const shown = (it: {
+		status: string;
+		job: string | null;
+		assignee: string | null;
+		epic: string | null;
+	}) =>
 		(status ? it.status === status : showDone || it.status !== 'done') &&
 		(!job || it.job === job) &&
+		(!epic || it.epic === epic) &&
 		(!forPath || assigneeMatches(it.assignee, forPath));
-	const filtered = $derived(!!status || !!job || !!forPath);
+	const filtered = $derived(!!status || !!job || !!epic || !!forPath);
 	const moves = $state<MoveState>({ busy: null, message: null });
 	// Reordering needs the whole list in view: not while filtered.
 	const canDrag = $derived(page.data.project.canEdit && !filtered);
@@ -87,6 +97,7 @@
 			/>
 			Show done {#if data.doneCount}<span class="muted">({data.doneCount})</span>{/if}
 		</label>
+		<EpicFilter value={epic} epics={data.epics} onchange={(v) => filter('epic', v)} />
 		<AssigneeFilter
 			value={assignee}
 			assignees={data.assignees}
@@ -111,6 +122,7 @@
 					</li>{/each}
 				{#each h.configWarnings as c (c)}<li><strong>.projectmagic.yml:</strong> {c}</li>{/each}
 				{#each h.assignees as a (a)}<li><strong>For:</strong> {a}</li>{/each}
+				{#each h.epics as x (x)}<li><strong>Epic:</strong> {x}</li>{/each}
 			</ul>
 			{#if h.notes.length}<p class="muted small">
 					Notes (headings without an id): {h.notes.join(' · ')}

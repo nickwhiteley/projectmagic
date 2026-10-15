@@ -1,9 +1,17 @@
 // A project's state for the views (spec §9), assembled from the cached parses of every active
 // branch: each item's derived status and where it came from, its links, the plan, the branches,
 // what is done, and the health panel. Pure: the server loader passes the rows in.
-import type { Backlog, Item, Note, Section, Warning } from './backlog.ts';
+import {
+	parseBacklog,
+	type Backlog,
+	type Item,
+	type Note,
+	type Section,
+	type Warning
+} from './backlog.ts';
 import { assigneeProblem } from './assignee.ts';
 import { EDIT_BRANCH } from './branchref.ts';
+import { declaredEpic, epicId, rollUp, type EpicRollup } from './epics.ts';
 import type { Config } from './config.ts';
 import { link, type Dangling, type Edge } from './link.ts';
 import type { MetaEntry, Status } from './meta.ts';
@@ -109,6 +117,8 @@ export interface ItemView {
 	size: string | null;
 	/** Who it is for (PM16), as written; null is anyone's. */
 	assignee: string | null;
+	/** Its epic's id (PM1), or null. */
+	epic: string | null;
 	section: number | null;
 	line: number;
 	start: number;
@@ -153,6 +163,8 @@ export interface DoneView {
 	commit: string | null;
 	pr: number | null;
 	body: string;
+	/** Its epic's id (PM1), read from the item as it was removed. */
+	epic: string | null;
 	/** Still on main with `done` in its meta line, waiting to be pruned. */
 	unpruned: boolean;
 }
@@ -178,6 +190,8 @@ export interface Health {
 	notes: string[];
 	/** Items whose `For:` doesn't start with person or agent (PM16). */
 	assignees: string[];
+	/** Items whose `Epic:` isn't an epic id (PM1). */
+	epics: string[];
 }
 
 export interface PlanTaskView extends Task {
@@ -199,6 +213,8 @@ export interface ProjectState {
 	branches: BranchView[];
 	done: DoneView[];
 	deleted: DeletedView[];
+	/** Each epic and what is in it (PM1). */
+	epics: EpicRollup[];
 	health: Health;
 	/** The last commit on any branch. */
 	lastCommit: { branch: string; at: string; message: string } | null;
@@ -316,6 +332,7 @@ export function assembleState(input: StateInput): ProjectState {
 			headingJob: it.headingJob,
 			size: it.meta?.size ?? null,
 			assignee: it.meta?.for || null,
+			epic: epicId(it.meta?.epic),
 			section: it.section,
 			line: it.line,
 			start: it.start,
@@ -393,6 +410,7 @@ export function assembleState(input: StateInput): ProjectState {
 				commit: null,
 				pr: null,
 				body: v.body,
+				epic: v.epic,
 				unpruned: true
 			})),
 		...input.done
@@ -404,6 +422,7 @@ export function assembleState(input: StateInput): ProjectState {
 				commit: d.removedOid,
 				pr: d.prNumber,
 				body: d.lastBody,
+				epic: epicId(parseBacklog(d.lastBody).items[0]?.meta?.epic),
 				unpruned: false
 			}))
 			.sort((a, b) => b.at.localeCompare(a.at))
@@ -452,6 +471,20 @@ export function assembleState(input: StateInput): ProjectState {
 		branches: branchViews,
 		done,
 		deleted,
+		epics: rollUp(
+			[
+				...views.flatMap((v) => {
+					const id = declaredEpic(v.id);
+					return id ? [{ id, title: v.titleText }] : [];
+				}),
+				...(main?.backlog?.sections ?? []).flatMap((sec) => {
+					const id = declaredEpic(sec.titleText.split(/\s+/)[0] ?? '');
+					return id ? [{ id, title: sec.titleText.slice(id.length).trim() }] : [];
+				})
+			],
+			views.map((v) => ({ id: v.id, epic: v.epic, status: v.status })),
+			done.filter((d) => !d.unpruned).map((d) => ({ id: d.id, epic: d.epic }))
+		),
 		health: {
 			lastError: input.lastError,
 			warnings: main?.backlog?.warnings ?? [],
@@ -460,6 +493,10 @@ export function assembleState(input: StateInput): ProjectState {
 			unknownTasks: plan?.unknown ?? [],
 			configWarnings: input.configWarnings,
 			notes: (main?.backlog?.notes ?? []).map((n) => n.titleText),
+			epics: views.flatMap((v) => {
+				const raw = v.meta?.find((e) => e.key.toLowerCase() === 'epic')?.value;
+				return raw && !v.epic ? [`${v.id}: Epic ${raw} isn't an epic id (EP and a number)`] : [];
+			}),
 			assignees: views.flatMap((v) => {
 				const problem = v.assignee ? assigneeProblem(v.assignee) : null;
 				return problem ? [`${v.id}: For ${v.assignee} ${problem}`] : [];

@@ -21,6 +21,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 			edits: project.edits,
 			counts: {
 				items: s.items.length,
+				epics: s.epics.length,
 				done: s.done.length,
 				branches: s.branches.filter((b) => b.active).length
 			}

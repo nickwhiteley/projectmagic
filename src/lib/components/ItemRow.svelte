@@ -20,6 +20,7 @@
 			{#if item.blocked && item.status !== 'blocked'}<span class="tag warn">blocked</span>{/if}
 			{#if item.job}<span class="tag">{item.job}</span>{/if}
 			{#if item.assignee}<span class="tag mono" title="For">{item.assignee}</span>{/if}
+			{#if item.epic}<span class="tag mono" title="Epic">{item.epic}</span>{/if}
 			{#if item.size}<span class="tag size">{item.size}</span>{/if}
 		</span>
 		<span class="source">
