@@ -16,6 +16,11 @@ When I create a new item there is no feedback that it is working and then after 
 
 Add filtering on each bulk view to allow "Human" or "AI Agent" selection.  This filter should be by user too once we are mulit-user so design for that. Add Item screen should also have assignment of task to a person or an agent.  In time we may also have agents with different models (cheaper, deeper thinker) so consider this in the design.
 
+### PM19 List view click to edit
+**Status:** todo
+
+On the list view I should be able to click through to edit the item.  It concetinas open and shows the task detail, add a button to go to edit the item at the bottom of the detail panel.
+
 ### PM12 A home page that explains Project Magic, and a README for strangers
 **Status:** in review · **Branch:** `feat/pm12-home-and-readme` · **Size:** M · **Type:** feature
 
@@ -145,8 +150,3 @@ Make projects great again
 **Status:** todo · **Size:** S
 
 I should be able to add a "bug" item type.
-
-### PM19 List view click to edit
-**Status:** todo
-
-On the list view I should be able to click through to edit the item.  It concetinas open and shows the task detail, add a button to go to edit the item at the bottom of the detail panel.
