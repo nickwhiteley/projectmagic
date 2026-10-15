@@ -37,17 +37,6 @@ On the list view I should be able to click through to edit the item.  It conceti
   Lantern), the Stitch exports are gone, and the real projects' names and details are replaced.
   The history still holds them; that is PM14.
 
-### PM13 Show that a navigation is under way
-**Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
-
-Straight after PM12. Clicking a project in the left navigation can take seconds before anything
-changes, so people click again and again. Show at once that something is happening: the clicked
-link marked as current and busy, and a thin progress bar at the top while SvelteKit navigates
-(`navigating` from `$app/state`), as on every navigation. Then find out why it is slow, rather
-than only hiding it: a project page reads the cached state from Postgres and should not call
-GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
-project's state) and fix what dominates.
-
 ### PM14 Make the repository public
 **Status:** todo · **Size:** M · **Type:** chore
 
@@ -150,3 +139,14 @@ Make projects great again
 **Status:** todo · **Size:** S
 
 I should be able to add a "bug" item type.
+
+### PM13 Show that a navigation is under way
+**Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
+
+Straight after PM12. Clicking a project in the left navigation can take seconds before anything
+changes, so people click again and again. Show at once that something is happening: the clicked
+link marked as current and busy, and a thin progress bar at the top while SvelteKit navigates
+(`navigating` from `$app/state`), as on every navigation. Then find out why it is slow, rather
+than only hiding it: a project page reads the cached state from Postgres and should not call
+GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
+project's state) and fix what dominates.
