@@ -15,6 +15,7 @@ Hide Done items from the List view.
 **Status:** todo · **Size:** S–M
 
 When i drag an item on the Board view into a different status it should update the status as though I had used the Edit screen.  This is particularly important to move from built to done as they are all done by a person.
+Looks like PM11 has similar ideas
 
 ### PM17 A new item can 404 after Add, with nothing shown while it saves
 **Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **For:** person.nickwhiteley
