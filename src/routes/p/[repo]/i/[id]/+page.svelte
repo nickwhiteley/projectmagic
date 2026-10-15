@@ -1,9 +1,16 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import StatusPill from '#lib/components/StatusPill.svelte';
+	import { refreshAll } from '$app/navigation';
 	import { ago } from '#lib/format.ts';
 
 	let { data } = $props();
+	// An item just added that the sync hasn't brought in yet: look again shortly (PM17).
+	$effect(() => {
+		if (!data.adding) return;
+		const t = setTimeout(() => refreshAll(), 2000);
+		return () => clearTimeout(t);
+	});
 	const repo = $derived(page.params.repo!);
 	const RULES: Record<number, string> = {
 		1: 'done in the backlog',
@@ -15,10 +22,16 @@
 	};
 </script>
 
-<svelte:head><title>{data.item?.id ?? data.done?.id} · {page.data.project.name}</title></svelte:head
+<svelte:head
+	><title>{data.item?.id ?? data.done?.id ?? page.params.id} · {page.data.project.name}</title
+	></svelte:head
 >
 
-{#if data.done}
+{#if data.adding}
+	<p class="muted" role="status" aria-live="polite">
+		Adding <code>{page.params.id}</code>. It shows here as soon as GitHub has it.
+	</p>
+{:else if data.done}
 	<article class="item">
 		<div class="main">
 			<p class="muted"><code>{data.done.id}</code> · shipped</p>

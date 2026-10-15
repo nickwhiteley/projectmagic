@@ -472,7 +472,11 @@ edit is accepted until it is resolved.
    concurrent change to **the same** item is shown to the user as a three-way choice and is
    never overwritten silently.
 5. Write `edit_log` and update the PR's body with the list of edits it holds.
-6. With `auto_merge`, merge the PR and delete the branch. Then start a sync.
+6. With `auto_merge`, merge the PR and delete the branch. Then sync until the cache holds the
+   merge commit (or, while the PR is pending, the branch's commit), for up to ten seconds: a
+   sync a webhook started may still be running, and GitHub can return a ref's old head for a
+   moment after it moves. The page the edit returns to then shows it. An item added in the last
+   minute that the cache still lacks shows as *being added*, never as a 404.
 
 **Pending edits are visible.** While a PR is open, each affected item carries a *pending* badge,
 and its page shows main's version beside the pending one. Views read main, so the board doesn't

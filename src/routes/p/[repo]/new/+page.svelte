@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
 	import ItemForm from '#lib/components/ItemForm.svelte';
 
 	let { data, form } = $props();
 	const values = $derived(form?.values ?? data.values);
+	// Adding commits, merges and syncs, which takes seconds: say so (PM17).
+	let adding = $state(false);
 </script>
 
 <svelte:head><title>Add an item · {page.data.project.name}</title></svelte:head>
@@ -18,7 +21,17 @@
 	</p>
 {/if}
 
-<form method="POST" class="panel">
+<form
+	method="POST"
+	class="panel"
+	use:enhance={() => {
+		adding = true;
+		return async ({ update }) => {
+			await update({ reset: false });
+			adding = false;
+		};
+	}}
+>
 	{#key values}
 		<ItemForm
 			{values}
@@ -49,7 +62,9 @@
 			Commits to <code>{page.data.project.main}</code> through the <code>projectmagic</code> branch, as
 			you.
 		</p>
-		<button class="button primary">Add</button>
+		<button class="button primary" disabled={adding} aria-busy={adding}
+			>{adding ? 'Adding…' : 'Add'}</button
+		>
 	</div>
 </form>
 

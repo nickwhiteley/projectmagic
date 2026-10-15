@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import { page } from '$app/state';
 	import ItemForm from '#lib/components/ItemForm.svelte';
 
@@ -10,6 +11,17 @@
 	const conflict = $derived(form?.conflict ?? null);
 	const others = $derived(data.items.filter((i) => i.id !== id));
 	let removing = $state(false);
+	// Each action commits, merges and syncs, which takes seconds: say which is under way (PM17).
+	let busy = $state<'save' | 'move' | 'remove' | null>(null);
+	const track =
+		(action: 'save' | 'move' | 'remove'): SubmitFunction =>
+		() => {
+			busy = action;
+			return async ({ update }) => {
+				await update({ reset: false });
+				busy = null;
+			};
+		};
 </script>
 
 <svelte:head><title>Edit {id} · {page.data.project.name}</title></svelte:head>
@@ -51,7 +63,7 @@
 	</section>
 {/if}
 
-<form method="POST" action="?/save" class="panel">
+<form method="POST" action="?/save" class="panel" use:enhance={track('save')}>
 	<input type="hidden" name="base" value={base} />
 	{#key values}<ItemForm {values} jobs={data.jobs} tasks={data.tasks} />{/key}
 	<div class="foot">
@@ -59,12 +71,14 @@
 			Commits to <code>{page.data.project.main}</code> through the <code>projectmagic</code> branch, as
 			you; its pull request is merged straight away.
 		</p>
-		<button class="button primary">{conflict ? 'Save mine' : 'Save'}</button>
+		<button class="button primary" disabled={!!busy} aria-busy={busy === 'save'}
+			>{busy === 'save' ? 'Saving…' : conflict ? 'Save mine' : 'Save'}</button
+		>
 	</div>
 </form>
 
 <div class="side">
-	<form method="POST" action="?/move" class="panel">
+	<form method="POST" action="?/move" class="panel" use:enhance={track('move')}>
 		<div class="label">Move</div>
 		<select name="to" required>
 			<option value="">Choose a place…</option>
@@ -77,10 +91,12 @@
 				</optgroup>
 			{/each}
 		</select>
-		<button class="button">Move</button>
+		<button class="button" disabled={!!busy} aria-busy={busy === 'move'}
+			>{busy === 'move' ? 'Moving…' : 'Move'}</button
+		>
 	</form>
 
-	<form method="POST" action="?/remove" class="panel danger">
+	<form method="POST" action="?/remove" class="panel danger" use:enhance={track('remove')}>
 		<div class="label">Remove</div>
 		{#if !removing}
 			<button type="button" class="button" onclick={() => (removing = true)}>Remove {id}…</button>
@@ -91,7 +107,9 @@
 			<label><input type="radio" name="mode" value="delete" /> Delete it from the backlog now</label
 			>
 			<label><input type="checkbox" name="confirm" value="yes" required /> I mean it</label>
-			<button class="button">Remove</button>
+			<button class="button" disabled={!!busy} aria-busy={busy === 'remove'}
+				>{busy === 'remove' ? 'Removing…' : 'Remove'}</button
+			>
 		{/if}
 	</form>
 </div>
