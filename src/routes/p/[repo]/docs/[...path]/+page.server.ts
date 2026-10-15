@@ -44,6 +44,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const html = md(s, text, {
 		docPath: doc.path,
 		docHref: (p) => `/p/${project.repo}/docs/${p}${query}`,
+		imgHref: (p) => `/p/${project.repo}/raw/${p}${query}`,
 		toc
 	});
 	return {

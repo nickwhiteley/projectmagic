@@ -3,7 +3,7 @@ import { checkId, splice, type Op } from '#lib/core/splice.ts';
 import { editChange, formValues, statusChange } from '#lib/core/edit-form.ts';
 import { updateMeta, type Status } from '#lib/core/meta.ts';
 import { edits } from '#lib/server/edits.ts';
-import { asMessage, conflictDiffs, respond } from '#lib/server/edit-actions.ts';
+import { asMessage, conflictDiffs, respond, safeBack } from '#lib/server/edit-actions.ts';
 import { problems, readBase, readItemForm } from '#lib/server/item-form.ts';
 import { loadProjectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
@@ -89,7 +89,8 @@ export const actions: Actions = {
 		}
 	},
 
-	// The Board's drag into another column (PM27): only the status, and the waiting reason.
+	// The Board's drag into another column (PM27) and the Accept buttons (PM10): only the status, and
+	// the waiting reason. `back` is where to go afterwards.
 	status: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const status = String(form.get('status') ?? '') as Status;
@@ -109,7 +110,7 @@ export const actions: Actions = {
 				{ op: 'edit', id: it.id, change },
 				null
 			);
-			return respond(result, `/p/${params.repo}/board`);
+			return respond(result, safeBack(form.get('back'), `/p/${params.repo}/board`));
 		} catch (e) {
 			return asMessage(e);
 		}

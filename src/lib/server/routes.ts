@@ -25,6 +25,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/api/cron/sync': { kind: 'machine' },
 	'/p/[repo]': { kind: 'project', action: 'view' },
 	'/p/[repo]/board': { kind: 'project', action: 'view' },
+	'/p/[repo]/raw/[...path]': { kind: 'project', action: 'view' },
 	'/p/[repo]/epics': { kind: 'project', action: 'view' },
 	'/p/[repo]/plan': { kind: 'project', action: 'view' },
 	'/p/[repo]/done': { kind: 'project', action: 'view' },

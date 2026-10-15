@@ -27,6 +27,12 @@ export function respond<E extends object>(result: WriteResult, done: string, ext
 	}
 }
 
+/** Where a form asked to go back to: a path on this site, never another site. */
+export function safeBack(raw: FormDataEntryValue | null, fallback: string): string {
+	const to = typeof raw === 'string' ? raw : '';
+	return /^\/(?![/\\])/.test(to) ? to : fallback;
+}
+
 /** Errors a person can act on become messages; anything else is a bug and is thrown. */
 export function asMessage<E extends object>(e: unknown, extra: E = {} as E) {
 	if (e instanceof ReauthRequired) return fail(401, { ...extra, message: e.message, reauth: true });

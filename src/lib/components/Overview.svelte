@@ -4,7 +4,7 @@
 
 	import type { Summary } from '#lib/server/summary.ts';
 
-	let { data }: { data: { cards: Summary[]; now: number } } = $props();
+	let { data }: { data: { cards: (Summary & { canEdit: boolean })[]; now: number } } = $props();
 	const tracked = $derived(data.cards.filter((c) => c.hasBacklog));
 	const others = $derived(data.cards.filter((c) => !c.hasBacklog));
 	const waiting = $derived(tracked.reduce((n, c) => n + c.waitingCount, 0));
@@ -65,6 +65,13 @@
 							<li>
 								<a href="/p/{c.repo}/i/{w.id}"><code>{w.id}</code> {w.title}</a>
 								<StatusPill status={w.status} small />
+								{#if c.canEdit && w.status === 'built'}
+									<form class="accept" method="POST" action="/p/{c.repo}/i/{w.id}/edit?/status">
+										<input type="hidden" name="status" value="done" />
+										<input type="hidden" name="back" value="/" />
+										<button class="button small" title="Mark {w.id} done">Accept</button>
+									</form>
+								{/if}
 								<div class="muted small">{@html w.waitingHtml}</div>
 							</li>
 						{/each}
@@ -246,6 +253,10 @@
 	}
 	ul a:hover {
 		text-decoration: underline;
+	}
+	.accept {
+		display: inline;
+		margin-left: 0.4rem;
 	}
 	.waiting li {
 		display: grid;

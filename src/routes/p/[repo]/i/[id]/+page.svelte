@@ -122,6 +122,13 @@
 					From {RULES[it.rule]}{it.rule === 2 || it.rule === 3 ? ` (${it.sourceDetail})` : ''}.
 				</p>
 				{#if it.waitingHtml}<p class="waiting small">Waiting on {@html it.waitingHtml}</p>{/if}
+				{#if page.data.project.canEdit && it.status === 'built'}
+					<form method="POST" action="/p/{repo}/i/{encodeURIComponent(it.id)}/edit?/status">
+						<input type="hidden" name="status" value="done" />
+						<input type="hidden" name="back" value="/p/{repo}/i/{encodeURIComponent(it.id)}" />
+						<button class="button" title="Mark {it.id} done">Accept</button>
+					</form>
+				{/if}
 			</section>
 
 			{#if it.disagreements.length || it.hints.length || it.noMeta}
