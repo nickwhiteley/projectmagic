@@ -6,6 +6,11 @@ Magic can read its own backlog.
 
 ## After v0.1
 
+### PM16 Select items by actor
+**Status:** todo · **Size:** S
+
+Add filtering on each bulk view to allow "Human" or "AI Agent" selection.  This filter should be by user too once we are mulit-user so design for that. Add Item screen should also have assignment of task to a person or an agent.  In time we may also have agents with different models (cheaper, deeper thinker) so consider this in the design.
+
 ### PM12 A home page that explains Project Magic, and a README for strangers
 **Status:** in review · **Branch:** `feat/pm12-home-and-readme` · **Size:** M · **Type:** feature
 
