@@ -75,7 +75,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM25 Batch edits: save several changes as one commit
-**Status:** todo · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
 (§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
@@ -101,12 +101,14 @@ main gets one commit for the batch.
 
 **Questions for Nick:**
 - Is the working copy per user or per project? Per project is simpler and lets everyone see the
-  pending changes; per user keeps one person's half-finished reordering out of other people's views.
+  pending changes; per user keeps one person's half-finished reordering out of other people's views. - If it is using the database, per project.  If it is using browser local storage then per user.  
 - How often should it save: a fixed interval (5 minutes), after a quiet period (60 seconds with
-  no new edit), or only when asked?
+  no new edit), or only when asked? - After a quiet period, at most 5 minutes.
 - Vercel's cron is daily on the free plan. A save every few minutes needs either a paid plan, a
   save that piggybacks on page loads and webhooks, or a quiet-period save started by the edit
-  itself. Which would you accept?
+  itself. Which would you accept? - Piggyback on page loads or use browser setinterval() is changes are stored in local storage.
+
+Note the decision to store changes in the database or local browser storage needs to be made at design time.
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
