@@ -86,15 +86,6 @@ read it too. The likely shape is a new meta key, `**Owner:** @nickwhiteley` for 
 - **What does an item with no owner count as?** Anyone's, or a third filter value,
   *unassigned*?
 
-### PM19 An Edit button in the expanded list row
-**Status:** todo · **Size:** S · **Type:** feature
-
-On the List, a row opens to show the item's detail, but editing means opening the item's page
-first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
-shown only to people who can edit the project.
-
-**Question for Nick:** should the Board's cards get the same button?
-
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature
 
@@ -202,6 +193,15 @@ Serve an image from the branch's tree through the app, with the installation tok
 project's view permission, cached by blob oid like `doc_blob`. SVG goes out as an image with a
 restrictive `Content-Security-Policy`, never inline, since a branch can hold anything an agent
 wrote. `docs/architecture.md` is the first document that needs it.
+
+### PM19 An Edit button in the expanded list row
+**Status:** todo · **Size:** S · **Type:** feature
+
+On the List, a row opens to show the item's detail, but editing means opening the item's page
+first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
+shown only to people who can edit the project.
+
+**Question for Nick:** should the Board's cards get the same button?
 
 ### PM9 Delivery and quality
 **Status:** todo · **Size:** M · **Type:** feature
