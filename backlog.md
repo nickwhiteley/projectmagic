@@ -37,7 +37,7 @@ The fix:
   item is in the state.
 
 ### PM24 Deleted items show as shipped
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug
+**Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug
 
 Reported by Nick on 2026-10-15. An item deleted with **Remove → Delete it from the backlog now**
 appears on the Done tab, the Board's shipped column and its own page as *shipped*. PM15, PM18
