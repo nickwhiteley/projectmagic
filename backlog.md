@@ -140,3 +140,8 @@ dragging E5 expecting its status to change.
 **Status:** todo · **Size:** S–M
 
 Make projects great again
+
+### PM18 Bug item type
+**Status:** todo · **Size:** S
+
+I should be able to add a "bug" item type.
