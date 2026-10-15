@@ -249,3 +249,8 @@ sign-up and installing the App, then invitations within an organisation.
 - **Can a person belong to more than one organisation?** And who creates one: anyone who signs
   in, or only people you approve?
 - **Does single-owner self-hosting stay supported** as it is today?
+
+### PM23 Test item
+**Status:** todo · **Size:** S
+
+See if it works
