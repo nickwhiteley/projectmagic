@@ -15,6 +15,7 @@
 	let job = $state(page.url.searchParams.get('job') ?? '');
 	let assignee = $state(page.url.searchParams.get('for') ?? '');
 	let epic = $state(page.url.searchParams.get('epic') ?? '');
+	let type = $state(page.url.searchParams.get('type') ?? '');
 	// Done items are hidden unless asked for (PM26), by the toggle or by choosing the done status.
 	let showDone = $state(page.url.searchParams.get('done') === '1');
 	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
@@ -29,10 +30,11 @@
 			h.epics.length
 	);
 
-	function filter(key: 'status' | 'job' | 'for' | 'epic', value: string) {
+	function filter(key: 'status' | 'job' | 'for' | 'epic' | 'type', value: string) {
 		if (key === 'status') status = value;
 		else if (key === 'job') job = value;
 		else if (key === 'epic') epic = value;
+		else if (key === 'type') type = value;
 		else assignee = value;
 		const u = new URL(page.url.href);
 		if (value) u.searchParams.set(key, value);
@@ -52,12 +54,14 @@
 		job: string | null;
 		assignee: string | null;
 		epic: string | null;
+		type: string | null;
 	}) =>
 		(status ? it.status === status : showDone || it.status !== 'done') &&
 		(!job || it.job === job) &&
 		(!epic || it.epic === epic) &&
+		(!type || it.type === type) &&
 		(!forPath || assigneeMatches(it.assignee, forPath));
-	const filtered = $derived(!!status || !!job || !!epic || !!forPath);
+	const filtered = $derived(!!status || !!job || !!epic || !!type || !!forPath);
 	const moves = $state<MoveState>({ busy: null, message: null });
 	// Reordering needs the whole list in view: not while filtered.
 	const canDrag = $derived(page.data.project.canEdit && !filtered);
@@ -97,6 +101,15 @@
 			/>
 			Show done {#if data.doneCount}<span class="muted">({data.doneCount})</span>{/if}
 		</label>
+		{#if data.types.length}
+			<label
+				>Type
+				<select value={type} onchange={(e) => filter('type', e.currentTarget.value)}>
+					<option value="">all</option>
+					{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
+				</select>
+			</label>
+		{/if}
 		<EpicFilter value={epic} epics={data.epics} onchange={(v) => filter('epic', v)} />
 		<AssigneeFilter
 			value={assignee}

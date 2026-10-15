@@ -17,6 +17,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	// Signed out, the home page; signed in, the overview.
 	'/': { kind: 'public' },
 	'/search': { kind: 'signed-in' },
+	'/activity': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },
@@ -25,6 +26,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/api/cron/sync': { kind: 'machine' },
 	'/p/[repo]': { kind: 'project', action: 'view' },
 	'/p/[repo]/board': { kind: 'project', action: 'view' },
+	'/p/[repo]/raw/[...path]': { kind: 'project', action: 'view' },
 	'/p/[repo]/epics': { kind: 'project', action: 'view' },
 	'/p/[repo]/plan': { kind: 'project', action: 'view' },
 	'/p/[repo]/done': { kind: 'project', action: 'view' },

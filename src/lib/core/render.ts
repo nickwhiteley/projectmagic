@@ -25,6 +25,8 @@ export interface RenderOptions {
 	/** For relative links between documents: the document's own path, and how to make an href. */
 	docPath?: string;
 	docHref?: (path: string) => string;
+	/** Where a relative image comes from; without it, images resolve like links. */
+	imgHref?: (path: string) => string;
 }
 
 const ID = /\b([A-Z]{1,4}[0-9]+[a-z]?|[0-9]+\.[0-9]+[a-z]?)\b/g;
@@ -65,7 +67,11 @@ function autolink(links: Map<string, string>) {
 }
 
 /** Relative links between documents resolve to the docs view; other relative links are dropped. */
-function relativeLinks(docPath: string, docHref: (p: string) => string) {
+function relativeLinks(
+	docPath: string,
+	docHref: (p: string) => string,
+	imgHref: ((p: string) => string) | undefined
+) {
 	const dir = docPath.includes('/') ? docPath.slice(0, docPath.lastIndexOf('/') + 1) : '';
 	return (tree: HastRoot) => {
 		visit(tree, 'element', (el: Element) => {
@@ -79,7 +85,8 @@ function relativeLinks(docPath: string, docHref: (p: string) => string) {
 				if (seg === '..') parts.pop();
 				else if (seg && seg !== '.') parts.push(seg);
 			}
-			el.properties[attr] = docHref(parts.join('/')) + (hash ? `#${hash}` : '');
+			const to = el.tagName === 'img' && imgHref ? imgHref : docHref;
+			el.properties[attr] = to(parts.join('/')) + (hash ? `#${hash}` : '');
 		});
 	};
 }
@@ -130,7 +137,7 @@ export function renderMarkdown(markdown: string, options: RenderOptions = {}): s
 		.use(remarkRehype)
 		.use(rehypeSanitize, schema);
 	if (options.docPath !== undefined && options.docHref)
-		processor.use(relativeLinks, options.docPath, options.docHref);
+		processor.use(relativeLinks, options.docPath, options.docHref, options.imgHref);
 	if (options.links?.size) processor.use(autolink, options.links);
 	if (options.toc) processor.use(headingIds, options.toc);
 	const tree = processor.runSync(processor.parse(markdown) as Root) as HastRoot;

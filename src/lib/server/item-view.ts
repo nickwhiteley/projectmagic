@@ -28,6 +28,7 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 		size: it.size,
 		assignee: it.assignee,
 		epic: it.epic,
+		type: it.type,
 		status: it.status,
 		blocked: it.blocked,
 		pending: it.pending,
@@ -40,6 +41,11 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 }
 
 export type Row = ReturnType<typeof row>;
+
+/** The `Type:` values in use (PM2), for the List's and Board's filter. */
+export function typesInUse(s: ProjectState): string[] {
+	return [...new Set(s.items.map((i) => i.type).filter((t): t is string => !!t))].sort();
+}
 
 /** The epics (PM1), for the List's and Board's filter: declared or named by an item. */
 export function epicsInUse(s: ProjectState): { id: string; title: string | null }[] {

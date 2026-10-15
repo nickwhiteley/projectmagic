@@ -3,6 +3,7 @@
 exports[`every route has an access rule (spec §11.2) > lists what each route checks 1`] = `
 {
   "/": "public",
+  "/activity": "signed-in",
   "/api/cron/sync": "machine",
   "/api/github/webhook": "machine",
   "/auth/github": "public",
@@ -19,6 +20,7 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/p/[repo]/i/[id]/edit": "project: edit",
   "/p/[repo]/new": "project: edit",
   "/p/[repo]/plan": "project: view",
+  "/p/[repo]/raw/[...path]": "project: view",
   "/p/[repo]/sync": "project: view",
   "/search": "signed-in",
   "/signin": "public",

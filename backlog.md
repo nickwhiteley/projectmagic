@@ -194,11 +194,23 @@ shows the description and target. The add and edit forms get an *Epic* field tha
 declared epics, so a person can set it without editing the file.
 
 ### PM2 Bug items
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 `Type: bug` on an item, with `Found:` and `Raised:`, and an optional `bugs.md` as a second
 backlog file with a `BUG` prefix. The board gains a type filter and a bug lane. `spec.md` §13
 and §16.4. PM9 measures the bugs that PRs fix; this shows the ones still open.
+
+Built: `Type:` (any value; `bug` gets a red tag), `Found:` and `Raised:` show on the item page, and
+the List and the Board filter by Type when the project uses it. **Left for PM29:** the optional
+`bugs.md` second backlog file with a `BUG` prefix, and a separate bug lane on the Board (the Type
+filter covers showing only bugs).
+
+### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+
+What PM2 left out. `spec.md` §13 and §16.4 let bugs live in an optional `bugs.md`, configured as
+a second backlog file with a `BUG` prefix, so the sync fetches and caches it, ids come from the
+prefix, and the views read two backlogs. The Board gets a bug lane beside the section lanes.
 
 ### PM3 Inferred status for items with no meta line
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
@@ -212,9 +224,15 @@ shown as *inferred*.
 A question box answered from the cached parses.
 
 ### PM5 Activity feed
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Recent commits across every project, grouped by linked item.
+
+Built as the *Activity* page in the navigation: the last 14 days across every project you can
+see, grouped by the item each was about. Each active branch shows its latest commit, since the
+sync caches only a branch's head, and an item that shipped shows once, with its PR. Branches that
+no item links to are listed under "not linked to an item". Project Magic's own edits and
+deployment branches are left out. A full commit history would need the sync to cache commits.
 
 ### PM6 Edit `PROGRESS.md` status cells and docs
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
@@ -226,10 +244,16 @@ The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: i
 login, the member list for each project, changing a role, and disabling a user.
 
 ### PM8 Mermaid in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+
+Built: a ```mermaid fence is drawn in the browser by Mermaid 11.17.2 with its strict security
+level, loaded only on a page that has a diagram. A diagram with an error keeps its source and
+says what is wrong. `npm audit` reports two low-severity advisories for Mermaid's KaTeX
+dependency; the fix is Mermaid 12.2.0, released on 2026-10-13, which is worth taking once it has
+aged.
 
 ### PM21 Images in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 The Docs tab shows a document's images as broken: `render.ts` resolves a relative `src` to the
 docs view, as it does for links, and GitHub's raw URLs need a token for a private repository.
@@ -237,6 +261,12 @@ Serve an image from the branch's tree through the app, with the installation tok
 project's view permission, cached by blob oid like `doc_blob`. SVG goes out as an image with a
 restrictive `Content-Security-Policy`, never inline, since a branch can hold anything an agent
 wrote. `docs/architecture.md` is the first document that needs it.
+
+Built: `/p/<repo>/raw/<path>` serves an image from a branch's tree through the GitHub contents
+API with the installation token, for png, jpg, gif, webp and svg up to 1 MB, with the project's
+view permission. An SVG is sent with `Content-Security-Policy: default-src 'none'; sandbox`, so
+it can't run script. The browser caches an image for 5 minutes and revalidates by blob sha; the
+Postgres cache the item suggested isn't needed for that.
 
 ### PM19 An Edit button in the expanded list row
 **Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
@@ -261,13 +291,17 @@ production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and
 fixes, not production bugs.
 
 ### PM10 Accept a built item from the founder queue
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
 an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
 branch, so it needs phase 5's write path. It turns the queue from something to read into
 something to clear.
+
+Built: an **Accept** button on each built item in the Overview's *Waiting on you* list and on
+the item page, for people who can edit. It is the Board's status edit with `done`, so *Waiting*
+is cleared, and it returns to where it came from.
 
 ### PM11 Set an item's status by dropping it into a Board column
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley

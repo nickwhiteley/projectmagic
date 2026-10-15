@@ -661,7 +661,8 @@ repository's `backlog.md`.
   across its items' statuses, counting items that shipped (read from the item as it was removed),
   and the List and Board filter by it. A value that isn't `EP` and a number is flagged in the
   health panel. An `epics.md` file with descriptions and targets is not read yet.
-- **Bugs.** `Type: bug` on an item. They can also live in their own `bugs.md`, configured as a
+- **Bugs** (`Type: bug` with `Found:` and `Raised:`, and a Type filter, are built, PM2; the
+  rest is PM29). They can also live in their own `bugs.md`, configured as a
   second backlog file, with a `BUG` prefix (`BUG12`), because Orchard already uses `B1`–`B14`. The board
   gains a type filter and a bug lane. v0.1 already keeps the `Type` key.
 - **LLM fallback for status**: for items with no meta line, a model reads the prose

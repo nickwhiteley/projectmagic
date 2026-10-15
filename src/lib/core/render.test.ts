@@ -41,6 +41,27 @@ describe('renderMarkdown', () => {
 		expect(html).toContain('href="#x"');
 	});
 
+	it('sends relative images to the image route, and leaves links alone (PM21)', () => {
+		const html = renderMarkdown(
+			'![a](img/a.png) ![b](../b.svg) ![c](https://a.b/c.png) [d](d.md)',
+			{
+				docPath: 'docs/guide.md',
+				docHref: (p) => `/p/r/docs/${p}`,
+				imgHref: (p) => `/p/r/raw/${p}`
+			}
+		);
+		expect(html).toContain('src="/p/r/raw/docs/img/a.png"');
+		expect(html).toContain('src="/p/r/raw/b.svg"');
+		expect(html).toContain('src="https://a.b/c.png"');
+		expect(html).toContain('href="/p/r/docs/docs/d.md"');
+	});
+
+	it('keeps the language class on a code fence, so mermaid can find its diagrams (PM8)', () => {
+		const html = renderMarkdown('```mermaid\ngraph TD\n  A-->B\n```');
+		expect(html).toContain('<pre><code class="language-mermaid">');
+		expect(html).toContain('A-->B');
+	});
+
 	it('gives headings ids and collects a table of contents', () => {
 		const toc: { depth: number; text: string; id: string }[] = [];
 		const html = renderMarkdown(

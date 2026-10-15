@@ -75,6 +75,7 @@
 				{#if it.job}<span class="tag">{it.job}</span>{/if}
 				{#if it.size}<span class="tag mono">{it.size}</span>{/if}
 				{#if it.assignee}<span class="tag mono" title="For">for {it.assignee}</span>{/if}
+				{#if it.type === 'bug'}<span class="tag bug">bug</span>{/if}
 				{#if it.epic}<a class="tag mono" href="/p/{repo}/epics#{it.epic}" title="Epic">{it.epic}</a
 					>{/if}
 				{#if it.pending}<span class="tag pending">pending edit</span>{/if}
@@ -86,6 +87,10 @@
 						href="/p/{repo}/i/{encodeURIComponent(it.id)}/edit">Edit</a
 					>{/if}
 			</div>
+			{#if it.found || it.raised}<p class="muted small">
+					{#if it.found}Found in {it.found}.{/if}
+					{#if it.raised}Raised {it.raised}.{/if}
+				</p>{/if}
 			{#if page.url.searchParams.get('pending')}<p class="muted small">
 					Saved. It reaches {data.main} when the edits PR is merged.
 				</p>{/if}
@@ -122,6 +127,13 @@
 					From {RULES[it.rule]}{it.rule === 2 || it.rule === 3 ? ` (${it.sourceDetail})` : ''}.
 				</p>
 				{#if it.waitingHtml}<p class="waiting small">Waiting on {@html it.waitingHtml}</p>{/if}
+				{#if page.data.project.canEdit && it.status === 'built'}
+					<form method="POST" action="/p/{repo}/i/{encodeURIComponent(it.id)}/edit?/status">
+						<input type="hidden" name="status" value="done" />
+						<input type="hidden" name="back" value="/p/{repo}/i/{encodeURIComponent(it.id)}" />
+						<button class="button" title="Mark {it.id} done">Accept</button>
+					</form>
+				{/if}
 			</section>
 
 			{#if it.disagreements.length || it.hints.length || it.noMeta}
@@ -237,6 +249,10 @@
 	.tag.star {
 		color: var(--warn);
 		border-color: var(--warn);
+	}
+	.tag.bug {
+		border-color: var(--danger);
+		color: var(--danger);
 	}
 	.tag.pending {
 		color: var(--accent);

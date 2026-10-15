@@ -15,15 +15,17 @@
 	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
 	// The Epic filter (PM1) works the same way.
 	let epic = $state(page.url.searchParams.get('epic') ?? '');
-	function setFilter(key: 'for' | 'epic', value: string) {
+	let type = $state(page.url.searchParams.get('type') ?? '');
+	function setFilter(key: 'for' | 'epic' | 'type', value: string) {
 		if (key === 'for') assignee = value;
+		else if (key === 'type') type = value;
 		else epic = value;
 		const u = new URL(page.url.href);
 		if (value) u.searchParams.set(key, value);
 		else u.searchParams.delete(key);
 		goto(u.href, { replace: true, shallow: true });
 	}
-	const filtered = $derived(!!forPath || !!epic);
+	const filtered = $derived(!!forPath || !!epic || !!type);
 	const lanes = $derived(
 		data.lanes
 			.map((l) => ({
@@ -31,7 +33,9 @@
 				cells: l.cells.map((c) =>
 					c.filter(
 						(it) =>
-							(!forPath || assigneeMatches(it.assignee, forPath)) && (!epic || it.epic === epic)
+							(!forPath || assigneeMatches(it.assignee, forPath)) &&
+							(!epic || it.epic === epic) &&
+							(!type || it.type === type)
 					)
 				)
 			}))
@@ -76,6 +80,15 @@
 		Columns come from the files and branches, so cards move when the work does. Lanes are the
 		backlog’s sections, in order.
 	</p>
+	{#if data.types.length}
+		<label
+			>Type
+			<select value={type} onchange={(e) => setFilter('type', e.currentTarget.value)}>
+				<option value="">all</option>
+				{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
+			</select>
+		</label>
+	{/if}
 	<EpicFilter value={epic} epics={data.epics} onchange={(v) => setFilter('epic', v)} />
 	<AssigneeFilter
 		value={assignee}
@@ -150,6 +163,7 @@
 									<span class="id">{it.id}</span>{#if it.star}<span class="star">★</span>{/if}
 									<span class="tags">
 										{#if it.pending}<span class="tag pending">pending</span>{/if}
+										{#if it.type === 'bug'}<span class="tag bug">bug</span>{/if}
 										{#if it.job}<span class="tag">{it.job}</span>{/if}
 										{#if it.assignee}<span class="tag mono" title="For">{it.assignee}</span>{/if}
 										{#if it.epic}<span class="tag mono" title="Epic">{it.epic}</span>{/if}
@@ -302,6 +316,10 @@
 	.tag.mono {
 		font-family: var(--mono);
 		font-weight: 500;
+	}
+	.tag.bug {
+		border-color: var(--danger);
+		color: var(--danger);
 	}
 	.tag.pending {
 		border-color: var(--accent);
