@@ -74,6 +74,7 @@
 				{#if it.star}<span class="tag star">★ on the cut line</span>{/if}
 				{#if it.job}<span class="tag">{it.job}</span>{/if}
 				{#if it.size}<span class="tag mono">{it.size}</span>{/if}
+				{#if it.assignee}<span class="tag mono" title="For">for {it.assignee}</span>{/if}
 				{#if it.pending}<span class="tag pending">pending edit</span>{/if}
 			</p>
 			<div class="title-row">

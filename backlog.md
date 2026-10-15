@@ -64,7 +64,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM16 Assign items to a person or an agent, and filter by it
-**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm16-assignment`
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
 2026-10-15.
@@ -94,7 +94,7 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 
 - **The parser** reads `For:` (no change to status derivation), and checks its first part.
 - **The List and the Board** get a *For* filter: *Mine*, *People*, *Agents*, and each value in
-  use, remembered per project. The value shows on rows and cards.
+  use, mirrored in the URL like the List's other filters. The value shows on rows and cards.
 - **The add and edit forms** get a *For* field, suggesting the values in use, empty by default.
 - **`specs/conventions.md`**, for agents:
   - work only on items for you, for a path above you, or for no one;

@@ -162,6 +162,17 @@ The prose, exactly as today …
   | `Found`    | for a bug: `production` · `preview` · `development`            | kept; §16.4         |
   | `Raised`   | for a bug: when it was first noticed                           | kept; §16.4         |
   | `Epic`     | an epic id                                                     | kept; v0.2 (§13)    |
+  | `For`      | who it is for: `person…` or `agent…`, below                    | shown, filterable   |
+
+  **`For:` is a dotted path** whose first part is `person` or `agent` (PM16): `person` is any
+  person, `person.nickwhiteley` one GitHub login, `agent` any agent, `agent.claude` any Anthropic
+  agent, `agent.claude.opus` one model family. Agents name themselves `agent.<maker>.<family>`,
+  with no version, since a version's dots would read as levels. An item has one `For:`, and none
+  means anyone's. A value that starts with anything else is kept, shown, and listed in the health
+  panel. **A path covers everything below it, and is covered by everything above it**: a filter
+  shows items for its path or below, items for a path above it, and unassigned items, so
+  `person.nickwhiteley` shows items for `person.nickwhiteley`, for `person` and for no one, and
+  `agent.claude.opus` doesn't show items for `agent.claude.sonnet`.
 
   Unknown keys are kept and shown as-is. **A missing meta line is not an error.** The item is
   `todo` unless a branch or PR says otherwise, and the item is flagged "no meta" so the user
@@ -393,9 +404,11 @@ shows:
 
 - **Board**: columns todo · in progress · blocked · in review · built · done (the done column
   covers the last 30 days), with swimlanes from the backlog's `##` sections. Cards show id, title, ★, size,
-  job and the status source.
+  job, `For:` and the status source. A *For* filter (§5.1) shows *mine* (the signed-in person),
+  *people*, *agents* or any value in use; dragging is off while it is set.
 - **List**: the backlog in document order, as written, including the preamble and notes. This
-  is the default, because order is priority.
+  is the default, because order is priority. It filters by status, job and *For*, each mirrored
+  in the URL so a filtered list can be shared.
 - **Plan**: `PROGRESS.md`'s tables, grouped, with status chips, and the narrative below.
 - **Done**: shipped items, newest first, with commit, PR and date.
 - **Branches**: every branch, active or stale, with its links. Unlinked active branches are

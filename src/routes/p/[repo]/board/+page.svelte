@@ -1,25 +1,57 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
+	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago } from '#lib/format.ts';
 	import { dragHandlers, type MoveState } from '#lib/move.ts';
 
 	let { data } = $props();
 	const repo = $derived(page.params.repo!);
+	// The For filter (PM16), mirrored in the URL like the List's filters.
+	let assignee = $state(page.url.searchParams.get('for') ?? '');
+	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
+	function setAssignee(value: string) {
+		assignee = value;
+		const u = new URL(page.url.href);
+		if (value) u.searchParams.set('for', value);
+		else u.searchParams.delete('for');
+		goto(u.href, { replace: true, shallow: true });
+	}
+	const lanes = $derived(
+		data.lanes
+			.map((l) => ({
+				...l,
+				cells: l.cells.map((c) =>
+					forPath ? c.filter((it) => assigneeMatches(it.assignee, forPath)) : c
+				)
+			}))
+			.filter((l) => !forPath || l.cells.some((c) => c.length))
+	);
 	const moves = $state<MoveState>({ busy: null, message: null });
-	const canDrag = $derived(page.data.project.canEdit);
+	// Reordering needs every card in view: not while filtered.
+	const canDrag = $derived(page.data.project.canEdit && !forPath);
 	const drag = dragHandlers(page.params.repo!, moves, () => canDrag);
 	const totals = $derived(
-		data.columns.map((_, i) => data.lanes.reduce((n, l) => n + l.cells[i].length, 0))
+		data.columns.map((_, i) => lanes.reduce((n, l) => n + l.cells[i].length, 0))
 	);
 </script>
 
 <svelte:head><title>Board · {page.data.project.name}</title></svelte:head>
 
-<p class="muted small">
-	Columns come from the files and branches, so cards move when the work does. Lanes are the
-	backlog’s sections, in order.
-</p>
+<div class="tools">
+	<p class="muted small">
+		Columns come from the files and branches, so cards move when the work does. Lanes are the
+		backlog’s sections, in order.
+	</p>
+	<AssigneeFilter
+		value={assignee}
+		assignees={data.assignees}
+		signedIn={!!page.data.user}
+		onchange={setAssignee}
+	/>
+</div>
 
 {#if moves.message}<p class="move-error" role="alert">{moves.message}</p>{/if}
 {#if canDrag}<p class="muted small">
@@ -44,7 +76,7 @@
 			</div>
 		{/each}
 	</div>
-	{#each data.lanes as lane (lane.title)}
+	{#each lanes as lane (lane.title)}
 		<details open class="lane">
 			<summary
 				>{lane.title}
@@ -66,6 +98,7 @@
 									<span class="tags">
 										{#if it.pending}<span class="tag pending">pending</span>{/if}
 										{#if it.job}<span class="tag">{it.job}</span>{/if}
+										{#if it.assignee}<span class="tag mono" title="For">{it.assignee}</span>{/if}
 										{#if it.size}<span class="tag mono">{it.size}</span>{/if}
 									</span>
 								</div>
@@ -105,6 +138,16 @@
 </div>
 
 <style>
+	.tools {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+	.tools p {
+		margin: 0 auto 0 0;
+		flex: 1 1 20rem;
+	}
 	.small {
 		font-size: 12.5px;
 		margin-top: 0;

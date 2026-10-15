@@ -27,6 +27,17 @@ Keep to these conventions so it reads them correctly:
   waits on, and `**Plan:**` for the `PROGRESS.md` tasks that build it. `Type` (`feature` or
   `bug`) and `Epic` are accepted too. **Keep the meta line current** whenever the prose about
   the item's state changes.
+- **`**For:**` says who an item is for**: `person`, `person.<github-login>`, `agent`,
+  `agent.<maker>` or `agent.<maker>.<family>`. You are `agent.<maker>.<family>`, worked out from
+  your own model with no version: Claude Opus is `agent.claude.opus`. A path covers everything
+  below it, and no `For:` means anyone's.
+  - **Work only on items for you, for a path above you, or for no one**: as
+    `agent.claude.opus`, that is `agent.claude.opus`, `agent.claude`, `agent` or no `For:`.
+    Leave items for another agent or for a person alone.
+  - **You may hand an item to a person**, such as one you are blocked on, by setting `For:` to
+    them. Take an item that is for a person only when they say so, and then set `For:` to you.
+  - **When you set an item to `built` and it needs a person to check it**, set `For:` to that
+    person: `person`, or `person.<login>` when you know who.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
   of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
   exists only on this machine is invisible to Project Magic.

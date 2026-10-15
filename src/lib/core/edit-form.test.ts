@@ -31,6 +31,20 @@ Body.
 `;
 	const item = editable(parseBacklog(text).items[0]);
 
+	it('assigns an item with For, and takes it off again (PM16)', () => {
+		const change = editChange(item, { ...formValues(item), assignee: 'agent.claude' });
+		const out = splice(text, { op: 'edit', id: 'C1', change });
+		expect(out).toBe(text.replace('**Size:** M', '**Size:** M · **For:** agent.claude'));
+		const again = editable(parseBacklog(out).items[0]);
+		expect(formValues(again).assignee).toBe('agent.claude');
+		const cleared = splice(out, {
+			op: 'edit',
+			id: 'C1',
+			change: editChange(again, { ...formValues(again), assignee: '' })
+		});
+		expect(cleared).toBe(text);
+	});
+
 	it('rewrites only the meta line for a status change, keeping the heading as written', () => {
 		const out = splice(text, {
 			op: 'edit',

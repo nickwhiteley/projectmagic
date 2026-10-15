@@ -2,6 +2,7 @@
 // branch: each item's derived status and where it came from, its links, the plan, the branches,
 // what is done, and the health panel. Pure: the server loader passes the rows in.
 import type { Backlog, Item, Note, Section, Warning } from './backlog.ts';
+import { assigneeProblem } from './assignee.ts';
 import { EDIT_BRANCH } from './branchref.ts';
 import type { Config } from './config.ts';
 import { link, type Dangling, type Edge } from './link.ts';
@@ -106,6 +107,8 @@ export interface ItemView {
 	/** The heading's own ` — WORD` tag, which an edit rewrites when the meta line has no Job. */
 	headingJob: string | null;
 	size: string | null;
+	/** Who it is for (PM16), as written; null is anyone's. */
+	assignee: string | null;
 	section: number | null;
 	line: number;
 	start: number;
@@ -173,6 +176,8 @@ export interface Health {
 	unknownTasks: string[];
 	configWarnings: string[];
 	notes: string[];
+	/** Items whose `For:` doesn't start with person or agent (PM16). */
+	assignees: string[];
 }
 
 export interface PlanTaskView extends Task {
@@ -310,6 +315,7 @@ export function assembleState(input: StateInput): ProjectState {
 			job: it.job,
 			headingJob: it.headingJob,
 			size: it.meta?.size ?? null,
+			assignee: it.meta?.for || null,
 			section: it.section,
 			line: it.line,
 			start: it.start,
@@ -453,7 +459,11 @@ export function assembleState(input: StateInput): ProjectState {
 			disagreements: views.flatMap((v) => v.disagreements),
 			unknownTasks: plan?.unknown ?? [],
 			configWarnings: input.configWarnings,
-			notes: (main?.backlog?.notes ?? []).map((n) => n.titleText)
+			notes: (main?.backlog?.notes ?? []).map((n) => n.titleText),
+			assignees: views.flatMap((v) => {
+				const problem = v.assignee ? assigneeProblem(v.assignee) : null;
+				return problem ? [`${v.id}: For ${v.assignee} ${problem}`] : [];
+			})
 		},
 		lastCommit: latest
 			? { branch: latest.name, at: latest.committedAt, message: latest.message }

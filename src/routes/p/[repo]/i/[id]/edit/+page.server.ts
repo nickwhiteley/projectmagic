@@ -1,3 +1,4 @@
+import { assigneesInUse } from '#lib/server/item-view.ts';
 import { checkId, splice, type Op } from '#lib/core/splice.ts';
 import { editChange, formValues } from '#lib/core/edit-form.ts';
 import { updateMeta } from '#lib/core/meta.ts';
@@ -22,6 +23,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return {
 		values,
 		base: it.source,
+		assignees: assigneesInUse(s),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		tasks: (s.plan?.tasks ?? [])
 			.filter((t) => !t.superseded)

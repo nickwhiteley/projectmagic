@@ -12,18 +12,21 @@
 		waiting: string;
 		plan: string;
 		branch: string;
+		assignee: string;
 		body: string;
 	}
 	let {
 		values,
 		jobs,
 		tasks,
+		assignees = ['person', 'agent'],
 		idHint = null,
 		idLocked = false
 	}: {
 		values: Values;
 		jobs: string[];
 		tasks: { number: string; title: string }[];
+		assignees?: string[];
 		idHint?: string | null;
 		idLocked?: boolean;
 	} = $props();
@@ -72,6 +75,21 @@
 		<datalist id="sizes"
 			>{#each ['S', 'S–M', 'M', 'M–L', 'L'] as s (s)}<option value={s}></option>{/each}</datalist
 		>
+	</label>
+	<label>
+		<span class="label">For</span>
+		<input
+			name="assignee"
+			class="mono"
+			list="assignees"
+			bind:value={v.assignee}
+			placeholder="anyone"
+			autocomplete="off"
+		/>
+		<datalist id="assignees"
+			>{#each assignees as a (a)}<option value={a}></option>{/each}</datalist
+		>
+		<small class="muted">person.&lt;login&gt; or agent.claude… Empty is anyone’s.</small>
 	</label>
 	<label class="check">
 		<input type="checkbox" name="star" bind:checked={v.star} />

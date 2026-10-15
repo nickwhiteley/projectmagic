@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
+	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
 	import ItemRow from '#lib/components/ItemRow.svelte';
+	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import { dragHandlers, type MoveState } from '#lib/move.ts';
 	import { plural, STATUS_ORDER } from '#lib/format.ts';
 
@@ -10,26 +12,32 @@
 	// Filters live in the page and are mirrored in the URL, so a filtered list can be shared.
 	let status = $state(page.url.searchParams.get('status') ?? '');
 	let job = $state(page.url.searchParams.get('job') ?? '');
+	let assignee = $state(page.url.searchParams.get('for') ?? '');
+	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
 	const h = $derived(data.health);
 	const notices = $derived(
 		h.warnings.length +
 			h.disagreements.length +
 			h.dangling.length +
 			h.unknownTasks.length +
-			h.configWarnings.length
+			h.configWarnings.length +
+			h.assignees.length
 	);
 
-	function filter(key: 'status' | 'job', value: string) {
+	function filter(key: 'status' | 'job' | 'for', value: string) {
 		if (key === 'status') status = value;
-		else job = value;
+		else if (key === 'job') job = value;
+		else assignee = value;
 		const u = new URL(page.url.href);
 		if (value) u.searchParams.set(key, value);
 		else u.searchParams.delete(key);
 		goto(u.href, { replace: true, shallow: true });
 	}
-	const shown = (it: { status: string; job: string | null }) =>
-		(!status || it.status === status) && (!job || it.job === job);
-	const filtered = $derived(!!status || !!job);
+	const shown = (it: { status: string; job: string | null; assignee: string | null }) =>
+		(!status || it.status === status) &&
+		(!job || it.job === job) &&
+		(!forPath || assigneeMatches(it.assignee, forPath));
+	const filtered = $derived(!!status || !!job || !!forPath);
 	const moves = $state<MoveState>({ busy: null, message: null });
 	// Reordering needs the whole list in view: not while filtered.
 	const canDrag = $derived(page.data.project.canEdit && !filtered);
@@ -60,6 +68,12 @@
 				{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
 			</select>
 		</label>
+		<AssigneeFilter
+			value={assignee}
+			assignees={data.assignees}
+			signedIn={!!page.data.user}
+			onchange={(v) => filter('for', v)}
+		/>
 		{#if page.data.project.canEdit}<a class="button" href="/p/{repo}/new">Add item</a>{/if}
 	</div>
 
@@ -77,6 +91,7 @@
 						<strong>Plan task {t}:</strong> its status cell doesn’t start with a known word
 					</li>{/each}
 				{#each h.configWarnings as c (c)}<li><strong>.projectmagic.yml:</strong> {c}</li>{/each}
+				{#each h.assignees as a (a)}<li><strong>For:</strong> {a}</li>{/each}
 			</ul>
 			{#if h.notes.length}<p class="muted small">
 					Notes (headings without an id): {h.notes.join(' · ')}
