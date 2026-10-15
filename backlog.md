@@ -9,7 +9,7 @@ Magic can read its own backlog.
 ### PM17 404 for new items
 **Status:** todo · **Size:** S
 
-When I create a new item there is no feedback that it is working and then after a while I get redirected to a new page for the item ID but it returns a 404 error.  It looks like timing as going into the list view shows the new item.
+When I create a new item there is no feedback that it is working and then after a while I get redirected to a new page for the item ID but it returns a 404 error.  It looks like timing as going into the list view shows the new item. THis is intermittent, sometimes it works as intended.
 
 ### PM16 Select items by actor
 **Status:** todo · **Size:** S
