@@ -35,11 +35,52 @@ export async function moveItem(
 	}
 }
 
+/** The Board's drag into another column sets the status (PM27); `waiting` is for blocked and built. */
+export async function setStatus(
+	repo: string,
+	id: string,
+	status: string,
+	waiting: string | null,
+	state: MoveState
+): Promise<void> {
+	state.busy = id;
+	state.message = null;
+	try {
+		const body = new FormData();
+		body.set('status', status);
+		if (waiting !== null) body.set('waiting', waiting);
+		const res = await fetch(`/p/${repo}/i/${encodeURIComponent(id)}/edit?/status`, {
+			method: 'POST',
+			body,
+			headers: { 'x-sveltekit-action': 'true', accept: 'application/json' }
+		});
+		const result = deserialize(await res.text());
+		if (result.type === 'failure')
+			state.message = String(
+				(result.data as { message?: string })?.message ?? 'The change failed.'
+			);
+		else if (result.type === 'error') state.message = 'The change failed.';
+		await refreshAll();
+	} finally {
+		state.busy = null;
+	}
+}
+
 /** Svelte attachments' worth of drag handling, as plain handlers: data-id on items, data-to on zones. */
-export function dragHandlers(repo: string, state: MoveState, enabled: () => boolean) {
+export function dragHandlers(
+	repo: string,
+	state: MoveState,
+	enabled: () => boolean,
+	/** Called instead of a move when an item is dropped into a column other than its own. */
+	onColumn?: (id: string, from: string, to: string) => void,
+	/** Reordering needs every item in view, so a filtered view turns it off. */
+	canReorder: () => boolean = () => true
+) {
 	let dragging: string | null = null;
+	let column: string | null = null;
 	const clear = () => {
 		dragging = null;
+		column = null;
 		document.querySelectorAll('.drop-target').forEach((x) => x.classList.remove('drop-target'));
 	};
 	const target = (e: DragEvent) =>
@@ -49,6 +90,7 @@ export function dragHandlers(repo: string, state: MoveState, enabled: () => bool
 			const el = (e.target as HTMLElement).closest<HTMLElement>('[data-id]');
 			if (!enabled() || !el) return;
 			dragging = el.dataset.id!;
+			column = el.closest<HTMLElement>('[data-status]')?.dataset.status ?? null;
 			e.dataTransfer?.setData('text/plain', dragging);
 			if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
 		},
@@ -64,11 +106,15 @@ export function dragHandlers(repo: string, state: MoveState, enabled: () => bool
 		async ondrop(e: DragEvent) {
 			const t = target(e);
 			const from = dragging;
+			const col = column;
 			clear();
 			if (!from || !t) return;
 			e.preventDefault();
-			const to = t.dataset.to ?? `before:${t.dataset.id}`;
 			if (t.dataset.id === from) return;
+			const into = t.closest<HTMLElement>('[data-status]')?.dataset.status;
+			if (onColumn && col && into && into !== col) return onColumn(from, col, into);
+			if (!canReorder()) return;
+			const to = t.dataset.to ?? `before:${t.dataset.id}`;
 			await moveItem(repo, from, to, state);
 		}
 	};

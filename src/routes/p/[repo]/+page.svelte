@@ -13,6 +13,8 @@
 	let status = $state(page.url.searchParams.get('status') ?? '');
 	let job = $state(page.url.searchParams.get('job') ?? '');
 	let assignee = $state(page.url.searchParams.get('for') ?? '');
+	// Done items are hidden unless asked for (PM26), by the toggle or by choosing the done status.
+	let showDone = $state(page.url.searchParams.get('done') === '1');
 	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
 	const h = $derived(data.health);
 	const notices = $derived(
@@ -33,8 +35,16 @@
 		else u.searchParams.delete(key);
 		goto(u.href, { replace: true, shallow: true });
 	}
+	function toggleDone(on: boolean) {
+		showDone = on;
+		const u = new URL(page.url.href);
+		if (on) u.searchParams.set('done', '1');
+		else u.searchParams.delete('done');
+		goto(u.href, { replace: true, shallow: true });
+	}
+	const hidingDone = $derived(!showDone && !status);
 	const shown = (it: { status: string; job: string | null; assignee: string | null }) =>
-		(!status || it.status === status) &&
+		(status ? it.status === status : showDone || it.status !== 'done') &&
 		(!job || it.job === job) &&
 		(!forPath || assigneeMatches(it.assignee, forPath));
 	const filtered = $derived(!!status || !!job || !!forPath);
@@ -67,6 +77,15 @@
 				<option value="">all</option>
 				{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
 			</select>
+		</label>
+		<label
+			><input
+				type="checkbox"
+				checked={showDone}
+				disabled={!!status}
+				onchange={(e) => toggleDone(e.currentTarget.checked)}
+			/>
+			Show done {#if data.doneCount}<span class="muted">({data.doneCount})</span>{/if}
 		</label>
 		<AssigneeFilter
 			value={assignee}
@@ -141,7 +160,7 @@
 	>
 		{@render entries(data.top)}
 		{#each data.sections as sec, i (i)}
-			{#if !filtered || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
+			{#if (!filtered && !hidingDone) || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
 				<section>
 					<h2>{sec.title}</h2>
 					{#if sec.introHtml}<div class="intro">{@html sec.introHtml}</div>{/if}

@@ -7,15 +7,21 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM26 Hide Done
-**Status:** todo · **Size:** S · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** person.nickwhiteley
 
 Hide Done items from the List view.
 
 ### PM27 Board drag changes status
-**Status:** todo · **Size:** S–M · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S–M · **For:** person.nickwhiteley
 
 When i drag an item on the Board view into a different status it should update the status as though I had used the Edit screen.  This is particularly important to move from built to done as they are all done by a person.
 Looks like PM11 has similar ideas
+
+Built with PM11, which asked for the same thing. Dropping a card into a column whose status can be set
+(todo, blocked, built or done) is the same edit as saving the Edit form with that status. Moving
+to `done` clears *Waiting*. Blocked and built ask what the item waits on when it has no reason
+yet. In progress and in review can't be dropped into, and the Board says so. Reordering within a
+column works as before, and is off while the For filter is on.
 
 ### PM17 A new item can 404 after Add, with nothing shown while it saves
 **Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **For:** person.nickwhiteley
@@ -250,7 +256,7 @@ branch, so it needs phase 5's write path. It turns the queue from something to r
 something to clear.
 
 ### PM11 Set an item's status by dropping it into a Board column
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Dropping a card into another column on the Board only reorders it today (task 5.3). Make a drop
 into **todo**, **blocked**, **built** or **done** also set `Status:` in the item's meta line, as an
@@ -258,6 +264,8 @@ ordinary edit through the `projectmagic` branch (§10). **in progress** and **in
 branches and PRs (§7.2), so a drop there still only reorders, and the Board should say so. A drop
 into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 2026-10-14, after
 dragging E5 expecting its status to change.
+
+Built with PM27.
 
 ### PM13 Show that a navigation is under way
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley

@@ -33,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			entries: entries(sec.index)
 		})),
 		assignees: assigneesInUse(s),
+		doneCount: s.items.filter((i) => i.status === 'done').length,
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		health: {
 			warnings: h.warnings.map((w) => ({ line: w.line, message: w.message })),

@@ -1,7 +1,7 @@
 import { assigneesInUse } from '#lib/server/item-view.ts';
 import { checkId, splice, type Op } from '#lib/core/splice.ts';
-import { editChange, formValues } from '#lib/core/edit-form.ts';
-import { updateMeta } from '#lib/core/meta.ts';
+import { editChange, formValues, statusChange } from '#lib/core/edit-form.ts';
+import { updateMeta, type Status } from '#lib/core/meta.ts';
 import { edits } from '#lib/server/edits.ts';
 import { asMessage, conflictDiffs, respond } from '#lib/server/edit-actions.ts';
 import { problems, readBase, readItemForm } from '#lib/server/item-form.ts';
@@ -84,6 +84,32 @@ export const actions: Actions = {
 				null
 			);
 			return respond(result, `/p/${params.repo}`);
+		} catch (e) {
+			return asMessage(e);
+		}
+	},
+
+	// The Board's drag into another column (PM27): only the status, and the waiting reason.
+	status: async ({ locals, params, request }) => {
+		const form = await request.formData();
+		const status = String(form.get('status') ?? '') as Status;
+		if (!['todo', 'blocked', 'built', 'done'].includes(status))
+			return fail(400, {
+				message:
+					'Only todo, blocked, built and done can be set; in progress and in review come from branches and pull requests.',
+				reauth: false
+			});
+		const waiting = form.get('waiting');
+		const { it } = await context(locals.project!.id, params.id);
+		const change = statusChange(it, status, waiting === null ? undefined : String(waiting).trim());
+		try {
+			const result = await edits.edit(
+				locals.user!,
+				locals.project!,
+				{ op: 'edit', id: it.id, change },
+				null
+			);
+			return respond(result, `/p/${params.repo}/board`);
 		} catch (e) {
 			return asMessage(e);
 		}

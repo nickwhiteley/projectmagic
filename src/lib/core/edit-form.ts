@@ -52,6 +52,17 @@ export function formValues(it: EditableItem): ItemFormValues {
 	};
 }
 
+/**
+ * Setting just the status, as the Board's drag does (PM27): the same edit as saving the item's
+ * form with another status. Moving to `done` clears *Waiting*, since nothing waits any more;
+ * `waiting` sets it for `blocked` and `built`.
+ */
+export function statusChange(it: EditableItem, status: Status, waiting?: string): ItemChange {
+	const was = formValues(it);
+	const next = status === 'done' ? '' : (waiting ?? was.waiting);
+	return editChange(it, { ...was, status, waiting: next });
+}
+
 export function editChange(it: EditableItem, v: ItemFormValues): ItemChange {
 	const was = formValues(it);
 	const change: ItemChange = {};
