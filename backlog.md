@@ -78,13 +78,13 @@ read it too. The likely shape is a new meta key, `**Owner:** @nickwhiteley` for 
 **Questions for Nick:**
 
 - **Assigned, or actually working?** Is this who an item is meant for, or who is working on it
-  now? The second can be inferred from who pushed the item's branch, with no new key.
+  now? The second can be inferred from who pushed the item's branch, with no new key. - By assigned (this is so I can see what I should be doing)
 - **How fine-grained for agents?** Just "agent", or the model as well? If the model, from a
-  fixed list (one per project in `.projectmagic.yml`) or free text?
+  fixed list (one per project in `.projectmagic.yml`) or free text? - agent and model, though model is optional. agent = any agent, agent.claude = any anthropic agent, agent.claude.opus = specific model. person = any person, person.nickwhiteley = only nickwhiteley user ID.  It is free text but the first part must be person or agent.
 - **What should an agent do with it?** Should the conventions tell agents to pick up only items
-  owned by `agent`, and leave items owned by a person alone?
+  owned by `agent`, and leave items owned by a person alone? - Yes, they are not expected to work on tasks assigned to someone else.  THey can edit the assignment though.
 - **What does an item with no owner count as?** Anyone's, or a third filter value,
-  *unassigned*?
+  *unassigned*? - Anyone's
 
 ### PM19 An Edit button in the expanded list row
 **Status:** todo · **Size:** S · **Type:** feature
