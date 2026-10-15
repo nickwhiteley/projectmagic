@@ -150,3 +150,8 @@ link marked as current and busy, and a thin progress bar at the top while Svelte
 than only hiding it: a project page reads the cached state from Postgres and should not call
 GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
 project's state) and fix what dominates.
+
+### PM20 Multi-tenant
+**Status:** todo · **Size:** M–L
+
+Add multi-tenancy where the Github config is stored in the database with a relationship to the logged in user.  This allows any person to setup a ProjectMagic dashboard for their own organisation and invite otehr users of tehir organisation to contribute.
