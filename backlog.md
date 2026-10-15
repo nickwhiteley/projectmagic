@@ -7,7 +7,7 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM17 A new item can 404 after Add, with nothing shown while it saves
-**Status:** in progress · **Size:** S · **Type:** bug · **Branch:** `fix/pm17-new-item-404`
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug
 
 Reported by Nick on 2026-10-15. After **Add** on the add item screen nothing happens on screen for
 several seconds, then the browser goes to the new item's page and it says 404. Opening the list
