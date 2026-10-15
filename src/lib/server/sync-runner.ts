@@ -3,6 +3,7 @@
 import { waitUntil } from '@vercel/functions';
 import type { Config } from '#lib/core/config.ts';
 import { db } from './db.ts';
+import { settle } from './settle.ts';
 import { asApp, installationClient } from './github-app.ts';
 import { syncInstallations, syncProject, type SyncSummary } from './sync.ts';
 
@@ -65,6 +66,42 @@ export async function syncNow(projectId: string): Promise<'ran' | 'queued'> {
 	do await runOnce(projectId);
 	while (await release(projectId));
 	return 'ran';
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** Waits until no sync is running for the project, or until `until`. */
+async function idle(projectId: string, until: number): Promise<void> {
+	while (Date.now() < until) {
+		const [r] = await db()<{ running: boolean }[]>`
+			select sync_started_at is not null as running from project where id = ${projectId}`;
+		if (!r?.running) return;
+		await sleep(250);
+	}
+}
+
+/** After an edit (PM17): syncs until the cache has `ref` at `oid`, for up to `limitMs`. */
+export function syncUntil(
+	projectId: string,
+	ref: string,
+	oid: string,
+	limitMs = 10_000
+): Promise<boolean> {
+	const until = Date.now() + limitMs;
+	return settle(
+		{
+			sync: () => syncNow(projectId),
+			idle: () => idle(projectId, until),
+			done: async () => {
+				const [r] = await db()<{ head_oid: string }[]>`
+					select head_oid from ref where project_id = ${projectId} and name = ${ref}`;
+				return r?.head_oid === oid;
+			},
+			sleep,
+			now: Date.now
+		},
+		limitMs
+	);
 }
 
 /** Starts a sync without waiting for it; on Vercel the function stays alive until it ends. */

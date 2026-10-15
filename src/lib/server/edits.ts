@@ -1,9 +1,10 @@
 // An edit from the app (spec §10): resolve where the backlog is, make the edit as the user,
 // record it, keep the PR's description current, remember what state the edits are in, and sync.
+import { EDIT_BRANCH } from '#lib/core/branchref.ts';
 import type { Op } from '#lib/core/splice.ts';
 import { parseConfig, type Config } from '#lib/core/config.ts';
 import { db } from './db.ts';
-import { syncNow } from './sync-runner.ts';
+import { syncUntil } from './sync-runner.ts';
 import type { SessionUser } from './users.ts';
 import type { ProjectRow } from './projects.ts';
 import { userClient } from './user-token.ts';
@@ -81,7 +82,9 @@ export async function edit(
 	if (state)
 		await db()`update project set edit_state = ${state.state}, edit_detail = ${state.detail}, edit_pr = ${state.pr}
 			where id = ${project.id}`;
-	if (result.kind === 'merged' || result.kind === 'pending') await syncNow(project.id);
+	// Wait until the cache holds the commit, so the page the action redirects to shows the edit.
+	if (result.kind === 'merged') await syncUntil(project.id, t.main, result.commit);
+	else if (result.kind === 'pending') await syncUntil(project.id, EDIT_BRANCH, result.commit);
 	return result;
 }
 
@@ -96,15 +99,28 @@ export async function mergeEdits(
 	if (!row?.edit_pr) return { ok: false, detail: 'There is no open edits PR.' };
 	const gh = userClient(user.id);
 	const repo = `/repos/${project.owner}/${project.repo}`;
-	const res = await gh.send<{ message?: string }>('PUT', `${repo}/pulls/${row.edit_pr}/merge`, {
-		merge_method: 'squash'
-	});
+	const res = await gh.send<{ message?: string; sha?: string }>(
+		'PUT',
+		`${repo}/pulls/${row.edit_pr}/merge`,
+		{
+			merge_method: 'squash'
+		}
+	);
 	if (res.status !== 200)
 		return { ok: false, detail: res.body?.message ?? `GitHub said ${res.status}` };
 	await gh.send('DELETE', `${repo}/git/refs/heads/projectmagic`);
 	await db()`update project set edit_state = null, edit_detail = null, edit_pr = null where id = ${project.id}`;
-	await syncNow(project.id);
+	if (res.body?.sha) await syncUntil(project.id, (await target(project)).main, res.body.sha);
 	return { ok: true, detail: `Merged PR #${row.edit_pr}.` };
 }
 
-export const edits = { edit, mergeEdits };
+/** An item added in the last minute, which the cache may not hold yet (PM17). */
+export async function justAdded(projectId: string, itemId: string): Promise<boolean> {
+	const [r] = await db()<{ n: number }[]>`
+		select count(*)::int as n from edit_log
+		where project_id = ${projectId} and item_id = ${itemId} and op = 'add' and error is null
+		and at > now() - interval '1 minute'`;
+	return (r?.n ?? 0) > 0;
+}
+
+export const edits = { edit, mergeEdits, justAdded };

@@ -1,4 +1,5 @@
 import { diffLines } from '#lib/core/diff.ts';
+import { edits } from '#lib/server/edits.ts';
 import { projectState } from '#lib/server/project-state.ts';
 import { sourceText } from '#lib/server/item-view.ts';
 import { inline, md } from '#lib/server/views.ts';
@@ -10,8 +11,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const it = s.items.find((i) => i.id === params.id);
 	if (!it) {
 		const done = s.done.find((d) => d.id === params.id);
-		if (!done) error(404, `No item ${params.id}`);
+		if (!done) {
+			// Just added, and the sync hasn't caught up: say so, and the page refreshes (PM17).
+			if (await edits.justAdded(locals.project!.id, params.id))
+				return { adding: true, done: null, item: null };
+			error(404, `No item ${params.id}`);
+		}
 		return {
+			adding: false,
 			done: {
 				id: done.id,
 				title: done.title,
@@ -26,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const linked = new Set(it.branches.map((b) => b.name));
 	const deploy = new Set(s.branches.filter((b) => b.isDeploy).map((b) => b.name));
 	return {
+		adding: false,
 		done: null,
 		item: {
 			id: it.id,
