@@ -316,12 +316,14 @@ sign-up and installing the App, then invitations within an organisation.
 
 - **Hosted or self-hosted?** Is this a service you run for other people, or a self-hosted copy
   that serves several organisations? A hosted service brings billing, terms, privacy and support,
-  and changes what the README promises ("it runs on your own accounts").
+  and changes what the README promises ("it runs on your own accounts"). - Both options.  Primary is hosted with the Github login telling us what they have access to. The repo is still open source.
 - **One App or one per organisation?** The first is much less work; is there a reason to need
-  the second?
+  the second? - One app
 - **Can a person belong to more than one organisation?** And who creates one: anyone who signs
-  in, or only people you approve?
-- **Does single-owner self-hosting stay supported** as it is today?
+  in, or only people you approve? - This would probably work but is not the intended approach.
+- **Does single-owner self-hosting stay supported** as it is today? - Yes
+
+Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment, particularly for tiers with AI model access and large numbers of users.
 
 ### PM16 Assign items to a person or an agent, and filter by it
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
