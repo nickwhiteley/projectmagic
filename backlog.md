@@ -149,7 +149,7 @@ explain it on the form?
   The history still holds them; that is PM14.
 
 ### PM14 Make the repository public
-**Status:** todo · **Size:** M · **Type:** chore
+**Status:** done · **Size:** M · **Type:** chore
 
 Nick has decided to keep the repository private for now (2026-10-14). The current files are
 clean (PM12), but the history and GitHub still hold two private projects' backlogs and plans:
