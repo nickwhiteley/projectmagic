@@ -213,7 +213,7 @@ a second backlog file with a `BUG` prefix, so the sync fetches and caches it, id
 prefix, and the views read two backlogs. The Board gets a bug lane beside the section lanes.
 
 ### PM3 Inferred status for items with no meta line
-**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm3-inferred-status` · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 A model reads the prose and proposes a status and waiting reason. It is cached by blob `oid` and
 shown as *inferred*.
@@ -221,6 +221,27 @@ shown as *inferred*.
 
 Model is selectable (OpenAI, Anthropic, Ollama) but initially uses Ollama models.
 Limits on token usage per tenant (see PM26) or designed with tenant in mind. Users and tenants can opt out.
+
+Built (PM3 answers). One reading to check: your note says "per tenant (see PM26)", and PM26 is
+Hide Done, so I took PM20, the tenant item.
+
+- **Model**: chosen by environment, `INFERENCE_PROVIDER` of `ollama`, `openai` or `anthropic`,
+  with `INFERENCE_MODEL`, `INFERENCE_BASE_URL` (Ollama) or `INFERENCE_API_KEY`. Unset, it is off.
+  Ollama is the first target; it must be reachable from where the app runs, so a hosted app needs
+  an Ollama on a public address, or one of the other providers.
+- **What it does**: after a sync, a few items (5 at most) with no meta line and no current
+  proposal are sent to the model, which answers with a status and a waiting reason. The proposal
+  is cached in `item_inference` against the item's text and is dropped when the item changes. It
+  shows as *inferred* on rows and the item page, and never changes the derived status.
+- **Limits**: `INFERENCE_DAILY_TOKEN_LIMIT` tokens a day, default 50 000, counted by scope
+  (`project:<id>` now). **Left for PM20:** a `tenant:<id>` scope and per-tenant limits, which need
+  tenants to exist.
+- **Opt out**: a project with `inference: false` in `.projectmagic.yml` is never sent, standing in
+  for the tenant opt-out until PM20; a person can hide the proposals from their own views with the
+  *Inferred statuses* button in the header (shown only when a model is configured).
+- **Before deploying**: `make migrate` creates `item_inference`, `inference_usage` and
+  `user_pref` (`migrations/003_inference.sql`). The app copes with the tables missing, and shows
+  no proposals until they exist.
 
 ### PM4 Ask across projects
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
