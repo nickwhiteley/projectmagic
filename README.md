@@ -56,7 +56,8 @@ team; the roles and permissions exist, but inviting people is not built yet
    refused (a review is required, say), the pull request stays open and the edit shows as
    pending.
 
-[`spec.md`](spec.md) is the full specification.
+[`spec.md`](spec.md) is the full specification, and
+[`docs/architecture.md`](docs/architecture.md) draws the system as three C4 diagrams.
 
 ## The conventions
 
@@ -220,6 +221,7 @@ the markdown parsed with remark. The unit tests run against real backlogs and pl
 | Path | What |
 | ---- | ---- |
 | [`spec.md`](spec.md) | the specification: conventions, linking, sync, status, editing, auth |
+| [`docs/architecture.md`](docs/architecture.md) | the architecture as C4 diagrams: context, containers, components |
 | [`PROGRESS.md`](PROGRESS.md) | the build plan and its status, phase by phase |
 | [`backlog.md`](backlog.md) | what comes next, written to the conventions so Project Magic reads it too |
 | [`specs/conventions.md`](specs/conventions.md) | the block for each repository's agent instructions |
