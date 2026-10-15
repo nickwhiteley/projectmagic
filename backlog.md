@@ -218,6 +218,10 @@ prefix, and the views read two backlogs. The Board gets a bug lane beside the se
 A model reads the prose and proposes a status and waiting reason. It is cached by blob `oid` and
 shown as *inferred*.
 
+
+Model is selectable (OpenAI, Anthropic, Ollama) but initially uses Ollama models.
+Limits on token usage per tenant (see PM26) or designed with tenant in mind. Users and tenants can opt out.
+
 ### PM4 Ask across projects
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
