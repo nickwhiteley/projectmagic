@@ -106,6 +106,7 @@ main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
 auto_merge: true                 # merge each edit's PR straight away (§10.2)
+inference: true                  # false opts out of model-inferred statuses (§13)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
 ```
@@ -665,9 +666,13 @@ repository's `backlog.md`.
   rest is PM29). They can also live in their own `bugs.md`, configured as a
   second backlog file, with a `BUG` prefix (`BUG12`), because Orchard already uses `B1`–`B14`. The board
   gains a type filter and a bug lane. v0.1 already keeps the `Type` key.
-- **LLM fallback for status**: for items with no meta line, a model reads the prose
-  ("Built 2026-09-30 … waits only on the lawyer") and proposes a status and waiting reason.
-  It is cached by blob `oid` and shown as *inferred*.
+- **LLM fallback for status** (built, PM3): for items with no meta line, a model reads the prose
+  ("Built 2026-09-30 … waits only on the lawyer") and proposes a status and waiting reason,
+  shown as *inferred* and never used to derive the real status (§7.2). The model is chosen by
+  environment (Ollama first; OpenAI and Anthropic too). A project may use a daily token limit
+  (default 50 000), counted by scope so it can move to tenants (PM20). A project opts out with
+  `inference: false`, and a person hides the proposals from their own views. A proposal is cached
+  against the item's text and dropped when the item changes.
 - **Ask across projects**: a question box answered from the cached parses, such as "what is
   blocked on the lawyer?"
 - **Activity feed**: recent commits across all projects, grouped by linked item.

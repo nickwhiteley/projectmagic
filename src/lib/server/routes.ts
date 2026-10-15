@@ -18,6 +18,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/': { kind: 'public' },
 	'/search': { kind: 'signed-in' },
 	'/activity': { kind: 'signed-in' },
+	'/settings/ai': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },

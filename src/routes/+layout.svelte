@@ -65,6 +65,17 @@
 					/>
 				</form>
 				<div class="who">
+					{#if data.ai}
+						<form method="POST" action="/settings/ai">
+							<input type="hidden" name="optOut" value={data.ai.optedOut ? '0' : '1'} />
+							<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
+							<button
+								class="button"
+								title="Statuses proposed by a model for items with no meta line"
+								>Inferred statuses: {data.ai.optedOut ? 'hidden' : 'shown'}</button
+							>
+						</form>
+					{/if}
 					<span>{data.user.name ?? data.user.login}</span>
 					<form method="POST" action="/auth/signout"><button class="button">Sign out</button></form>
 				</div>

@@ -29,6 +29,7 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 		assignee: it.assignee,
 		epic: it.epic,
 		type: it.type,
+		inferred: it.inferred,
 		status: it.status,
 		blocked: it.blocked,
 		pending: it.pending,

@@ -1,6 +1,7 @@
 // Loads a project's state for the views: the refs and cached parses the sync stored, assembled by
 // the pure core. Kept in memory per instance until the project syncs again.
 import { parseConfig, type Config } from '#lib/core/config.ts';
+import type { Status } from '#lib/core/meta.ts';
 import {
 	assembleState,
 	type ProjectState,
@@ -38,6 +39,11 @@ export function projectState(event: {
 	let p = locals.states.get(id);
 	if (!p) locals.states.set(id, (p = loadProjectState(id)));
 	return p;
+}
+
+/** Drops the cached state, after something other than a sync changed what it shows (PM3). */
+export function forgetState(projectId: string): void {
+	cache.delete(projectId);
 }
 
 export async function loadProjectState(projectId: string): Promise<ProjectState> {
@@ -124,6 +130,15 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		};
 	});
 
+	// PM3's table may not exist until the migration has run; no proposals is the right answer then.
+	const inferences = await sql<
+		{ item_id: string; source: string; status: Status; waiting: string | null; model: string }[]
+	>`select item_id, source, status, waiting, model from item_inference where project_id = ${projectId}`.catch(
+		(e: { code?: string }) => {
+			if (e?.code === '42P01') return [];
+			throw e;
+		}
+	);
 	const state = assembleState({
 		owner: p.owner,
 		repo: p.repo,
@@ -138,6 +153,13 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			removedAt: d.removed_at.toISOString(),
 			prNumber: d.pr_number,
 			deleted: d.deleted_at ? { by: d.deleted_by, at: d.deleted_at.toISOString() } : null
+		})),
+		inferences: inferences.map((i) => ({
+			itemId: i.item_id,
+			source: i.source,
+			status: i.status,
+			waiting: i.waiting,
+			model: i.model
 		})),
 		lastSyncAt: p.last_sync_at?.toISOString() ?? null,
 		lastError: p.last_error,

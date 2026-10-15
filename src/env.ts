@@ -32,5 +32,26 @@ export const variables = defineEnvVars({
 		}
 	},
 	BOOTSTRAP_ADMIN_GITHUB_LOGIN: { schema: optional },
+	INFERENCE_PROVIDER: {
+		schema: (value) => {
+			const v = optional(value);
+			if (v && !['ollama', 'openai', 'anthropic'].includes(v))
+				throw new Error('INFERENCE_PROVIDER must be ollama, openai or anthropic');
+			return v;
+		},
+		description: 'The model that proposes statuses (PM3); unset turns inferred statuses off'
+	},
+	INFERENCE_MODEL: { schema: optional },
+	INFERENCE_BASE_URL: { schema: optional, description: 'Ollama: http://host:11434' },
+	INFERENCE_API_KEY: { schema: optional, description: 'OpenAI or Anthropic' },
+	INFERENCE_DAILY_TOKEN_LIMIT: {
+		schema: (value) => {
+			const n = Number(optional(value) ?? 50_000);
+			if (!Number.isInteger(n) || n < 0)
+				throw new Error('INFERENCE_DAILY_TOKEN_LIMIT must be a whole number of tokens');
+			return n;
+		},
+		description: 'Tokens a project may use a day; default 50000'
+	},
 	CRON_SECRET: { schema: optional, description: 'Set by Vercel for the daily cron' }
 });

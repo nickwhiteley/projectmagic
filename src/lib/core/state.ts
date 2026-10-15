@@ -68,6 +68,16 @@ export interface DoneInput {
 	deleted?: { by: string | null; at: string } | null;
 }
 
+/** A model's proposed status for an item with no meta line (PM3). */
+export interface InferenceInput {
+	itemId: string;
+	/** The item's text when the model read it; the proposal is dropped if the item has changed. */
+	source: string;
+	status: Status;
+	waiting: string | null;
+	model: string;
+}
+
 export interface StateInput {
 	owner: string;
 	repo: string;
@@ -75,6 +85,7 @@ export interface StateInput {
 	configWarnings: string[];
 	refs: RefInput[];
 	done: DoneInput[];
+	inferences?: InferenceInput[];
 	lastSyncAt: string | null;
 	lastError: string | null;
 	now: number;
@@ -141,6 +152,8 @@ export interface ItemView {
 	hints: string[];
 	/** Other branches' copies that differ from main's, for the item view's diffs. */
 	differs: { branch: string; source: string }[];
+	/** A model's guess for an item with no meta line (PM3): shown as inferred, never used for status. */
+	inferred: { status: Status; waiting: string | null; model: string } | null;
 	/** Changed in the open Project Magic edits PR (§10.3). */
 	pending: boolean;
 	/** Older branches probably about this item (§6, source 6): shown, never used for status. */
@@ -289,6 +302,7 @@ export function assembleState(input: StateInput): ProjectState {
 	});
 
 	const edits = refByName.get(EDIT_BRANCH);
+	const inferences = new Map((input.inferences ?? []).map((i) => [i.itemId, i]));
 	const views: ItemView[] = items.map((it) => {
 		const edges = edgesOf(it.id);
 		const pick = <K extends Edge['to']['kind']>(kind: K) =>
@@ -326,6 +340,7 @@ export function assembleState(input: StateInput): ProjectState {
 			copies: otherCopies,
 			tasks: itemTasks
 		});
+		const guess = it.meta ? undefined : inferences.get(it.id);
 		const editCopy = edits?.active ? edits.backlog?.items.find((x) => x.id === it.id) : undefined;
 		return {
 			id: it.id,
@@ -362,6 +377,10 @@ export function assembleState(input: StateInput): ProjectState {
 			disagreements: d.disagreements,
 			hints: d.hints,
 			differs: d.differs.map((c) => ({ branch: c.branch, source: c.text })),
+			inferred:
+				guess && guess.source === it.source
+					? { status: guess.status, waiting: guess.waiting, model: guess.model }
+					: null,
 			pending: !!edits?.active && (editCopy?.source ?? null) !== it.source,
 			inferredBranches: inferredOf(it.id)
 		};

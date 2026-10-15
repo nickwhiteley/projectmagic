@@ -5,6 +5,8 @@ import type { Config } from '#lib/core/config.ts';
 import { db } from './db.ts';
 import { settle } from './settle.ts';
 import { asApp, installationClient } from './github-app.ts';
+import { inferProject } from './inference.ts';
+import { forgetState } from './project-state.ts';
 import { syncInstallations, syncProject, type SyncSummary } from './sync.ts';
 
 /** A sync that has run this long is presumed dead, and another may start. */
@@ -65,6 +67,12 @@ export async function syncNow(projectId: string): Promise<'ran' | 'queued'> {
 	if (!(await claim(projectId))) return 'queued';
 	do await runOnce(projectId);
 	while (await release(projectId));
+	// Proposed statuses (PM3) are asked for after the sync, in the background, a few at a time.
+	waitUntil(
+		inferProject(projectId)
+			.then((n) => n && forgetState(projectId))
+			.catch((e) => console.error('inference', projectId, e instanceof Error ? e.message : e))
+	);
 	return 'ran';
 }
 
