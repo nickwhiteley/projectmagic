@@ -135,11 +135,6 @@ dragging E5 expecting its status to change.
 
 Make projects great again
 
-### PM18 Bug item type
-**Status:** todo · **Size:** S
-
-I should be able to add a "bug" item type.
-
 ### PM13 Show that a navigation is under way
 **Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
 
