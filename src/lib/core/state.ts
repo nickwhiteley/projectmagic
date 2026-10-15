@@ -55,6 +55,8 @@ export interface DoneInput {
 	removedOid: string;
 	removedAt: string;
 	prNumber: number | null;
+	/** Set when Project Magic's own Remove deleted it (PM24): not shipped, only gone. */
+	deleted?: { by: string | null; at: string } | null;
 }
 
 export interface StateInput {
@@ -152,6 +154,17 @@ export interface DoneView {
 	unpruned: boolean;
 }
 
+/** An item deleted with Project Magic's Remove (PM24): gone from the backlog, never shipped. */
+export interface DeletedView {
+	id: string;
+	title: string;
+	at: string;
+	commit: string;
+	/** The GitHub login of whoever deleted it, if known. */
+	by: string | null;
+	body: string;
+}
+
 export interface Health {
 	lastError: string | null;
 	warnings: Warning[];
@@ -180,6 +193,7 @@ export interface ProjectState {
 	plan: { tasks: PlanTaskView[]; groups: Group[]; next: string | null } | null;
 	branches: BranchView[];
 	done: DoneView[];
+	deleted: DeletedView[];
 	health: Health;
 	/** The last commit on any branch. */
 	lastCommit: { branch: string; at: string; message: string } | null;
@@ -376,6 +390,7 @@ export function assembleState(input: StateInput): ProjectState {
 				unpruned: true
 			})),
 		...input.done
+			.filter((d) => !d.deleted)
 			.map((d) => ({
 				id: d.itemId,
 				title: d.title,
@@ -387,6 +402,18 @@ export function assembleState(input: StateInput): ProjectState {
 			}))
 			.sort((a, b) => b.at.localeCompare(a.at))
 	];
+
+	const deleted: DeletedView[] = input.done
+		.filter((d) => d.deleted)
+		.map((d) => ({
+			id: d.itemId,
+			title: d.title,
+			at: d.removedAt,
+			commit: d.removedOid,
+			by: d.deleted!.by,
+			body: d.lastBody
+		}))
+		.sort((a, b) => b.at.localeCompare(a.at));
 
 	const planTasks: PlanTaskView[] | null = plan
 		? plan.tasks.map((t) => ({
@@ -418,6 +445,7 @@ export function assembleState(input: StateInput): ProjectState {
 		plan: plan && planTasks ? { tasks: planTasks, groups: plan.groups, next: plan.next } : null,
 		branches: branchViews,
 		done,
+		deleted,
 		health: {
 			lastError: input.lastError,
 			warnings: main?.backlog?.warnings ?? [],

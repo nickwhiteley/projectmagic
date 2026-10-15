@@ -324,6 +324,14 @@ GraphQL. It diffs the id sets of consecutive versions. An id present before and 
 is **done at that commit**, and the tool records its last body, the commit, its date, and the PR
 that merged it. An id that reappears later is no longer done.
 
+**An item deleted with Project Magic's Remove is deleted, not done.** Its removal looks the
+same in the history, so `edit_log` tells it apart: when the last edit Project Magic made to the
+id was a `remove` that landed with the removal (before it reached main or within ten minutes
+after, and from the same PR where both are known), the item is *deleted*. Deleted items are left
+off the Done list's shipped items, the Board's shipped column and the overview's counts, and are
+listed, collapsed, at the bottom of the Done tab. Their pages say *deleted*, and their ids are
+never reused. A removal made outside Project Magic still counts as shipped (PM24).
+
 The first sync backfills the whole history once. Later syncs only look at new commits.
 Results are immutable per commit, so they are cached forever.
 

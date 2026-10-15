@@ -66,6 +66,8 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		removed_oid: string;
 		removed_at: Date;
 		pr_number: number | null;
+		deleted_by: string | null;
+		deleted_at: Date | null;
 	};
 	// Independent reads in parallel; parses only for active branches, the only ones the view uses.
 	const [refs, files, done, parses] = await Promise.all([
@@ -73,8 +75,20 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			from ref where project_id = ${projectId}`,
 		sql<{ ref_name: string; path: string; oid: string }[]>`
 			select ref_name, path, oid from ref_file where project_id = ${projectId}`,
-		sql<DoneRow[]>`select item_id, title, last_body, removed_oid, removed_at, pr_number
-			from done_item where project_id = ${projectId}`,
+		// An item is deleted, not shipped, when the last edit Project Magic made to it was a remove
+		// that landed with this removal (PM24): before it reached main, or within ten minutes after,
+		// allowing for clocks; and from the same PR, where the history knows the PR.
+		sql<DoneRow[]>`select d.item_id, d.title, d.last_body, d.removed_oid, d.removed_at,
+				d.pr_number, e.login as deleted_by, e.at as deleted_at
+			from done_item d
+			left join lateral (
+				select e.op, e.at, e.pr_number, u.github_login as login from edit_log e
+				left join app_user u on u.id = e.user_id
+				where e.project_id = d.project_id and e.item_id = d.item_id and e.error is null
+				order by e.at desc limit 1
+			) e on e.op = 'remove' and e.at <= d.removed_at + interval '10 minutes'
+				and (d.pr_number is null or e.pr_number is null or e.pr_number = d.pr_number)
+			where d.project_id = ${projectId}`,
 		sql<{ oid: string; kind: string; parsed_json: unknown }[]>`
 			select distinct on (b.oid, b.kind) b.oid, b.kind, b.parsed_json
 			from ref_file f
@@ -122,7 +136,8 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			lastBody: d.last_body,
 			removedOid: d.removed_oid,
 			removedAt: d.removed_at.toISOString(),
-			prNumber: d.pr_number
+			prNumber: d.pr_number,
+			deleted: d.deleted_at ? { by: d.deleted_by, at: d.deleted_at.toISOString() } : null
 		})),
 		lastSyncAt: p.last_sync_at?.toISOString() ?? null,
 		lastError: p.last_error,

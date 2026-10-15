@@ -43,7 +43,29 @@
 		{/each}
 	</ul>
 {:else}
-	<p class="muted">Nothing has been removed from the backlog yet.</p>
+	<p class="muted">Nothing has shipped yet.</p>
+{/if}
+
+{#if data.deleted.length}
+	<details class="deleted">
+		<summary>Deleted ({data.deleted.length})</summary>
+		<p class="muted small">
+			Deleted with Project Magic’s Remove, so never shipped. Their ids are not used again.
+		</p>
+		<ul>
+			{#each data.deleted as d (d.id)}
+				<li id={d.id}>
+					<a href="/p/{repo}/i/{encodeURIComponent(d.id)}"
+						><code>{d.id}</code> {@html d.titleHtml}</a
+					>
+					<span class="muted"
+						>{ago(d.at)}{#if d.by}
+							· @{d.by}{/if}</span
+					>
+				</li>
+			{/each}
+		</ul>
+	</details>
 {/if}
 
 <style>
@@ -72,5 +94,12 @@
 	}
 	.muted {
 		font-size: 12.5px;
+	}
+	.deleted {
+		margin-top: 2rem;
+	}
+	.deleted summary {
+		cursor: pointer;
+		color: var(--text-3);
 	}
 </style>
