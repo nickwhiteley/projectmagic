@@ -173,11 +173,25 @@ the repository's id changes), or keep this one private as the full record and pu
 rewritten history as a new repository under another name. Nick chooses when the time comes.
 
 ### PM1 Epics
-**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm1-epics` · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
 `spec.md` §13.
+
+Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
+The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
+and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
+epic id is flagged in the health panel. **Left for PM28:** reading `epics.md`, and an Epic field
+on the item form (the key is kept when a form is saved, so it can be set in the file).
+
+### PM28 Epics: an `epics.md` file and an Epic field on the item form
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+
+What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
+description and an optional target, so the sync fetches and caches that file and the Epics tab
+shows the description and target. The add and edit forms get an *Epic* field that suggests the
+declared epics, so a person can set it without editing the file.
 
 ### PM2 Bug items
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
