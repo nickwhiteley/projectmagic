@@ -194,7 +194,7 @@ shows the description and target. The add and edit forms get an *Epic* field tha
 declared epics, so a person can set it without editing the file.
 
 ### PM2 Bug items
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm2-small-items` · **For:** agent
 
 `Type: bug` on an item, with `Found:` and `Raised:`, and an optional `bugs.md` as a second
 backlog file with a `BUG` prefix. The board gains a type filter and a bug lane. `spec.md` §13
@@ -212,7 +212,7 @@ shown as *inferred*.
 A question box answered from the cached parses.
 
 ### PM5 Activity feed
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm2-small-items` · **For:** agent
 
 Recent commits across every project, grouped by linked item.
 
@@ -226,10 +226,10 @@ The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: i
 login, the member list for each project, changing a role, and disabling a user.
 
 ### PM8 Mermaid in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm2-small-items` · **For:** agent
 
 ### PM21 Images in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm2-small-items` · **For:** agent
 
 The Docs tab shows a document's images as broken: `render.ts` resolves a relative `src` to the
 docs view, as it does for links, and GitHub's raw URLs need a token for a private repository.
@@ -261,7 +261,7 @@ production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and
 fixes, not production bugs.
 
 ### PM10 Accept a built item from the founder queue
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm2-small-items` · **For:** agent
 
 From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
