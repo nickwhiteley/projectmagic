@@ -3,6 +3,7 @@
 exports[`every route has an access rule (spec §11.2) > lists what each route checks 1`] = `
 {
   "/": "public",
+  "/activity": "signed-in",
   "/api/cron/sync": "machine",
   "/api/github/webhook": "machine",
   "/auth/github": "public",
