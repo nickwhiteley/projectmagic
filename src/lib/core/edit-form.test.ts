@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseBacklog, type Item } from './backlog.ts';
-import { editChange, formValues } from './edit-form.ts';
+import { editChange, formValues, statusChange } from './edit-form.ts';
 import { fixture } from './fixtures.ts';
 import { splice } from './splice.ts';
 
@@ -67,5 +67,52 @@ Body.
 		const bare = editable(parseBacklog('## Now\n\n### X1 Bare\n\nProse.\n').items[0]);
 		const change = editChange(bare, formValues(bare));
 		expect(change.meta).toEqual([{ key: 'Status', value: 'todo' }]);
+	});
+});
+
+describe('statusChange (the Board drag, PM27)', () => {
+	const text = `## Now
+
+### C1 Publish the catalogue
+**Status:** built · **Waiting:** Nick's check · **Size:** M
+
+Body.
+
+### C2 No meta line
+Body.
+`;
+	const b = parseBacklog(text);
+	const [c1, c2] = b.items.map(editable);
+	const apply = (id: string, change: ReturnType<typeof statusChange>) =>
+		splice(text, { op: 'edit', id, change });
+
+	it('built to done changes the status and clears the waiting reason', () => {
+		expect(apply('C1', statusChange(c1, 'done'))).toBe(
+			text.replace(
+				"**Status:** built · **Waiting:** Nick's check · **Size:** M",
+				'**Status:** done · **Size:** M'
+			)
+		);
+	});
+
+	it('is the same edit as saving the form with that status', () => {
+		const viaForm = editChange(c1, { ...formValues(c1), status: 'todo' });
+		expect(statusChange(c1, 'todo')).toEqual(viaForm);
+	});
+
+	it('sets the waiting reason for blocked, and keeps it otherwise', () => {
+		const out = apply('C1', statusChange(c1, 'blocked', 'the lawyer'));
+		expect(out).toContain('**Status:** blocked · **Waiting:** the lawyer · **Size:** M');
+		expect(apply('C1', statusChange(c1, 'blocked'))).toContain("**Waiting:** Nick's check");
+	});
+
+	it('an item with no meta line gets one', () => {
+		expect(apply('C2', statusChange(c2, 'todo'))).toContain(
+			'### C2 No meta line\n**Status:** todo'
+		);
+	});
+
+	it('changes nothing when the status is already that', () => {
+		expect(statusChange(c1, 'built')).toEqual({});
 	});
 });

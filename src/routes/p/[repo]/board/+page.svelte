@@ -5,7 +5,7 @@
 	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago } from '#lib/format.ts';
-	import { dragHandlers, type MoveState } from '#lib/move.ts';
+	import { dragHandlers, setStatus, type MoveState } from '#lib/move.ts';
 
 	let { data } = $props();
 	const repo = $derived(page.params.repo!);
@@ -30,9 +30,32 @@
 			.filter((l) => !forPath || l.cells.some((c) => c.length))
 	);
 	const moves = $state<MoveState>({ busy: null, message: null });
-	// Reordering needs every card in view: not while filtered.
-	const canDrag = $derived(page.data.project.canEdit && !forPath);
-	const drag = dragHandlers(page.params.repo!, moves, () => canDrag);
+	// Dropping a card into another column sets its status (PM27). In progress and in review come
+	// from branches and pull requests, so they can't be set. Blocked and built ask what they wait on.
+	let ask = $state<{ id: string; status: string; waiting: string } | null>(null);
+	function intoColumn(id: string, _from: string, to: string) {
+		if (to === 'in progress' || to === 'in review') {
+			moves.message = `${to} comes from branches and pull requests, so a card can't be dropped there.`;
+			return;
+		}
+		const card = lanes.flatMap((l) => l.cells.flat()).find((c) => c.id === id);
+		if ((to === 'blocked' || to === 'built') && !card?.waitingHtml)
+			ask = { id, status: to, waiting: '' };
+		else setStatus(page.params.repo!, id, to, null, moves);
+	}
+	async function confirmAsk() {
+		if (!ask?.waiting.trim()) return;
+		const { id, status, waiting } = ask;
+		ask = null;
+		await setStatus(page.params.repo!, id, status, waiting, moves);
+	}
+	const drag = dragHandlers(
+		page.params.repo!,
+		moves,
+		() => page.data.project.canEdit,
+		intoColumn,
+		() => !forPath
+	);
 	const totals = $derived(
 		data.columns.map((_, i) => lanes.reduce((n, l) => n + l.cells[i].length, 0))
 	);
@@ -53,11 +76,28 @@
 	/>
 </div>
 
+{#if ask}
+	<form
+		class="ask"
+		onsubmit={(e) => {
+			e.preventDefault();
+			confirmAsk();
+		}}
+	>
+		<label
+			>What is {ask.id}
+			{ask.status === 'blocked' ? 'blocked on' : 'waiting on'}?
+			<input bind:value={ask.waiting} required />
+		</label>
+		<button type="submit">Set {ask.status}</button>
+		<button type="button" class="secondary" onclick={() => (ask = null)}>Cancel</button>
+	</form>
+{/if}
 {#if moves.message}<p class="move-error" role="alert">{moves.message}</p>{/if}
-{#if canDrag}<p class="muted small">
-		Drag a card onto another to put it before that one, or onto a lane’s empty space to put it last
-		in that section. A card’s column comes from its status, so dragging between columns only
-		reorders.
+{#if page.data.project.canEdit}<p class="muted small">
+		Drag a card onto another in its column to put it before that one, or onto a lane’s empty space
+		to put it last in that section. Drag it into another column to set its status: todo, blocked,
+		built or done. In progress and in review come from branches and pull requests.
 	</p>{/if}
 <div
 	class="board"
@@ -84,14 +124,18 @@
 			>
 			<div class="cells">
 				{#each lane.cells as cell, i (i)}
-					<div class="cell" data-to={lane.section === null ? undefined : `end:${lane.section}`}>
+					<div
+						class="cell"
+						data-status={data.columns[i]}
+						data-to={lane.section === null ? undefined : `end:${lane.section}`}
+					>
 						{#each cell as it (it.id)}
 							<a
 								class="card"
 								class:busy={moves.busy === it.id}
 								href="/p/{repo}/i/{encodeURIComponent(it.id)}"
 								data-id={it.id}
-								draggable={canDrag}
+								draggable={page.data.project.canEdit}
 							>
 								<div class="top">
 									<span class="id">{it.id}</span>{#if it.star}<span class="star">★</span>{/if}
@@ -208,6 +252,16 @@
 	}
 	.cell:global(.drop-target) {
 		box-shadow: inset 0 0 0 2px var(--accent);
+	}
+	.ask {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		flex-wrap: wrap;
+		margin: 0.5rem 0;
+	}
+	.ask input {
+		min-width: 18rem;
 	}
 	.move-error {
 		color: var(--danger);
