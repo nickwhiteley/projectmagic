@@ -63,6 +63,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			job: it.job,
 			size: it.size,
 			assignee: it.assignee,
+			epic: it.epic,
 			section: it.section === null ? null : (s.sections[it.section]?.titleText ?? null),
 			status: it.status,
 			rule: it.statusSource.rule,

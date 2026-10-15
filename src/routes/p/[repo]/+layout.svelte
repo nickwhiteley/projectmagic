@@ -9,6 +9,7 @@
 	const tabs = $derived([
 		{ href: base, label: 'List', count: p.counts.items },
 		{ href: `${base}/board`, label: 'Board' },
+		{ href: `${base}/epics`, label: 'Epics', count: p.counts.epics, hide: !p.counts.epics },
 		{ href: `${base}/plan`, label: 'Plan', hide: !p.hasPlan },
 		{ href: `${base}/done`, label: 'Done', count: p.counts.done },
 		{ href: `${base}/branches`, label: 'Branches', count: p.counts.branches },

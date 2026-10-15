@@ -38,6 +38,10 @@ Keep to these conventions so it reads them correctly:
     them. Take an item that is for a person only when they say so, and then set `For:` to you.
   - **When you set an item to `built` and it needs a person to check it**, set `For:` to that
     person: `person`, or `person.<login>` when you know who.
+- **`**Epic:**` groups items**: `Epic: EP3` joins an item to epic EP3. Declare an epic as an
+  item (`### EP3 Billing`) or a section (`## EP3 Billing`) whose id is `EP` and a number. Project
+  Magic shows each epic's items by status, shipped ones included, so an item you remove when it
+  ships still counts for its epic.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
   of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
   exists only on this machine is invisible to Project Magic.

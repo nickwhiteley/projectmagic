@@ -27,6 +27,7 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 		job: it.job,
 		size: it.size,
 		assignee: it.assignee,
+		epic: it.epic,
 		status: it.status,
 		blocked: it.blocked,
 		pending: it.pending,
@@ -39,6 +40,11 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 }
 
 export type Row = ReturnType<typeof row>;
+
+/** The epics (PM1), for the List's and Board's filter: declared or named by an item. */
+export function epicsInUse(s: ProjectState): { id: string; title: string | null }[] {
+	return s.epics.map((e) => ({ id: e.id, title: e.title }));
+}
 
 /** The `For:` values in use (PM16), plus the two kinds, for suggestions and filters. */
 export function assigneesInUse(s: ProjectState): string[] {

@@ -656,10 +656,11 @@ test/fixtures/       real snapshots of both repositories' files, committed
 These are recorded so v0.1 doesn't paint them into a corner. Each one is also an item in this
 repository's `backlog.md`.
 
-- **Epics.** An epic is declared as a `##` or `###` heading with an id prefixed `EP` in
-  `backlog.md`, or in its own `epics.md`, with a short description and an optional target. Items
-  join one with `Epic: EP3`. Views: an epic roll-up across its items' statuses, and a filter.
-  v0.1 already keeps the `Epic` key, so agents can start tagging early.
+- **Epics** (built, PM1). An epic is declared as a `##` or `###` heading with an id prefixed
+  `EP` in `backlog.md`. Items join one with `Epic: EP3`. The *Epics* tab rolls each epic up
+  across its items' statuses, counting items that shipped (read from the item as it was removed),
+  and the List and Board filter by it. A value that isn't `EP` and a number is flagged in the
+  health panel. An `epics.md` file with descriptions and targets is not read yet.
 - **Bugs.** `Type: bug` on an item. They can also live in their own `bugs.md`, configured as a
   second backlog file, with a `BUG` prefix (`BUG12`), because Orchard already uses `B1`–`B14`. The board
   gains a type filter and a bug lane. v0.1 already keeps the `Type` key.

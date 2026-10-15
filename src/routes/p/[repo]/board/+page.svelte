@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
+	import EpicFilter from '#lib/components/EpicFilter.svelte';
 	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago } from '#lib/format.ts';
@@ -12,22 +13,29 @@
 	// The For filter (PM16), mirrored in the URL like the List's filters.
 	let assignee = $state(page.url.searchParams.get('for') ?? '');
 	const forPath = $derived(assigneeFilter(assignee, page.data.user?.login ?? null));
-	function setAssignee(value: string) {
-		assignee = value;
+	// The Epic filter (PM1) works the same way.
+	let epic = $state(page.url.searchParams.get('epic') ?? '');
+	function setFilter(key: 'for' | 'epic', value: string) {
+		if (key === 'for') assignee = value;
+		else epic = value;
 		const u = new URL(page.url.href);
-		if (value) u.searchParams.set('for', value);
-		else u.searchParams.delete('for');
+		if (value) u.searchParams.set(key, value);
+		else u.searchParams.delete(key);
 		goto(u.href, { replace: true, shallow: true });
 	}
+	const filtered = $derived(!!forPath || !!epic);
 	const lanes = $derived(
 		data.lanes
 			.map((l) => ({
 				...l,
 				cells: l.cells.map((c) =>
-					forPath ? c.filter((it) => assigneeMatches(it.assignee, forPath)) : c
+					c.filter(
+						(it) =>
+							(!forPath || assigneeMatches(it.assignee, forPath)) && (!epic || it.epic === epic)
+					)
 				)
 			}))
-			.filter((l) => !forPath || l.cells.some((c) => c.length))
+			.filter((l) => !filtered || l.cells.some((c) => c.length))
 	);
 	const moves = $state<MoveState>({ busy: null, message: null });
 	// Dropping a card into another column sets its status (PM27). In progress and in review come
@@ -68,11 +76,12 @@
 		Columns come from the files and branches, so cards move when the work does. Lanes are the
 		backlog’s sections, in order.
 	</p>
+	<EpicFilter value={epic} epics={data.epics} onchange={(v) => setFilter('epic', v)} />
 	<AssigneeFilter
 		value={assignee}
 		assignees={data.assignees}
 		signedIn={!!page.data.user}
-		onchange={setAssignee}
+		onchange={(v) => setFilter('for', v)}
 	/>
 </div>
 
@@ -143,6 +152,7 @@
 										{#if it.pending}<span class="tag pending">pending</span>{/if}
 										{#if it.job}<span class="tag">{it.job}</span>{/if}
 										{#if it.assignee}<span class="tag mono" title="For">{it.assignee}</span>{/if}
+										{#if it.epic}<span class="tag mono" title="Epic">{it.epic}</span>{/if}
 										{#if it.size}<span class="tag mono">{it.size}</span>{/if}
 									</span>
 								</div>
