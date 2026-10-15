@@ -18,6 +18,7 @@
 					>pending</span
 				>{/if}
 			{#if item.blocked && item.status !== 'blocked'}<span class="tag warn">blocked</span>{/if}
+			{#if item.type === 'bug'}<span class="tag bug" title="Type: bug">bug</span>{/if}
 			{#if item.job}<span class="tag">{item.job}</span>{/if}
 			{#if item.assignee}<span class="tag mono" title="For">{item.assignee}</span>{/if}
 			{#if item.epic}<span class="tag mono" title="Epic">{item.epic}</span>{/if}
@@ -86,6 +87,10 @@
 	.tag.pending {
 		border-color: var(--accent);
 		color: var(--accent);
+	}
+	.tag.bug {
+		border-color: var(--danger);
+		color: var(--danger);
 	}
 	.tag.warn {
 		border-color: var(--warn);

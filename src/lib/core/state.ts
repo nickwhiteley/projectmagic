@@ -119,6 +119,11 @@ export interface ItemView {
 	assignee: string | null;
 	/** Its epic's id (PM1), or null. */
 	epic: string | null;
+	/** `Type:` lower-cased, such as `bug` or `feature` (PM2); null when not given. */
+	type: string | null;
+	/** Where a bug was found and when it was raised, as written (PM2). */
+	found: string | null;
+	raised: string | null;
 	section: number | null;
 	line: number;
 	start: number;
@@ -333,6 +338,9 @@ export function assembleState(input: StateInput): ProjectState {
 			size: it.meta?.size ?? null,
 			assignee: it.meta?.for || null,
 			epic: epicId(it.meta?.epic),
+			type: it.meta?.type?.trim().toLowerCase() || null,
+			found: it.meta?.found || null,
+			raised: it.meta?.raised || null,
 			section: it.section,
 			line: it.line,
 			start: it.start,
