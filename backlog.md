@@ -130,7 +130,7 @@ don't say what they are.
   `specs/conventions.md`.
 
 **Question for Nick:** rename Job to Area everywhere (heading tag, filter, form), or only
-explain it on the form?
+explain it on the form?  - A rename is clearer I think
 
 ### PM12 A home page that explains Project Magic, and a README for strangers
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
