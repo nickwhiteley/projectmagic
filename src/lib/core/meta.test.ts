@@ -96,6 +96,16 @@ describe('updateMeta', () => {
 		);
 	});
 
+	it('adds For last, and removes it when emptied (PM16)', () => {
+		const line = formatMeta(updateMeta(entries, { for: 'person.nickwhiteley' }));
+		expect(line).toBe(
+			'**Status:** todo · **Size:** M · **Owner:** Nick · **Plan:** 46 · **For:** person.nickwhiteley'
+		);
+		const back = parseMeta(line)!;
+		expect(back.for).toBe('person.nickwhiteley');
+		expect(formatMeta(updateMeta(back.entries, { for: '' }))).toBe(formatMeta(entries));
+	});
+
 	it('builds a line from nothing', () => {
 		expect(formatMeta(updateMeta([], { status: 'todo', size: 'S', plan: ['5.8', ' 5.9 '] }))).toBe(
 			'**Status:** todo · **Size:** S · **Plan:** 5.8, 5.9'

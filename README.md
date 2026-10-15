@@ -202,6 +202,15 @@ of a push. Without a webhook, page loads, the *Refresh* button and the daily cro
    `projectmagic` and only touch `backlog.md`: add `if: github.head_ref != 'projectmagic'` to
    jobs that run on pull requests, and `paths-ignore: [backlog.md]` to push triggers
    (`spec.md` §10.4).
+5. **Optionally, keep Vercel from deploying them**: add to the repository's `vercel.json`
+
+   ```json
+   "git": { "deploymentEnabled": { "projectmagic": false } },
+   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'"
+   ```
+
+   The first skips the `projectmagic` branch's previews; the second skips any push to main that
+   only changes `backlog.md`, such as a merged edit.
 
 ## Developing
 

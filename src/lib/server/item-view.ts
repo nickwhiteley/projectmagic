@@ -26,6 +26,7 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 		titleText: it.titleText,
 		job: it.job,
 		size: it.size,
+		assignee: it.assignee,
 		status: it.status,
 		blocked: it.blocked,
 		pending: it.pending,
@@ -38,3 +39,9 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 }
 
 export type Row = ReturnType<typeof row>;
+
+/** The `For:` values in use (PM16), plus the two kinds, for suggestions and filters. */
+export function assigneesInUse(s: ProjectState): string[] {
+	const used = s.items.map((i) => i.assignee).filter((a): a is string => !!a);
+	return [...new Set(['person', 'agent', ...used])].sort();
+}

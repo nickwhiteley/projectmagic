@@ -1,5 +1,5 @@
 import { projectState } from '#lib/server/project-state.ts';
-import { row } from '#lib/server/item-view.ts';
+import { assigneesInUse, row } from '#lib/server/item-view.ts';
 import type { PageServerLoad } from './$types';
 
 const COLUMNS = ['todo', 'in progress', 'blocked', 'in review', 'built', 'done'] as const;
@@ -22,6 +22,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	);
 	return {
 		columns: COLUMNS,
+		assignees: assigneesInUse(s),
 		lanes,
 		shipped: recent.map((d) => ({ id: d.id, title: d.title, at: d.at }))
 	};

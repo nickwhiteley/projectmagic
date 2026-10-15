@@ -65,7 +65,12 @@
 
 <form method="POST" action="?/save" class="panel" use:enhance={track('save')}>
 	<input type="hidden" name="base" value={base} />
-	{#key values}<ItemForm {values} jobs={data.jobs} tasks={data.tasks} />{/key}
+	{#key values}<ItemForm
+			{values}
+			jobs={data.jobs}
+			tasks={data.tasks}
+			assignees={data.assignees}
+		/>{/key}
 	<div class="foot">
 		<p class="muted small">
 			Commits to <code>{page.data.project.main}</code> through the <code>projectmagic</code> branch, as

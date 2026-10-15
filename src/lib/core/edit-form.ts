@@ -14,6 +14,8 @@ export interface ItemFormValues {
 	waiting: string;
 	plan: string;
 	branch: string;
+	/** Who it is for (PM16); '' is anyone's. */
+	assignee: string;
 	body: string;
 }
 
@@ -45,6 +47,7 @@ export function formValues(it: EditableItem): ItemFormValues {
 		waiting: meta('waiting'),
 		plan: meta('plan'),
 		branch: meta('branch').replace(/`/g, ''),
+		assignee: meta('for').replace(/`/g, ''),
 		body: it.body
 	};
 }
@@ -68,6 +71,7 @@ export function editChange(it: EditableItem, v: ItemFormValues): ItemChange {
 			? { plan: v.plan ? v.plan.split(',') : [] }
 			: {}),
 		...(v.waiting !== was.waiting ? { waiting: v.waiting } : {}),
+		...(v.assignee !== was.assignee ? { for: v.assignee } : {}),
 		...(metaJob && v.job !== was.job ? { job: v.job } : {})
 	};
 	const meta = updateMeta(it.meta ?? [], fields);

@@ -1,5 +1,5 @@
 import { projectState } from '#lib/server/project-state.ts';
-import { row } from '#lib/server/item-view.ts';
+import { assigneesInUse, row } from '#lib/server/item-view.ts';
 import { md } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
@@ -32,6 +32,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			introHtml: sec.intro ? md(s, sec.intro) : null,
 			entries: entries(sec.index)
 		})),
+		assignees: assigneesInUse(s),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		health: {
 			warnings: h.warnings.map((w) => ({ line: w.line, message: w.message })),
@@ -39,6 +40,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			dangling: h.dangling.map((d) => `${d.ref} (from ${d.where})`),
 			unknownTasks: h.unknownTasks,
 			configWarnings: h.configWarnings,
+			assignees: h.assignees,
 			notes: h.notes
 		}
 	};

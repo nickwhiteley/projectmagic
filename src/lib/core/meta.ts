@@ -16,7 +16,17 @@ export function idKind(token: string): IdKind | null {
 }
 
 type KnownKey =
-	'status' | 'size' | 'job' | 'branch' | 'plan' | 'waiting' | 'type' | 'found' | 'raised' | 'epic';
+	| 'status'
+	| 'size'
+	| 'job'
+	| 'branch'
+	| 'plan'
+	| 'waiting'
+	| 'type'
+	| 'found'
+	| 'raised'
+	| 'epic'
+	| 'for';
 
 export interface MetaEntry {
 	/** The key as written, for showing unknown keys as-is. */
@@ -41,6 +51,8 @@ export interface Meta {
 	found?: string;
 	raised?: string;
 	epic?: string;
+	/** Who the item is for (PM16): `person…` or `agent…`, backticks removed. */
+	for?: string;
 	/** Entries whose key isn't a known one, kept and shown as-is. */
 	unknown: MetaEntry[];
 }
@@ -94,6 +106,9 @@ export function parseMeta(line: string): Meta | null {
 			case 'plan':
 				meta.plan = e.value.split(',').map(unquote).filter(Boolean);
 				break;
+			case 'for':
+				meta.for = unquote(e.value);
+				break;
 			case 'size':
 			case 'job':
 			case 'waiting':
@@ -123,6 +138,7 @@ export interface MetaFields {
 	branch?: string;
 	plan?: string[];
 	waiting?: string;
+	for?: string;
 }
 
 const FIELD_KEYS: [keyof MetaFields, string][] = [
@@ -131,7 +147,8 @@ const FIELD_KEYS: [keyof MetaFields, string][] = [
 	['job', 'Job'],
 	['branch', 'Branch'],
 	['plan', 'Plan'],
-	['waiting', 'Waiting']
+	['waiting', 'Waiting'],
+	['for', 'For']
 ];
 
 /**
