@@ -64,7 +64,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM16 Assign items to a person or an agent, and filter by it
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm16-assignment`
 
 So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
 2026-10-15.
