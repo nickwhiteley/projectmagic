@@ -46,7 +46,9 @@ export async function ask(
 		return { ok: false, reason: 'The model did not answer. Try again in a moment.' };
 	}
 	await db()`insert into inference_usage (scope, day, tokens) values (${scope}, current_date, ${reply.tokens})
-		on conflict (scope, day) do update set tokens = inference_usage.tokens + excluded.tokens`;
+		on conflict (scope, day) do update set tokens = inference_usage.tokens + excluded.tokens`.catch(
+		(e) => console.error('ask usage:', e instanceof Error ? e.message : e)
+	);
 	return {
 		ok: true,
 		html: renderMarkdown(linkAnswer(reply.text.trim(), d.known)),
