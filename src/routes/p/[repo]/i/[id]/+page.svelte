@@ -127,6 +127,18 @@
 					From {RULES[it.rule]}{it.rule === 2 || it.rule === 3 ? ` (${it.sourceDetail})` : ''}.
 				</p>
 				{#if it.waitingHtml}<p class="waiting small">Waiting on {@html it.waitingHtml}</p>{/if}
+				{#if it.inferred && !page.data.ai?.optedOut}
+					<p class="small">
+						<em>Inferred</em>: <StatusPill
+							status={it.inferred.status}
+							small
+						/>{#if it.inferred.waiting}
+							waiting on {it.inferred.waiting}{/if}
+					</p>
+					<p class="muted small">
+						Proposed by {it.inferred.model} from this item’s text. Add a meta line to replace it.
+					</p>
+				{/if}
 				{#if page.data.project.canEdit && it.status === 'built'}
 					<form method="POST" action="/p/{repo}/i/{encodeURIComponent(it.id)}/edit?/status">
 						<input type="hidden" name="status" value="done" />

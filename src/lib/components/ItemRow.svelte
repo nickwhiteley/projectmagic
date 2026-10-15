@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import StatusPill from './StatusPill.svelte';
 	import type { Row } from '#lib/server/item-view.ts';
 
@@ -27,7 +28,13 @@
 		<span class="source">
 			{item.source}{#if item.waitingHtml}
 				· <span class="waiting">waiting on {@html item.waitingHtml}</span>{/if}{#if item.noMeta}
-				· <span class="nometa">no meta line</span>{/if}
+				· <span class="nometa">no meta line</span
+				>{/if}{#if item.inferred && !page.data.ai?.optedOut}
+				·
+				<span class="inferred" title="Proposed by {item.inferred.model} from the item's text"
+					>inferred {item.inferred.status}{#if item.inferred.waiting}, waiting on {item.inferred
+							.waiting}{/if}</span
+				>{/if}
 		</span>
 	</summary>
 	{#if item.bodyHtml}<div class="body prose">{@html item.bodyHtml}</div>{/if}
@@ -87,6 +94,9 @@
 	.tag.pending {
 		border-color: var(--accent);
 		color: var(--accent);
+	}
+	.inferred {
+		font-style: italic;
 	}
 	.tag.bug {
 		border-color: var(--danger);

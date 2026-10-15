@@ -18,6 +18,7 @@ describe('parseConfig', () => {
 			activeBranchDays: 30,
 			newIdPrefix: null,
 			autoMerge: true,
+			inference: true,
 			productionEnvironments: ['Production*']
 		});
 	});
@@ -48,8 +49,16 @@ production_environments: ["Production – orchard-web"]
 			activeBranchDays: 14,
 			newIdPrefix: 'BP',
 			autoMerge: false,
+			inference: true,
 			productionEnvironments: ['Production – orchard-web']
 		});
+	});
+
+	it('reads inference: false, the opt-out from model-inferred statuses (PM3)', () => {
+		expect(parseConfig('inference: false\n', repo).config.inference).toBe(false);
+		const bad = parseConfig('inference: "no"\n', repo);
+		expect(bad.config.inference).toBe(true);
+		expect(bad.warnings).toEqual(['inference should be true or false; using the default']);
 	});
 
 	it('falls back per key, with a warning for each bad value and unknown key', () => {
