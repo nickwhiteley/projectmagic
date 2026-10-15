@@ -78,7 +78,7 @@ export async function fetchBranches(
 	now = Date.now()
 ): Promise<{ defaultBranch: string; branches: Branch[] }> {
 	const nodes: RefNode[] = [];
-	let defaultBranch = main;
+	let defaultBranch: string;
 	let after: string | null = null;
 	do {
 		type R = {
@@ -239,7 +239,9 @@ export async function syncProject(
 	let main = config?.main ?? 'main';
 	let paths = trackedPaths(config);
 	let days = config?.activeBranchDays ?? 30;
-	let { defaultBranch, branches } = await fetchBranches(gh, owner, repo, main, paths, days, now);
+	const fetched = await fetchBranches(gh, owner, repo, main, paths, days, now);
+	const defaultBranch = fetched.defaultBranch;
+	let branches = fetched.branches;
 	for (let round = 0; round < 2; round++) {
 		const mainRef =
 			branches.find((b) => b.name === main) ?? branches.find((b) => b.name === defaultBranch);

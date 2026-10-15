@@ -165,9 +165,9 @@ export async function applyEdit(
 
 	// 2–4. Read the branch's backlog, splice by id, and commit with the blob sha as
 	// compare-and-swap. A change underneath (409) means read again; three tries.
-	let commit = '';
-	let message = '';
-	let baseOid = '';
+	let commit: string;
+	let message: string;
+	let baseOid: string;
 	for (let attempt = 0; ; attempt++) {
 		const file = await gh.send<Contents>(
 			'GET',

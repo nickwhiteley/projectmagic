@@ -1,6 +1,6 @@
 import { projectState } from '#lib/server/project-state.ts';
 import { row } from '#lib/server/item-view.ts';
-import { inline, md } from '#lib/server/views.ts';
+import { md } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {

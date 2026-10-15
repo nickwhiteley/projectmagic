@@ -1,0 +1,12 @@
+# Read by Project Magic, including this one. Every key is optional; see spec.md §4.
+name: Project Magic
+backlog: backlog.md
+progress: PROGRESS.md
+docs:
+  - README.md
+  - spec.md
+  - specs/**/*.md
+  - docs/**/*.md
+  - design/README.md
+  - spikes/*/RESULT.md
+new_id_prefix: PM
