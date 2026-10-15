@@ -63,28 +63,48 @@ the `edit_log` rows are there. Spec §7.3 and the Done view (§9) say so.
 the bottom of the Done tab. A `dropped` status, for deletes made outside Project Magic, waits
 until it is needed.
 
-### PM16 Filter and assign items by who does them
+### PM16 Assign items to a person or an agent, and filter by it
 **Status:** todo · **Size:** M · **Type:** feature
 
-Filter the List and the Board by who does an item: a person or an AI agent, and later a
-particular person once there are more users (PM7), or a particular agent or model (a cheap one
-or one that thinks harder). The add and edit screens assign an item to someone.
+So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
+2026-10-15.
 
-The files are the record, so the assignment has to be written in `backlog.md`, where agents can
-read it too. The likely shape is a new meta key, `**Owner:** @nickwhiteley` for a person and
-`**Owner:** agent` or `**Owner:** agent:claude-opus` for an agent, added to
-`specs/conventions.md` and the parser, shown on rows and cards, and filterable.
+**The assignment is a meta key, `For:`, in `backlog.md`**, where agents read it too:
 
-**Questions for Nick:**
+    **Status:** todo · **Size:** S · **For:** person.nickwhiteley
 
-- **Assigned, or actually working?** Is this who an item is meant for, or who is working on it
-  now? The second can be inferred from who pushed the item's branch, with no new key. - By assigned (this is so I can see what I should be doing)
-- **How fine-grained for agents?** Just "agent", or the model as well? If the model, from a
-  fixed list (one per project in `.projectmagic.yml`) or free text? - agent and model, though model is optional. agent = any agent, agent.claude = any anthropic agent, agent.claude.opus = specific model. person = any person, person.nickwhiteley = only nickwhiteley user ID.  It is free text but the first part must be person or agent.
-- **What should an agent do with it?** Should the conventions tell agents to pick up only items
-  owned by `agent`, and leave items owned by a person alone? - Yes, they are not expected to work on tasks assigned to someone else.  THey can edit the assignment though.
-- **What does an item with no owner count as?** Anyone's, or a third filter value,
-  *unassigned*? - Anyone's
+- **The value is a dotted path**, free text whose first part is `person` or `agent`:
+  `person` (any person), `person.nickwhiteley` (a GitHub login), `agent` (any agent),
+  `agent.claude` (any Anthropic agent), `agent.claude.opus` (one model family). Anything else is
+  kept, shown, and flagged in the health panel.
+- **Agents name themselves `agent.<maker>.<family>`**, worked out from their own model, with no
+  version: Claude Opus 5.5 is `agent.claude.opus`. A version would add dots, and dots are levels.
+- **One value per item.** The hierarchy covers "any of these".
+- **No `For:` means anyone's.**
+
+**What matches what.** An item belongs to everyone its path covers, and to everyone below that:
+
+- A filter shows items for that path or below it, items for a more general path above it, and
+  unassigned ones. Nick's "mine" (`person.nickwhiteley`) is items for `person.nickwhiteley`,
+  for `person`, and for no one.
+- So an agent running as `agent.claude.opus` may take items for `agent.claude.opus`,
+  `agent.claude`, `agent` or no one, and not `agent.claude.sonnet` or anything for a person.
+
+**What it adds:**
+
+- **The parser** reads `For:` (no change to status derivation), and checks its first part.
+- **The List and the Board** get a *For* filter: *Mine*, *People*, *Agents*, and each value in
+  use, remembered per project. The value shows on rows and cards.
+- **The add and edit forms** get a *For* field, suggesting the values in use, empty by default.
+- **`specs/conventions.md`**, for agents:
+  - work only on items for you, for a path above you, or for no one;
+  - you may hand an item to a person, such as one you are blocked on, by setting `For:` to
+    them;
+  - take an item assigned to a person only when that person says so, and then set `For:` to
+    yourself;
+  - when you set an item to `built` and it needs a person to check it, set `For:` to that
+    person (`person`, or `person.<login>` when you know who).
+- **`spec.md`** §5.1 (the key) and §9 (the filter).
 
 ### PM19 An Edit button in the expanded list row
 **Status:** todo · **Size:** S · **Type:** feature
