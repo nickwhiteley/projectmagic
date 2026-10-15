@@ -7,12 +7,12 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM26 Hide Done
-**Status:** todo · **Size:** S
+**Status:** todo · **Size:** S · **For:** agent
 
 Hide Done items from the List view.
 
 ### PM17 A new item can 404 after Add, with nothing shown while it saves
-**Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug
+**Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **For:** person.nickwhiteley
 
 Reported by Nick on 2026-10-15. After **Add** on the add item screen nothing happens on screen for
 several seconds, then the browser goes to the new item's page and it says 404. Opening the list
@@ -42,7 +42,7 @@ The fix:
   item is in the state.
 
 ### PM24 Deleted items show as shipped
-**Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug
+**Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **For:** person.nickwhiteley
 
 Reported by Nick on 2026-10-15. An item deleted with **Remove → Delete it from the backlog now**
 appears on the Done tab, the Board's shipped column and its own page as *shipped*. PM15, PM18
@@ -112,7 +112,7 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 - **`spec.md`** §5.1 (the key) and §9 (the filter).
 
 ### PM22 Make the item form explain itself, and add Type
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Raised by Nick on 2026-10-15: the add item screen has no **Type**, and **Job** and **Plan tasks**
 don't say what they are.
@@ -133,7 +133,7 @@ don't say what they are.
 explain it on the form?
 
 ### PM12 A home page that explains Project Magic, and a README for strangers
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 - **`/` for a signed-out visitor** is a home page instead of a redirect to sign in: what Project
   Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in markdown in
@@ -149,7 +149,7 @@ explain it on the form?
   The history still holds them; that is PM14.
 
 ### PM14 Make the repository public
-**Status:** done · **Size:** M · **Type:** chore
+**Status:** done · **Size:** M · **Type:** chore · **For:** person.nickwhiteley
 
 Nick has decided to keep the repository private for now (2026-10-14). The current files are
 clean (PM12), but the history and GitHub still hold two private projects' backlogs and plans:
@@ -168,49 +168,49 @@ the repository's id changes), or keep this one private as the full record and pu
 rewritten history as a new repository under another name. Nick chooses when the time comes.
 
 ### PM1 Epics
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
 `spec.md` §13.
 
 ### PM2 Bug items
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 `Type: bug` on an item, with `Found:` and `Raised:`, and an optional `bugs.md` as a second
 backlog file with a `BUG` prefix. The board gains a type filter and a bug lane. `spec.md` §13
 and §16.4. PM9 measures the bugs that PRs fix; this shows the ones still open.
 
 ### PM3 Inferred status for items with no meta line
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 A model reads the prose and proposes a status and waiting reason. It is cached by blob `oid` and
 shown as *inferred*.
 
 ### PM4 Ask across projects
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 A question box answered from the cached parses.
 
 ### PM5 Activity feed
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 Recent commits across every project, grouped by linked item.
 
 ### PM6 Edit `PROGRESS.md` status cells and docs
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 ### PM7 More users: invitations, members and roles
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: invite by GitHub
 login, the member list for each project, changing a role, and disabling a user.
 
 ### PM8 Mermaid in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 ### PM21 Images in rendered docs
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 The Docs tab shows a document's images as broken: `render.ts` resolves a relative `src` to the
 docs view, as it does for links, and GitHub's raw URLs need a token for a private repository.
@@ -220,7 +220,7 @@ restrictive `Content-Security-Policy`, never inline, since a branch can hold any
 wrote. `docs/architecture.md` is the first document that needs it.
 
 ### PM19 An Edit button in the expanded list row
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 On the List, a row opens to show the item's detail, but editing means opening the item's page
 first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
@@ -229,7 +229,7 @@ shown only to people who can edit the project.
 **Question for Nick:** should the Board's cards get the same button?
 
 ### PM9 Delivery and quality
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
 DORA's four measures sized for one person and a team of agents: deployment frequency, lead time
 for changes, change failure rate and time to restore, from Vercel's GitHub deployments and
@@ -242,7 +242,7 @@ production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and
 fixes, not production bugs.
 
 ### PM10 Accept a built item from the founder queue
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
@@ -251,7 +251,7 @@ branch, so it needs phase 5's write path. It turns the queue from something to r
 something to clear.
 
 ### PM25 Batch edits: save several changes as one commit
-**Status:** todo · **Size:** M · **Type:** feature
+**Status:** todo · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
 (§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
@@ -285,7 +285,7 @@ main gets one commit for the batch.
   itself. Which would you accept?
 
 ### PM11 Set an item's status by dropping it into a Board column
-**Status:** todo · **Size:** S · **Type:** feature
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 Dropping a card into another column on the Board only reorders it today (task 5.3). Make a drop
 into **todo**, **blocked**, **built** or **done** also set `Status:` in the item's meta line, as an
@@ -295,7 +295,7 @@ into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 
 dragging E5 expecting its status to change.
 
 ### PM13 Show that a navigation is under way
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Straight after PM12. Clicking a project in the left navigation can take seconds before anything
 changes, so people click again and again. Show at once that something is happening: the clicked
@@ -306,7 +306,7 @@ GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection
 project's state) and fix what dominates.
 
 ### PM20 Organisations: one Project Magic for many teams
-**Status:** todo · **Size:** L · **Type:** feature
+**Status:** todo · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
 
 Anyone could set up Project Magic for their own organisation and invite their colleagues,
 without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
