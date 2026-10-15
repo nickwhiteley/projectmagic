@@ -6,6 +6,11 @@ Magic can read its own backlog.
 
 ## After v0.1
 
+### PM26 Hide Done
+**Status:** todo · **Size:** S
+
+Hide Done items from the List view.
+
 ### PM17 A new item can 404 after Add, with nothing shown while it saves
 **Status:** done · **Waiting:** Nick's check · **Size:** S · **Type:** bug
 
