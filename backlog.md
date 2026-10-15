@@ -140,8 +140,8 @@ clean (PM12), but the history and GitHub still hold two private projects' backlo
 
 - **The git history**: every earlier commit has the old fixtures, golden files and Stitch exports,
   and the projects' names and details in the spec, the plan and the tests. A rewrite removes the
-  paths and applies the same replacement map PM12 used (Orchard → Orchard, Lantern →
-  Lantern, and so on).
+  paths and applies the same replacement map PM12 used, so the real names become Orchard and
+  Lantern.
 - **GitHub's pull requests**: closed and merged PRs keep their descriptions, their diffs and the
   commits behind them, which a force-push doesn't reach. PR #6's diff holds both backlogs in full,
   and many descriptions quote them. Only deleting the repository removes them.
