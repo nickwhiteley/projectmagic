@@ -4,6 +4,52 @@
 
 	let { data } = $props();
 	const repo = $derived(page.params.repo!);
+	let article = $state<HTMLElement>();
+
+	// Mermaid diagrams (PM8): a ```mermaid fence arrives as code.language-mermaid in sanitised
+	// HTML, and is drawn in the browser. Mermaid loads only on a page that has one, and runs with
+	// its strict security level, so a diagram can't carry script or click handlers.
+	$effect(() => {
+		void data.html;
+		const blocks = article?.querySelectorAll<HTMLElement>('pre > code.language-mermaid');
+		if (!blocks?.length) return;
+		let cancelled = false;
+		(async () => {
+			const { default: mermaid } = await import('mermaid');
+			const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+			mermaid.initialize({
+				startOnLoad: false,
+				securityLevel: 'strict',
+				theme: dark ? 'dark' : 'neutral'
+			});
+			let n = 0;
+			for (const code of blocks) {
+				const pre = code.parentElement!;
+				try {
+					const { svg } = await mermaid.render(
+						`mermaid-${Date.now()}-${n++}`,
+						code.textContent ?? ''
+					);
+					if (cancelled) return;
+					const figure = document.createElement('div');
+					figure.className = 'diagram';
+					figure.innerHTML = svg;
+					pre.replaceWith(figure);
+				} catch (e) {
+					// Leave the source showing, with what mermaid said.
+					pre.insertAdjacentHTML(
+						'afterend',
+						`<p class="diagram-error">This diagram has an error: ${String(
+							(e as Error).message ?? e
+						).replace(/[<&]/g, ' ')}</p>`
+					);
+				}
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	});
 
 	// The tree: directories as headings, files beneath, in the order selectDocs gives.
 	const tree = $derived.by(() => {
@@ -49,7 +95,7 @@
 	</nav>
 
 	{#if data.html}
-		<article>
+		<article bind:this={article}>
 			<p class="path mono muted">
 				{data.path}{#if data.ref !== data.branches[0]}
 					on {data.ref}{/if} · <a href={data.githubUrl}>GitHub</a>
@@ -66,6 +112,19 @@
 </div>
 
 <style>
+	:global(.diagram) {
+		overflow-x: auto;
+		margin: 1rem 0;
+	}
+	:global(.diagram svg) {
+		max-width: 100%;
+		height: auto;
+	}
+	:global(.diagram-error) {
+		color: var(--danger);
+		font-size: 13px;
+	}
+
 	.docs {
 		display: grid;
 		grid-template-columns: 15rem minmax(0, 1fr) 14rem;

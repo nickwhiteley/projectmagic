@@ -56,6 +56,12 @@ describe('renderMarkdown', () => {
 		expect(html).toContain('href="/p/r/docs/docs/d.md"');
 	});
 
+	it('keeps the language class on a code fence, so mermaid can find its diagrams (PM8)', () => {
+		const html = renderMarkdown('```mermaid\ngraph TD\n  A-->B\n```');
+		expect(html).toContain('<pre><code class="language-mermaid">');
+		expect(html).toContain('A-->B');
+	});
+
 	it('gives headings ids and collects a table of contents', () => {
 		const toc: { depth: number; text: string; id: string }[] = [];
 		const html = renderMarkdown(
