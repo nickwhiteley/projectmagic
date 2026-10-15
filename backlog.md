@@ -98,6 +98,16 @@ login, the member list for each project, changing a role, and disabling a user.
 ### PM8 Mermaid in rendered docs
 **Status:** todo · **Size:** S · **Type:** feature
 
+### PM21 Images in rendered docs
+**Status:** todo · **Size:** S · **Type:** feature
+
+The Docs tab shows a document's images as broken: `render.ts` resolves a relative `src` to the
+docs view, as it does for links, and GitHub's raw URLs need a token for a private repository.
+Serve an image from the branch's tree through the app, with the installation token and the
+project's view permission, cached by blob oid like `doc_blob`. SVG goes out as an image with a
+restrictive `Content-Security-Policy`, never inline, since a branch can hold anything an agent
+wrote. `docs/architecture.md` is the first document that needs it.
+
 ### PM9 Delivery and quality
 **Status:** todo · **Size:** M · **Type:** feature
 
