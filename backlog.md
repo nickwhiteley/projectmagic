@@ -36,6 +36,37 @@ The fix:
 - **A test** for `syncNow()` returning `'queued'` during an edit: the edit still waits until the
   item is in the state.
 
+### PM24 Deleted items show as shipped
+**Status:** todo · **Size:** S · **Type:** bug
+
+Reported by Nick on 2026-10-15. An item deleted with **Remove → Delete it from the backlog now**
+appears on the Done tab, the Board's shipped column and its own page as *shipped*. PM15, PM18
+and PM23, all test items, show this way now.
+
+Done detection (spec §7.3) treats every id that leaves main's backlog as shipped, because agents
+prune shipped items without marking them done first. Project Magic's own delete looks the same
+in the history.
+
+**The fix:** Project Magic knows which removals were its deletes, because `edit_log` holds a
+`remove` row for each (PM15 in #35, PM18 in #33 and PM23 in #41). An id whose removal matches one
+is *deleted*:
+
+- left off the Done tab, the Board's shipped column and the overview's counts;
+- its page says "Deleted on 15 Oct by @nickwhiteley", with its last text, not "shipped";
+- its id still counts as used, so it is never suggested again.
+
+A removal made outside Project Magic stays shipped, as now. It applies to past deletes too, since
+the `edit_log` rows are there. Spec §7.3 and the Done view (§9) say so.
+
+**Questions for Nick:**
+
+- **Where should deleted items show?** Nowhere but their own page, or in a collapsed *Deleted*
+  list at the bottom of the Done tab?
+- **What about deletes outside Project Magic?** An agent or a person deleting an item that won't
+  ship, in an editor or on GitHub, would still look shipped. One way to mark it: a new status
+  `dropped`, set before pruning, so an item whose last status was `dropped` counts as deleted.
+  Worth adding to the conventions now, or later if it comes up?
+
 ### PM16 Filter and assign items by who does them
 **Status:** todo · **Size:** M · **Type:** feature
 
