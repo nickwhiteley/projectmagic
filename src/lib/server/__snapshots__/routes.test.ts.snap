@@ -6,6 +6,7 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/activity": "signed-in",
   "/api/cron/sync": "machine",
   "/api/github/webhook": "machine",
+  "/ask": "signed-in",
   "/auth/github": "public",
   "/auth/github/callback": "public",
   "/auth/signout": "public",

@@ -66,4 +66,10 @@ describe('inferred status (PM3)', () => {
 		const b2 = state([guess('B2', 'x')]).items.find((i) => i.id === 'B2')!;
 		expect(b2.inferred).toBeNull();
 	});
+
+	it('says whether the project allows models, for Ask and inference (PM4)', () => {
+		expect(state([]).inferenceAllowed).toBe(true);
+		const off = parseConfig('inference: false\n', { name: 'x', defaultBranch: 'main' }).config;
+		expect(off.inference).toBe(false);
+	});
 });

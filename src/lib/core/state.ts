@@ -223,6 +223,8 @@ export interface ProjectState {
 	main: string;
 	lastSyncAt: string | null;
 	hasBacklog: boolean;
+	/** False when the project opted out of models with `inference: false` (PM3, PM4). */
+	inferenceAllowed: boolean;
 	preambleText: string;
 	sections: Section[];
 	items: ItemView[];
@@ -490,6 +492,7 @@ export function assembleState(input: StateInput): ProjectState {
 		main: config.main,
 		lastSyncAt: input.lastSyncAt,
 		hasBacklog: !!main?.backlog,
+		inferenceAllowed: config.inference !== false,
 		preambleText: main?.backlog?.preambleText ?? '',
 		sections: main?.backlog?.sections ?? [],
 		items: views,
