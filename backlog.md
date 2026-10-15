@@ -12,7 +12,7 @@ Magic can read its own backlog.
 Hide Done items from the List view.
 
 ### PM27 Board drag changes status
-**Status:** todo · **Size:** S–M
+**Status:** todo · **Size:** S–M · **For:** agent
 
 When i drag an item on the Board view into a different status it should update the status as though I had used the Edit screen.  This is particularly important to move from built to done as they are all done by a person.
 Looks like PM11 has similar ideas
