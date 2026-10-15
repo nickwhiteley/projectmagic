@@ -12,13 +12,31 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	if (!it) {
 		const done = s.done.find((d) => d.id === params.id);
 		if (!done) {
+			// Deleted with Project Magic's Remove: say so, with its last text (PM24).
+			const gone = s.deleted.find((d) => d.id === params.id);
+			if (gone)
+				return {
+					adding: false,
+					deleted: {
+						id: gone.id,
+						title: gone.title,
+						at: gone.at,
+						by: gone.by,
+						commit: gone.commit,
+						bodyHtml: md(s, gone.body.replace(/^###[^\n]*\n/, ''))
+					},
+					done: null,
+					item: null,
+					repoUrl: `https://github.com/${s.owner}/${s.repo}`
+				};
 			// Just added, and the sync hasn't caught up: say so, and the page refreshes (PM17).
 			if (await edits.justAdded(locals.project!.id, params.id))
-				return { adding: true, done: null, item: null };
+				return { adding: true, deleted: null, done: null, item: null };
 			error(404, `No item ${params.id}`);
 		}
 		return {
 			adding: false,
+			deleted: null,
 			done: {
 				id: done.id,
 				title: done.title,
@@ -27,13 +45,15 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 				pr: done.pr,
 				bodyHtml: md(s, done.body.replace(/^###[^\n]*\n/, ''))
 			},
-			item: null
+			item: null,
+			repoUrl: `https://github.com/${s.owner}/${s.repo}`
 		};
 	}
 	const linked = new Set(it.branches.map((b) => b.name));
 	const deploy = new Set(s.branches.filter((b) => b.isDeploy).map((b) => b.name));
 	return {
 		adding: false,
+		deleted: null,
 		done: null,
 		item: {
 			id: it.id,

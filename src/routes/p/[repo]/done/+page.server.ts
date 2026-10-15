@@ -13,6 +13,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			commit: d.commit,
 			pr: d.pr,
 			unpruned: d.unpruned
+		})),
+		deleted: s.deleted.map((d) => ({
+			id: d.id,
+			titleHtml: inline(s, d.title),
+			at: d.at,
+			by: d.by
 		}))
 	};
 };

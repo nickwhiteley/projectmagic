@@ -36,6 +36,33 @@ The fix:
 - **A test** for `syncNow()` returning `'queued'` during an edit: the edit still waits until the
   item is in the state.
 
+### PM24 Deleted items show as shipped
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug
+
+Reported by Nick on 2026-10-15. An item deleted with **Remove → Delete it from the backlog now**
+appears on the Done tab, the Board's shipped column and its own page as *shipped*. PM15, PM18
+and PM23, all test items, show this way now.
+
+Done detection (spec §7.3) treats every id that leaves main's backlog as shipped, because agents
+prune shipped items without marking them done first. Project Magic's own delete looks the same
+in the history.
+
+**The fix:** Project Magic knows which removals were its deletes, because `edit_log` holds a
+`remove` row for each (PM15 in #35, PM18 in #33 and PM23 in #41). An id whose removal matches one
+is *deleted*:
+
+- left off the Done tab's shipped list, the Board's shipped column and the overview's counts,
+  and listed in a collapsed *Deleted* list at the bottom of the Done tab;
+- its page says "Deleted on 15 Oct by @nickwhiteley", with its last text, not "shipped";
+- its id still counts as used, so it is never suggested again.
+
+A removal made outside Project Magic stays shipped, as now. It applies to past deletes too, since
+the `edit_log` rows are there. Spec §7.3 and the Done view (§9) say so.
+
+**Decided by Nick on 2026-10-15:** deleted items are listed in a collapsed *Deleted* list at
+the bottom of the Done tab. A `dropped` status, for deletes made outside Project Magic, waits
+until it is needed.
+
 ### PM16 Filter and assign items by who does them
 **Status:** todo · **Size:** M · **Type:** feature
 

@@ -23,7 +23,9 @@
 </script>
 
 <svelte:head
-	><title>{data.item?.id ?? data.done?.id ?? page.params.id} · {page.data.project.name}</title
+	><title
+		>{data.item?.id ?? data.done?.id ?? data.deleted?.id ?? page.params.id} · {page.data.project
+			.name}</title
 	></svelte:head
 >
 
@@ -31,6 +33,22 @@
 	<p class="muted" role="status" aria-live="polite">
 		Adding <code>{page.params.id}</code>. It shows here as soon as GitHub has it.
 	</p>
+{:else if data.deleted}
+	<article class="item">
+		<div class="main">
+			<p class="muted"><code>{data.deleted.id}</code> · deleted</p>
+			<h2>{data.deleted.title}</h2>
+			<p class="muted small">
+				Deleted from the backlog {ago(data.deleted.at)}{#if data.deleted.by}
+					by @{data.deleted.by}{/if}
+				in
+				<a href="{data.repoUrl}/commit/{data.deleted.commit}"
+					><code>{data.deleted.commit.slice(0, 7)}</code></a
+				>. It was never shipped. Its last text on main:
+			</p>
+			<div class="prose">{@html data.deleted.bodyHtml}</div>
+		</div>
+	</article>
 {:else if data.done}
 	<article class="item">
 		<div class="main">

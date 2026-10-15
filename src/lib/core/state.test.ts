@@ -146,6 +146,15 @@ describe('assembleState: orchard', () => {
 				removedOid: '0e577f9',
 				removedAt: '2026-09-22T10:00:00Z',
 				prNumber: 4
+			},
+			{
+				itemId: 'B9',
+				title: 'A test item',
+				lastBody: '…',
+				removedOid: '5d0c1a2',
+				removedAt: '2026-10-12T10:00:00Z',
+				prNumber: null,
+				deleted: { by: 'nickwhiteley', at: '2026-10-12T10:00:02Z' }
 			}
 		],
 		lastSyncAt: null,
@@ -179,5 +188,20 @@ describe('assembleState: orchard', () => {
 			['B5', false],
 			['C7', false]
 		]);
+	});
+
+	it('keeps a deleted item out of done, and its id out of reach of new items (PM24)', () => {
+		expect(s.deleted).toEqual([
+			{
+				id: 'B9',
+				title: 'A test item',
+				at: '2026-10-12T10:00:00Z',
+				commit: '5d0c1a2',
+				by: 'nickwhiteley',
+				body: '…'
+			}
+		]);
+		expect(s.done.map((d) => d.id)).not.toContain('B9');
+		expect(s.usedIds).toContain('B9');
 	});
 });
