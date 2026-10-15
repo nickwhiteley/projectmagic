@@ -21,7 +21,12 @@ export default defineConfig(
 		rules: {
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
-			'no-undef': 'off'
+			'no-undef': 'off',
+			// Every {@html} is markdown rendered on the server through rehype-sanitize (render.ts,
+			// spec §11.3), never raw text from a branch.
+			'svelte/no-at-html-tags': 'off',
+			// The app has no base path, so its absolute hrefs need no resolve().
+			'svelte/no-navigation-without-resolve': 'off'
 		}
 	},
 	{
@@ -45,7 +50,7 @@ export default defineConfig(
 					patterns: [
 						{ group: ['node:*', 'fs', 'path', 'http', 'https'], message: 'The core does no I/O.' },
 						{
-							group: ['#lib/server/*', '#lib/server/*', '../server/*'],
+							group: ['#lib/server/*', '$lib/server/*', '../server/*'],
 							message: 'The core is pure.'
 						}
 					]

@@ -22,9 +22,9 @@
 			{#if item.size}<span class="tag size">{item.size}</span>{/if}
 		</span>
 		<span class="source">
-			{item.source}{#if item.waitingHtml}{' · '}<span class="waiting"
-					>waiting on {@html item.waitingHtml}</span
-				>{/if}{#if item.noMeta}{' · '}<span class="nometa">no meta line</span>{/if}
+			{item.source}{#if item.waitingHtml}
+				· <span class="waiting">waiting on {@html item.waitingHtml}</span>{/if}{#if item.noMeta}
+				· <span class="nometa">no meta line</span>{/if}
 		</span>
 	</summary>
 	{#if item.bodyHtml}<div class="body prose">{@html item.bodyHtml}</div>{/if}

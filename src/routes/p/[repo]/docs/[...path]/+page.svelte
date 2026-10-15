@@ -7,6 +7,7 @@
 
 	// The tree: directories as headings, files beneath, in the order selectDocs gives.
 	const tree = $derived.by(() => {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local to the derivation
 		const groups = new Map<string, string[]>();
 		for (const p of data.docs) {
 			const dir = p.includes('/') ? p.slice(0, p.lastIndexOf('/')) : '';

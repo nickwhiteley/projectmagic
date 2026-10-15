@@ -8,9 +8,9 @@ export function respond<E extends object>(result: WriteResult, done: string, ext
 	switch (result.kind) {
 		case 'merged':
 		case 'unchanged':
-			redirect(303, done);
+			return redirect(303, done);
 		case 'pending':
-			redirect(303, `${done}${done.includes('?') ? '&' : '?'}pending=1`);
+			return redirect(303, `${done}${done.includes('?') ? '&' : '?'}pending=1`);
 		case 'conflict':
 			return fail(409, {
 				...extra,
