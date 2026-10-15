@@ -516,13 +516,21 @@ the head. A merged edit changes only `backlog.md`, so the push to main is skippe
 lantern#71).
 
 **Vercel deploys every branch and every push to main**, so an edit causes a preview deploy of
-`projectmagic` and, once merged, a production deploy that changes nothing. Each Vercel project can
-skip both with an Ignored Build Step that exits 0 when a commit touches nothing but
+`projectmagic` and, once merged, a production deploy that changes nothing. A managed repository's
+`vercel.json` skips both: `deploymentEnabled` turns off the branch, and `ignoreCommand` is an
+Ignored Build Step that exits 0, skipping the build, when a commit touches nothing but
 `backlog.md`:
 
-```sh
-git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'
+```json
+{
+	"git": { "deploymentEnabled": { "projectmagic": false } },
+	"ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'"
+}
 ```
+
+A squash merge is one commit on main, so `HEAD^` is main before the edit. An agent's commit that
+only changes `backlog.md` is skipped too. If the command fails, say because the clone has no
+parent commit, it exits non-zero and Vercel builds. Project Magic's own `vercel.json` carries both.
 
 Until that is set, §16 doesn't count deploys whose commit is a Project Magic edit.
 
