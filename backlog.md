@@ -173,7 +173,7 @@ the repository's id changes), or keep this one private as the full record and pu
 rewritten history as a new repository under another name. Nick chooses when the time comes.
 
 ### PM1 Epics
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm1-epics` · **For:** agent
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
