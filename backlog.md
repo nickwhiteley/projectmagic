@@ -130,11 +130,6 @@ branches and PRs (§7.2), so a drop there still only reorders, and the Board sho
 into blocked or built should ask for the *Waiting* reason. Asked for by Nick on 2026-10-14, after
 dragging E5 expecting its status to change.
 
-### PM15 Test item
-**Status:** todo · **Size:** S–M
-
-Make projects great again
-
 ### PM13 Show that a navigation is under way
 **Status:** in review · **Branch:** `feat/pm13-navigation` · **Size:** S · **Type:** feature
 
