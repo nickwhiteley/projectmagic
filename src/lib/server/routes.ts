@@ -17,6 +17,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	// Signed out, the home page; signed in, the overview.
 	'/': { kind: 'public' },
 	'/search': { kind: 'signed-in' },
+	'/activity': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },

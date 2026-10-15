@@ -35,6 +35,7 @@
 					aria-current={path === '/' ? 'page' : undefined}
 					aria-busy={busy('/') && going === '/' ? true : undefined}>Overview</a
 				>
+				<a href="/activity" aria-current={path === '/activity' ? 'page' : undefined}>Activity</a>
 				<a href="/search" aria-current={path === '/search' ? 'page' : undefined}>Search</a>
 			</nav>
 			<div class="label group">Projects</div>
