@@ -335,3 +335,8 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
   - when you set an item to `built` and it needs a person to check it, set `For:` to that
     person (`person`, or `person.<login>` when you know who).
 - **`spec.md`** §5.1 (the key) and §9 (the filter).
+
+### PM27 Board drag changes status
+**Status:** todo · **Size:** S–M
+
+When i drag an item on the Board view into a different status it should update the status as though I had used the Edit screen.  This is particularly important to move from built to done as they are all done by a person.
