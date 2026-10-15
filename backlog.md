@@ -213,7 +213,7 @@ a second backlog file with a `BUG` prefix, so the sync fetches and caches it, id
 prefix, and the views read two backlogs. The Board gets a bug lane beside the section lanes.
 
 ### PM3 Inferred status for items with no meta line
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm3-inferred-status` · **For:** agent
 
 A model reads the prose and proposes a status and waiting reason. It is cached by blob `oid` and
 shown as *inferred*.
