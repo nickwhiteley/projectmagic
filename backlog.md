@@ -106,15 +106,6 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
     person (`person`, or `person.<login>` when you know who).
 - **`spec.md`** §5.1 (the key) and §9 (the filter).
 
-### PM19 An Edit button in the expanded list row
-**Status:** todo · **Size:** S · **Type:** feature
-
-On the List, a row opens to show the item's detail, but editing means opening the item's page
-first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
-shown only to people who can edit the project.
-
-**Question for Nick:** should the Board's cards get the same button?
-
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature
 
@@ -160,8 +151,8 @@ clean (PM12), but the history and GitHub still hold two private projects' backlo
 
 - **The git history**: every earlier commit has the old fixtures, golden files and Stitch exports,
   and the projects' names and details in the spec, the plan and the tests. A rewrite removes the
-  paths and applies the same replacement map PM12 used (Orchard → Orchard, Lantern →
-  Lantern, and so on).
+  paths and applies the same replacement map PM12 used, so the real names become Orchard and
+  Lantern.
 - **GitHub's pull requests**: closed and merged PRs keep their descriptions, their diffs and the
   commits behind them, which a force-push doesn't reach. PR #6's diff holds both backlogs in full,
   and many descriptions quote them. Only deleting the repository removes them.
@@ -223,6 +214,15 @@ project's view permission, cached by blob oid like `doc_blob`. SVG goes out as a
 restrictive `Content-Security-Policy`, never inline, since a branch can hold anything an agent
 wrote. `docs/architecture.md` is the first document that needs it.
 
+### PM19 An Edit button in the expanded list row
+**Status:** todo · **Size:** S · **Type:** feature
+
+On the List, a row opens to show the item's detail, but editing means opening the item's page
+first. Add an **Edit** button at the bottom of the open row, going to `/p/<repo>/i/<id>/edit`,
+shown only to people who can edit the project.
+
+**Question for Nick:** should the Board's cards get the same button?
+
 ### PM9 Delivery and quality
 **Status:** todo · **Size:** M · **Type:** feature
 
@@ -244,6 +244,40 @@ button on each built item in the founder queue (and on the item page) that marks
 an ordinary edit (§10): the meta line's status becomes `done`, through the `projectmagic`
 branch, so it needs phase 5's write path. It turns the queue from something to read into
 something to clear.
+
+### PM25 Batch edits: save several changes as one commit
+**Status:** todo · **Size:** M · **Type:** feature
+
+Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
+(§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
+row, such as setting a few statuses or reordering the backlog, are slow and fill main with
+`Backlog: edit …` commits.
+
+An optional **batch mode**: edits are applied to a working copy of `backlog.md` held by Project
+Magic, shown at once in the views as pending, and saved to GitHub together every few minutes or
+on request. The save is one commit on the `projectmagic` branch and one PR, merged as today, so
+main gets one commit for the batch.
+
+- **A project setting** (`.projectmagic.yml`, next to `auto_merge`) and a per-user choice, off by
+  default, so nobody has to use it. Saving each edit at once stays the default.
+- **The pending edits are stored in Postgres**, per project, as the item edits themselves (id,
+  operation, base `oid`), not as a whole file, so the batch can be replayed on the current
+  backlog and a later edit by an agent doesn't conflict with it.
+- **Save now** applies the pending edits in order to the current backlog on main in one commit.
+  A scheduled save (a cron every few minutes, or after a quiet period) does the same.
+- **Conflicts**: an edit whose item has changed on main since it was made is left pending and
+  shown, with the others saved.
+- **The views** show the pending edits on top of the cached state, marked as unsaved, with a
+  count and a *Discard* for each.
+
+**Questions for Nick:**
+- Is the working copy per user or per project? Per project is simpler and lets everyone see the
+  pending changes; per user keeps one person's half-finished reordering out of other people's views.
+- How often should it save: a fixed interval (5 minutes), after a quiet period (60 seconds with
+  no new edit), or only when asked?
+- Vercel's cron is daily on the free plan. A save every few minutes needs either a paid plan, a
+  save that piggybacks on page loads and webhooks, or a quiet-period save started by the edit
+  itself. Which would you accept?
 
 ### PM11 Set an item's status by dropping it into a Board column
 **Status:** todo · **Size:** S · **Type:** feature

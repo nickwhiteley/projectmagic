@@ -243,4 +243,4 @@ the markdown parsed with remark. The unit tests run against real backlogs and pl
 
 ## Licence
 
-[MIT](LICENSE).
+[MIT](LICENSE). Copyright (c) 2026 Nick Whiteley.
