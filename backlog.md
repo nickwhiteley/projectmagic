@@ -220,10 +220,9 @@ shown as *inferred*.
 
 
 Model is selectable (OpenAI, Anthropic, Ollama) but initially uses Ollama models.
-Limits on token usage per tenant (see PM26) or designed with tenant in mind. Users and tenants can opt out.
+Limits on token usage per tenant (see PM20) or designed with tenant in mind. Users and tenants can opt out.
 
-Built (PM3 answers). One reading to check: your note says "per tenant (see PM26)", and PM26 is
-Hide Done, so I took PM20, the tenant item.
+Built (PM3 answers).
 
 - **Model**: chosen by environment, `INFERENCE_PROVIDER` of `ollama`, `openai` or `anthropic`,
   with `INFERENCE_MODEL`, `INFERENCE_BASE_URL` (Ollama) or `INFERENCE_API_KEY`. Unset, it is off.
@@ -244,7 +243,7 @@ Hide Done, so I took PM20, the tenant item.
   no proposals until they exist.
 
 ### PM4 Ask across projects
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm4-ask` · **For:** agent
 
 A question box answered from the cached parses.
 
