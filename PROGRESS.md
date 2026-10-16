@@ -71,7 +71,7 @@ Sizes are rough: S is about half a day of agent work, M is a day or two.
 | 4.4 | Plan, Done and Branches tabs | **done** |
 | 4.5 | Docs: the tree, rendering with sanitising, id and task autolinks, relative links, branch picker. **M** | **done**: tree per branch head from the `docs` globs, text cached by blob oid in `doc_blob`, contents from h2–h3 |
 | 4.6 | Search across projects | **done**: id, then title, then body, across every visible project's main |
-| 4.7 | **Deploy v0.1-read** to Vercel and Neon. Point the App's webhook at it. Acceptance: Nick reads both projects' state without asking an agent. | todo |
+| 4.7 | **Deploy v0.1-read** to Vercel and Neon. Point the App's webhook at it. Acceptance: Nick reads both projects' state without asking an agent. | done |
 | 4.8 | Inferred links for older branches (§6, source 6): cited spec filename, then title word overlap. Optional. **S** | **done**: only for branches nothing else links; a spec file named like the branch and cited by exactly one item, else a unique best title overlap (two or more words, most of the branch's). Shown dashed and labelled *inferred*; never used for status. No real branch is matched today, and none wrongly |
 
 ### Phase 5: editing
