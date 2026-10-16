@@ -278,6 +278,11 @@ injected link is dead text.
   AI features can't ask.
 - **Not in it**: no memory between questions, and no search of item bodies, which the digest
   leaves out to stay small. A body-level question would need retrieval first.
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
+
 ### PM5 Activity feed
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
@@ -393,11 +398,6 @@ something to clear.
 Built: an **Accept** button on each built item in the Overview's *Waiting on you* list and on
 the item page, for people who can edit. It is the Board's status edit with `done`, so *Waiting*
 is cleared, and it returns to where it came from.
-
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
 
 ### PM11 Set an item's status by dropping it into a Board column
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
