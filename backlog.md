@@ -356,7 +356,7 @@ shown only to people who can edit the project.
 **Question for Nick:** should the Board's cards get the same button?
 
 ### PM9 Delivery and quality
-**Status:** built · **Waiting:** `make migrate` (004), then Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 DORA's four measures sized for one person and a team of agents: deployment frequency, lead time
 for changes, change failure rate and time to restore, from Vercel's GitHub deployments and
