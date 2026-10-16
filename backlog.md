@@ -213,7 +213,7 @@ the List and the Board filter by Type when the project uses it. **Left for PM29:
 filter covers showing only bugs).
 
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Branch:** `feat/pm29-bugs-file` · **Size:** M · **Type:** feature · **For:** agent
 
 What PM2 left out. `spec.md` §13 and §16.4 let bugs live in an optional `bugs.md`, configured as
 a second backlog file with a `BUG` prefix, so the sync fetches and caches it, ids come from the
