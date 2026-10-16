@@ -394,6 +394,11 @@ Built: an **Accept** button on each built item in the Overview's *Waiting on you
 the item page, for people who can edit. It is the Board's status edit with `done`, so *Waiting*
 is cleared, and it returns to where it came from.
 
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
+
 ### PM11 Set an item's status by dropping it into a Board column
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
@@ -497,11 +502,6 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 **Status:** todo · **Size:** M–L
 
 Such as BitBucket
-
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
 
 ### PM32 Information for agents
 **Status:** todo · **Size:** M · **For:** agent
