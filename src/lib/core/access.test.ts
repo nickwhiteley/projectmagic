@@ -164,6 +164,47 @@ describe('isolation between tenants', () => {
 	});
 });
 
+describe('default and overridden project roles', () => {
+	const managed = (def: 'none' | 'viewer' | 'editor') =>
+		ctx(
+			'member',
+			{ access: 'managed', defaultProjectRole: def },
+			{ id: 'p3', hidden: false, tenantId: 't1' }
+		);
+
+	it('gives managed access a default role on a project nobody set a role on', () => {
+		expect(ofUser(user('n'), managed('viewer')).filter((a) => a in PROJECT_ACTIONS)).toEqual([
+			'view'
+		]);
+		expect(ofUser(user('n'), managed('editor')).filter((a) => a in PROJECT_ACTIONS)).toEqual([
+			'view',
+			'edit'
+		]);
+		expect(ofUser(user('n'), managed('none')).filter((a) => a in PROJECT_ACTIONS)).toEqual([]);
+	});
+
+	it('does not apply the default under access by GitHub', () => {
+		const c = ctx(
+			'member',
+			{ access: 'github', defaultProjectRole: 'editor' },
+			{ id: 'p3', hidden: false, tenantId: 't1' }
+		);
+		expect(can(user('n'), 'view', c)).toBe(false);
+	});
+
+	it('lets a role set on the project beat the default, up or down', () => {
+		const c = {
+			...managed('editor'),
+			memberships: [
+				{ userId: 'n', projectId: 'p3', role: 'none' as const },
+				{ userId: 'u', projectId: 'p3', role: 'maintainer' as const }
+			]
+		};
+		expect(can(user('n'), 'view', c)).toBe(false);
+		expect(can(user('u'), 'merge', c)).toBe(true);
+	});
+});
+
 describe('visibleProjects', () => {
 	it('lists what the user can view', () => {
 		const ps = [project, hidden, { id: 'p3', hidden: false, tenantId: 't1' }, elsewhere];

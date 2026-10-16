@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Signed in but in no tenant yet: create one, or wait to be invited.
 	if (!locals.tenant) redirect(303, '/welcome');
 	const projects = visibleProjects(locals.user, await projectsFor(locals), accessCtx(locals));
-	await revalidate(projects.map((p) => p.id));
+	// A support session only looks: it must not start work in the tenant.
+	if (!locals.tenant?.support) await revalidate(projects.map((p) => p.id));
 	const states = await Promise.all(projects.map((p) => loadProjectState(p.id)));
 	const lines = await Promise.all(
 		states.map((s, i) => loadDelivery(s, projects[i].id).then(cardLine, () => null))

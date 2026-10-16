@@ -28,21 +28,21 @@
 <section class="panel">
 	<h2>Actions</h2>
 	{#if t.status === 'pending'}
-		<form method="POST">
+		<form method="POST" action="?/move">
 			<input type="hidden" name="action" value="approve" /><button class="button primary"
 				>Approve</button
 			>
 		</form>
 	{/if}
 	{#if t.status === 'suspended'}
-		<form method="POST">
+		<form method="POST" action="?/move">
 			<input type="hidden" name="action" value="restore" /><button class="button primary"
 				>Unsuspend</button
 			>
 		</form>
 	{/if}
 	{#if t.status === 'active'}
-		<form method="POST" class="form">
+		<form method="POST" action="?/move" class="form">
 			<input type="hidden" name="action" value="suspend" />
 			<label
 				><span>Reason (shown to the tenant's admins)</span><input
@@ -59,13 +59,13 @@
 			Deleted {t.deletedAt ? ago(t.deletedAt, Date.now()) : ''}. Its data is purged 30 days after
 			deletion.
 		</p>
-		<form method="POST">
+		<form method="POST" action="?/move">
 			<input type="hidden" name="action" value="undelete" /><button class="button primary"
 				>Restore it</button
 			>
 		</form>
 	{:else}
-		<form method="POST" class="form">
+		<form method="POST" action="?/move" class="form">
 			<input type="hidden" name="action" value="delete" />
 			<label
 				><span>Type <code>{t.slug}</code> to delete it</span><input
@@ -78,6 +78,18 @@
 		</form>
 	{/if}
 </section>
+
+{#if t.status !== 'deleted'}
+	<form method="POST" action="?/support" class="panel form">
+		<h2>Open as support</h2>
+		<p class="muted small">
+			A read-only view of this tenant's projects for one hour. You must say why; the reason is
+			written to the audit log and shown to the tenant's admins.
+		</p>
+		<label><span>Reason</span><input type="text" name="reason" required minlength="5" /></label>
+		<button class="button">Open as support</button>
+	</form>
+{/if}
 
 <section>
 	<h2>Audit</h2>

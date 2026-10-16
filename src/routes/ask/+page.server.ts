@@ -23,6 +23,9 @@ async function optedOut(userId: string): Promise<boolean> {
 export const actions: Actions = {
 	default: async ({ locals, request }) => {
 		const question = String((await request.formData()).get('q') ?? '');
+		// A support session only looks: a model is never sent a tenant's content from one.
+		if (locals.tenant?.support)
+			return fail(403, { question, reason: 'Ask is off during a support session.' });
 		if (await optedOut(locals.user!.id))
 			return fail(403, { question, reason: 'You have hidden AI features.' });
 		// Projects that opted out of models are never sent (`inference: false`).

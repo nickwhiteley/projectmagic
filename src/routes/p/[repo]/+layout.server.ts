@@ -11,7 +11,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const project = locals.project!;
 	// A batch of pending edits that is due is saved when anyone loads a page (PM25), in the
 	// background: the page doesn't wait for the commit, and shows the edits until it lands.
-	waitUntil(edits.savePendingIfDue(project));
+	if (!locals.tenant?.support) waitUntil(edits.savePendingIfDue(project));
 	const s = await projectState({ locals, params });
 	const pending = s.batchEdits ? await listPending(project.id) : [];
 	const waiting = pending.filter((e) => !e.conflict && !e.claimed);

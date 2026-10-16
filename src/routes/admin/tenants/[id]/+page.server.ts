@@ -1,6 +1,7 @@
 import { asApp } from '#lib/server/github-app.ts';
 import { auditLog, moveTenant, tenantSummary, type TenantAction } from '#lib/server/platform.ts';
-import { error, fail } from '@sveltejs/kit';
+import { startSupport } from '#lib/server/support.ts';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
@@ -12,7 +13,17 @@ export const load: PageServerLoad = async ({ params }) => {
 const ACTIONS: TenantAction[] = ['approve', 'suspend', 'restore', 'delete', 'undelete'];
 
 export const actions: Actions = {
-	default: async ({ locals, params, request }) => {
+	/** A read-only, one-hour look at the tenant, for a stated reason the tenant's admins can read (§6.3). */
+	support: async ({ locals, params, request }) => {
+		const r = await startSupport(
+			locals.user!.id,
+			params.id,
+			String((await request.formData()).get('reason') ?? '')
+		);
+		if (!r.ok) return fail(400, { reason: r.reason });
+		redirect(303, '/');
+	},
+	move: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const action = String(form.get('action')) as TenantAction;
 		if (!ACTIONS.includes(action)) return fail(400, { reason: 'Unknown action.' });

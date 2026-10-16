@@ -7,6 +7,12 @@ import { db } from './db.ts';
 export interface TenantInfo extends TenantContext {
 	slug: string;
 	name: string;
+	/** Whether this tenant's members join by having GitHub access to its organisations (§3.3). */
+	joinByGithub: boolean;
+	/** When this person's GitHub-derived roles were last read, or null if due (§6.1). */
+	githubSyncedAt: string | null;
+	/** On a support session, when it ends. */
+	until?: string;
 }
 
 interface Row {
@@ -15,6 +21,10 @@ interface Row {
 	name: string;
 	status: TenantContext['status'];
 	role: TenantRole;
+	access: 'github' | 'managed' | null;
+	default_project_role: 'none' | 'viewer' | 'editor' | null;
+	join_by_github: boolean | null;
+	github_synced_at: Date | null;
 }
 
 const toTenant = (r: Row): TenantInfo => ({
@@ -22,15 +32,20 @@ const toTenant = (r: Row): TenantInfo => ({
 	slug: r.slug,
 	name: r.name,
 	status: r.status,
-	role: r.role
+	role: r.role,
+	access: r.access ?? 'github',
+	defaultProjectRole: r.default_project_role ?? 'none',
+	joinByGithub: r.join_by_github ?? true,
+	githubSyncedAt: r.github_synced_at?.toISOString() ?? null
 });
 
 /** The tenants a user belongs to, the one they used last first, then by name. Deleted ones are
  * not theirs any more. */
 export async function tenantsOf(userId: string): Promise<TenantInfo[]> {
 	const rows = await db()<Row[]>`
-		select t.id, t.slug, t.name, t.status, m.role
+		select t.id, t.slug, t.name, t.status, m.role, s.access, s.default_project_role, s.join_by_github, m.github_synced_at
 		from tenant_member m join tenant t on t.id = m.tenant_id
+		left join tenant_setting s on s.tenant_id = t.id
 		left join user_pref p on p.user_id = m.user_id
 		where m.user_id = ${userId} and t.status <> 'deleted'
 		order by (t.id = p.current_tenant_id) desc, lower(t.name)`;
@@ -96,7 +111,17 @@ export async function createTenant(
 				on conflict (user_id) do update set current_tenant_id = excluded.current_tenant_id`;
 			return {
 				ok: true,
-				tenant: { id: String(t.id), slug, name: name.trim(), status, role: 'admin' }
+				tenant: {
+					id: String(t.id),
+					slug,
+					name: name.trim(),
+					status,
+					role: 'admin',
+					access: 'github',
+					defaultProjectRole: 'none',
+					joinByGithub: true,
+					githubSyncedAt: null
+				}
 			} as const;
 		});
 	} catch (e) {
@@ -147,4 +172,17 @@ export async function tenantUsage(tenantId: string) {
 			(select count(*)::int from installation where tenant_id = ${tenantId} and removed_at is null) as installations,
 			coalesce((select tokens from inference_usage where scope = ${`tenant:${tenantId}`} and day = current_date), 0)::int as tokens`;
 	return r;
+}
+
+/** A platform admin's open support session, if any: they see that tenant, read-only, as no member
+ * of it (§6.3). */
+export async function supportTenant(userId: string): Promise<TenantInfo | null> {
+	const [r] = await db()<(Row & { until: Date })[]>`
+		select t.id, t.slug, t.name, t.status, null as role, s.access, s.default_project_role, s.join_by_github,
+			null as github_synced_at, ss.expires_at as until
+		from support_session ss join tenant t on t.id = ss.tenant_id
+		left join tenant_setting s on s.tenant_id = t.id
+		where ss.user_id = ${userId} and ss.ended_at is null and ss.expires_at > now() and t.status <> 'deleted'
+		order by ss.started_at desc limit 1`;
+	return r ? { ...toTenant(r), support: true, until: r.until.toISOString() } : null;
 }

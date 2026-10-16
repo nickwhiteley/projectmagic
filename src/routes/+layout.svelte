@@ -98,10 +98,23 @@
 					{#if data.user.admin}
 						<a href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}>Admin</a>
 					{/if}
-					<span>{data.user.name ?? data.user.login}</span>
+					<a href="/settings" aria-current={path === '/settings' ? 'page' : undefined}
+						>{data.user.name ?? data.user.login}</a
+					>
 					<form method="POST" action="/auth/signout"><button class="button">Sign out</button></form>
 				</div>
 			</header>
+			{#if data.tenant?.support}
+				<form method="POST" action="/admin/support/end" class="notice support" role="status">
+					<span>
+						Support session on <b>{data.tenant.name}</b>: read-only, and the tenant's admins can see
+						it. Ends {data.tenant.until
+							? new Date(data.tenant.until).toLocaleTimeString()
+							: 'within the hour'}.
+					</span>
+					<button class="button">End session</button>
+				</form>
+			{/if}
 			{#if data.tenant && data.tenant.status !== 'active'}
 				<p class="notice status-{data.tenant.status}" role="status">
 					{STATUS_NOTICE[data.tenant.status]}
@@ -276,6 +289,12 @@
 		background: var(--warn-bg);
 		color: var(--warn);
 		border-bottom: 1px solid var(--line);
+	}
+	.notice.support {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		justify-content: space-between;
 	}
 	.tenant {
 		display: flex;

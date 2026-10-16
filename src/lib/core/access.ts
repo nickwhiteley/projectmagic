@@ -28,8 +28,12 @@ export interface Project {
 export interface Membership {
 	userId: string;
 	projectId: string;
-	role: ProjectRole;
+	/** `none` is a manual override that removes access derived from GitHub or the tenant's default. */
+	role: ProjectRole | 'none';
 }
+
+/** How a tenant's project roles are decided (§6). */
+export type AccessMode = 'github' | 'managed';
 
 /** The tenant a request is made in, and what the user is to it. */
 export interface TenantContext {
@@ -39,6 +43,9 @@ export interface TenantContext {
 	role: TenantRole | null;
 	/** A platform admin's read-only support session on this tenant (§6.3). */
 	support?: boolean;
+	/** With managed access, the role on a project nobody set a role on (§6.2). */
+	defaultProjectRole?: 'none' | ProjectRole;
+	access?: AccessMode;
 }
 
 export interface Ctx {
@@ -98,9 +105,17 @@ export function roleOn(user: User, ctx: Ctx): ProjectRole | null {
 	if (!tenant || !project || project.tenantId !== tenant.id) return null;
 	if (tenant.role === 'admin') return 'maintainer';
 	if (tenant.role !== 'member') return null;
-	return (
-		ctx.memberships.find((m) => m.userId === user.id && m.projectId === project.id)?.role ?? null
-	);
+	// A role set for them on the project, derived from GitHub or by an admin, decides.
+	const set = ctx.memberships.find((m) => m.userId === user.id && m.projectId === project.id);
+	if (set) return set.role === 'none' ? null : set.role;
+	// With managed access, a project nobody set a role on falls back to the tenant's default.
+	if (
+		tenant.access === 'managed' &&
+		tenant.defaultProjectRole &&
+		tenant.defaultProjectRole !== 'none'
+	)
+		return tenant.defaultProjectRole;
+	return null;
 }
 
 export function can(user: User | null, action: Action, ctx: Ctx): boolean {

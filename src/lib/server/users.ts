@@ -74,7 +74,9 @@ export type SignInResult =
 export async function signIn(
 	gh: GitHubUser,
 	tokens: UserTokens,
-	signup: SignupMode
+	signup: SignupMode,
+	/** Asked only of a stranger while sign-up is closed: do they hold an invitation, or reach a tenant that admits them? */
+	admitted: () => Promise<boolean> = async () => false
 ): Promise<SignInResult> {
 	const sealed = tokens.refreshToken ? encrypt(tokens.refreshToken, TOKEN_ENCRYPTION_KEY) : null;
 	return db().begin(async (tx) => {
@@ -92,7 +94,8 @@ export async function signIn(
 			const [{ admins }] = await tx<{ admins: number }[]>`
 				select count(*)::int as admins from app_user where platform_role = 'admin'`;
 			const first = bootstrap && admins === 0;
-			if (!first && signup === 'closed') return { ok: false, reason: 'not-invited' } as const;
+			if (!first && signup === 'closed' && !(await admitted()))
+				return { ok: false, reason: 'not-invited' } as const;
 			[row] = await tx<UserRow[]>`
 				insert into app_user (github_id, github_login, name, platform_role, refresh_token_enc, refresh_token_expires_at)
 				values (${gh.id}, ${gh.login}, ${gh.name}, ${first ? 'admin' : 'none'}, ${sealed}, ${tokens.refreshExpiresAt})
@@ -101,4 +104,95 @@ export async function signIn(
 		if (row.disabled_at) return { ok: false, reason: 'disabled' } as const;
 		return { ok: true, user: toUser(row) } as const;
 	});
+}
+
+export interface UserSummary {
+	id: string;
+	login: string;
+	name: string | null;
+	platformRole: 'admin' | 'none';
+	disabled: boolean;
+	createdAt: string;
+	tenants: { name: string; role: string }[];
+}
+
+/** Everyone who has signed in, for platform admins (§9.3): by login, with their tenants. */
+export async function listUsers(search = ''): Promise<UserSummary[]> {
+	const like = `%${search.trim().replace(/[\\%_]/g, '\\$&')}%`;
+	const rows = await db()<
+		{
+			id: string;
+			github_login: string;
+			name: string | null;
+			platform_role: 'admin' | 'none';
+			disabled_at: Date | null;
+			created_at: Date;
+			tenants: { name: string; role: string }[];
+		}[]
+	>`select u.id, u.github_login, u.name, u.platform_role, u.disabled_at, u.created_at,
+			coalesce(json_agg(json_build_object('name', t.name, 'role', m.role) order by t.name) filter (where t.id is not null), '[]') as tenants
+		from app_user u left join tenant_member m on m.user_id = u.id left join tenant t on t.id = m.tenant_id and t.status <> 'deleted'
+		where u.github_login ilike ${like} or u.name ilike ${like}
+		group by u.id order by lower(u.github_login) limit 200`;
+	return rows.map((r) => ({
+		id: String(r.id),
+		login: r.github_login,
+		name: r.name,
+		platformRole: r.platform_role,
+		disabled: !!r.disabled_at,
+		createdAt: r.created_at.toISOString(),
+		tenants: r.tenants
+	}));
+}
+
+/** Tenants the person is the only active admin of, which block disabling or deleting them. */
+export async function soleAdminOf(userId: string): Promise<string[]> {
+	const rows = await db()<{ name: string }[]>`
+		select t.name from tenant_member m join tenant t on t.id = m.tenant_id
+		where m.user_id = ${userId} and m.role = 'admin' and t.status <> 'deleted'
+			and not exists (
+				select 1 from tenant_member o join app_user ou on ou.id = o.user_id
+				where o.tenant_id = m.tenant_id and o.role = 'admin' and o.user_id <> m.user_id and ou.disabled_at is null)`;
+	return rows.map((r) => r.name);
+}
+
+async function lastPlatformAdmin(userId: string): Promise<boolean> {
+	const [r] = await db()<{ n: number }[]>`
+		select count(*)::int as n from app_user where platform_role = 'admin' and disabled_at is null and id <> ${userId}`;
+	const [me] = await db()<
+		{ platform_role: string }[]
+	>`select platform_role from app_user where id = ${userId}`;
+	return me?.platform_role === 'admin' && r.n === 0;
+}
+
+/** Why a person can't be disabled or deleted (the last admin of a tenant, or of the service), or null. */
+export async function lastAdminProblem(userId: string): Promise<string | null> {
+	const sole = await soleAdminOf(userId);
+	if (sole.length)
+		return `They are the only admin of ${sole.join(', ')}. Make someone else an admin first.`;
+	if (await lastPlatformAdmin(userId)) return 'They are the only platform admin.';
+	return null;
+}
+
+export async function setUserDisabled(
+	userId: string,
+	actorId: string,
+	disabled: boolean
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+	if (disabled) {
+		const problem = await lastAdminProblem(userId);
+		if (problem) return { ok: false, reason: problem };
+	}
+	try {
+		await db().begin(async (tx) => {
+			await tx`update app_user set disabled_at = ${disabled ? tx`now()` : null} where id = ${userId}`;
+			await tx`insert into audit_log (tenant_id, actor_user_id, action, target)
+				values (null, ${actorId}, ${disabled ? 'user.disabled' : 'user.enabled'}, ${`user:${userId}`})`;
+		});
+	} catch (e) {
+		if ((e as { code?: string }).code === '23514')
+			return { ok: false, reason: 'They are the last admin of a tenant or of the service.' };
+		throw e;
+	}
+	return { ok: true };
 }

@@ -424,8 +424,8 @@ project's state) and fix what dominates.
 scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
 its questions on 2026-10-16 (its §15).
 
-**Phase 1 (the tenant model and scoping) is merged** (#61); phase 2 (sign-up, installation claims and the admin screens) is merged (#62); phase 3 (members and access) is in progress. See `specs/tenants.md` §14
-for what each phase settled. Phases 3–4 are still to do.
+**Phase 1 (the tenant model and scoping) is merged** (#61); phase 2 (sign-up, installation claims and the admin screens) is merged (#62); phase 3 (members and access, with PM7) is built on `feat/pm20-members-access`. See `specs/tenants.md` §14
+for what each phase settled. Phase 4 (tiers, quotas and billing) is still to do.
 
 **PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
 disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or
