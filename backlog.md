@@ -451,7 +451,10 @@ sign-up and installing the App, then invitations within an organisation.
   in, or only people you approve? - This would probably work but is not the intended approach.
 - **Does single-owner self-hosting stay supported** as it is today? - Yes
 
-Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment, particularly for tiers with AI model access and large numbers of users.
+Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment as a stub, particularly for tiers with AI model access and large numbers of users.
+
+This feature will need a full admin screen implementation.
+Look at plinth for help
 
 ### PM16 Assign items to a person or an agent, and filter by it
 **Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
