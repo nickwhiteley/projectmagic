@@ -109,6 +109,7 @@ main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
 auto_merge: true                 # merge each edit's PR straight away (§10.2)
+batch_edits: false               # allow holding edits and saving them as one commit (§10.5)
 inference: true                  # false opts out of model-inferred statuses (§13)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
@@ -551,6 +552,36 @@ only changes `backlog.md` is skipped too. If the command fails, say because the 
 parent commit, it exits non-zero and Vercel builds. Project Magic's own `vercel.json` carries both.
 
 Until that is set, §16 doesn't count deploys whose commit is a Project Magic edit.
+
+### 10.5 Batch edits (PM25)
+
+Every edit is a commit, a PR and a squash merge, which takes seconds and puts one commit on main
+per click. For a run of small changes, such as setting several statuses or tidying the order, a
+project can allow **batch edits** (`batch_edits: true`) and each person can turn them on for
+themselves (a button above the tabs). Both are off by default; nothing changes for anyone who
+doesn't choose it.
+
+- **What is held.** An item edit (add, edit, status, move, remove) is stored in Postgres as the
+  operation itself, with the item as the person saw it, in `pending_edit`, per project. It is not
+  a copy of the file, so the batch is replayed on today's backlog and an agent's later change to
+  another item doesn't conflict with it. Plan and document edits (PM6) are saved at once as before.
+- **What the views show.** The state is built from main's backlog (and `bugs.md`) with the pending
+  edits replayed on top, so an edit shows immediately, for everyone on the project. The blob text
+  comes from GitHub by oid and is kept in memory. A list above the tabs shows each unsaved edit
+  with a *Discard*, and *Save now*.
+- **When it is saved.** After a quiet minute with no new edit, and at most five minutes after the
+  first. Vercel's cron is daily, so nothing runs on a timer: the check is made when any page of
+  the project loads and when a webhook arrives, and the page sets a one-shot timer for when the
+  batch will be due and reloads itself then. The daily cron is the backstop. If nobody has the
+  app open and the repository is quiet, a batch can therefore wait for the next webhook or the
+  cron.
+- **How.** The pending edits are claimed (so two saves never take the same ones), applied in order
+  to the current text by the same splice used for single edits, and committed as one commit on the
+  `projectmagic` branch and one PR, merged as in §10.2. The commit is made with the token of whoever
+  pressed *Save now*, or of the batch's first author when it is saved automatically. A batch spanning
+  both the backlog and `bugs.md` is one commit per file.
+- **Conflicts.** An edit whose item changed on main since the person saw it is not applied. It stays
+  pending, marked with why, and the others are saved. Discard it, or make the change again.
 
 ## 11. Auth and security
 

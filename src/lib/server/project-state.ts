@@ -10,6 +10,7 @@ import {
 	type StoredBacklog,
 	type StoredPlan
 } from '#lib/core/state.ts';
+import { listPending, overlayBacklog, pendingKey } from './batch.ts';
 import { db } from './db.ts';
 import { PARSER_VERSION, type Pr } from './sync.ts';
 
@@ -17,6 +18,7 @@ interface ProjectRow {
 	id: string;
 	owner: string;
 	repo: string;
+	installation_id: string;
 	config_json: Config | null;
 	last_sync_at: Date | null;
 	last_error: string | null;
@@ -50,9 +52,10 @@ export function forgetState(projectId: string): void {
 export async function loadProjectState(projectId: string): Promise<ProjectState> {
 	const sql = db();
 	const [p] = await sql<ProjectRow[]>`
-		select id, owner, repo, config_json, last_sync_at, last_error from project where id = ${projectId}`;
+		select id, owner, repo, installation_id, config_json, last_sync_at, last_error from project where id = ${projectId}`;
 	if (!p) throw new Error(`no project ${projectId}`);
-	const key = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}`;
+	// Pending edits (PM25) change what the views show, so they are part of the key.
+	const key = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}|${await pendingKey(projectId)}`;
 	const hit = cache.get(projectId);
 	if (hit?.key === key) return hit.state;
 
@@ -113,6 +116,25 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		return oid ? (parsed.get(`config:${oid}`) as { warnings: string[] } | undefined) : undefined;
 	})();
 
+	// Pending edits (PM25), replayed on main's backlog and bugs file.
+	const pending = await listPending(projectId);
+	const installation = { owner: p.owner, repo: p.repo, installationId: Number(p.installation_id) };
+	const overlay = async (path: string | undefined, file: string | null) => {
+		const oid = path ? fileOf(config.main, path) : undefined;
+		const mine = pending.filter((e) => e.file === file);
+		return oid && mine.length
+			? overlayBacklog(installation, config.main, oid, mine).catch((e) => {
+					console.error(`pending edits ${p.owner}/${p.repo}:`, e);
+					return null;
+				})
+			: null;
+	};
+	const mainBacklog = await overlay(
+		config.backlog.find((path) => fileOf(config.main, path)),
+		null
+	);
+	const mainBugs = config.bugs ? await overlay(config.bugs, config.bugs) : null;
+
 	const refInputs: RefInput[] = refs.map((r) => {
 		const backlogPath = config.backlog.find((path) => fileOf(r.name, path));
 		const backlogOid = backlogPath ? fileOf(r.name, backlogPath) : undefined;
@@ -129,12 +151,16 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			active: r.active,
 			message: r.pr_json?.message ?? '',
 			prs: r.pr_json?.prs ?? [],
-			backlog: backlogOid
-				? ((parsed.get(`backlog:${backlogOid}`) as StoredBacklog | undefined) ?? null)
-				: null,
-			bugs: bugsOid
-				? ((parsed.get(`backlog:${bugsOid}`) as StoredBacklog | undefined) ?? null)
-				: null,
+			backlog:
+				(r.name === config.main ? mainBacklog : null) ??
+				(backlogOid
+					? ((parsed.get(`backlog:${backlogOid}`) as StoredBacklog | undefined) ?? null)
+					: null),
+			bugs:
+				(r.name === config.main ? mainBugs : null) ??
+				(bugsOid
+					? ((parsed.get(`backlog:${bugsOid}`) as StoredBacklog | undefined) ?? null)
+					: null),
 			epics: epicsOid
 				? ((parsed.get(`epics:${epicsOid}`) as { epics: EpicDeclaration[] } | undefined)?.epics ??
 					null)

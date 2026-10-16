@@ -2,12 +2,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { diffLines } from '#lib/core/diff.ts';
 import { ReauthRequired } from './user-token.ts';
-import { WriteError, type WriteResult } from './write.ts';
+import type { EditResult } from './edits.ts';
+import { WriteError } from './write.ts';
 
-export function respond<E extends object>(result: WriteResult, done: string, extra: E = {} as E) {
+export function respond<E extends object>(result: EditResult, done: string, extra: E = {} as E) {
 	switch (result.kind) {
 		case 'merged':
 		case 'unchanged':
+		case 'queued':
 			return redirect(303, done);
 		case 'pending':
 			return redirect(303, `${done}${done.includes('?') ? '&' : '?'}pending=1`);

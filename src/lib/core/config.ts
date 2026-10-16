@@ -21,6 +21,8 @@ export interface Config {
 	/** The prefix suggested for a new item, or null to infer it from the existing ids. */
 	newIdPrefix: string | null;
 	autoMerge: boolean;
+	/** Whether people may hold edits and save them together as one commit (PM25). */
+	batchEdits: boolean;
 	/** False opts the project out of model-inferred statuses (PM3). */
 	inference: boolean;
 	/** Glob-like names (`*` only) of the GitHub deployment environments that count as production. */
@@ -60,6 +62,7 @@ export function defaults(repo: RepoFacts): Config {
 		activeBranchDays: 30,
 		newIdPrefix: null,
 		autoMerge: true,
+		batchEdits: false,
 		inference: true,
 		productionEnvironments: ['Production*']
 	};
@@ -78,6 +81,7 @@ const KEYS = [
 	'active_branch_days',
 	'new_id_prefix',
 	'auto_merge',
+	'batch_edits',
 	'inference',
 	'production_environments'
 ];
@@ -166,6 +170,10 @@ export function parseConfig(text: string | null, repo: RepoFacts): ConfigResult 
 	if ('auto_merge' in y) {
 		if (typeof y.auto_merge === 'boolean') config.autoMerge = y.auto_merge;
 		else bad('auto_merge', 'true or false');
+	}
+	if ('batch_edits' in y) {
+		if (typeof y.batch_edits === 'boolean') config.batchEdits = y.batch_edits;
+		else bad('batch_edits', 'true or false');
 	}
 	if ('inference' in y) {
 		if (typeof y.inference === 'boolean') config.inference = y.inference;

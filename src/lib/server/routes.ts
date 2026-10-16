@@ -19,6 +19,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/search': { kind: 'signed-in' },
 	'/activity': { kind: 'signed-in' },
 	'/settings/ai': { kind: 'signed-in' },
+	'/settings/batch': { kind: 'signed-in' },
 	'/ask': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
@@ -39,6 +40,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/p/[repo]/i/[id]/edit': { kind: 'project', action: 'edit' },
 	'/p/[repo]/new': { kind: 'project', action: 'edit' },
 	'/p/[repo]/edit-doc/[...path]': { kind: 'project', action: 'edit' },
+	'/p/[repo]/pending': { kind: 'project', action: 'edit' },
 	'/p/[repo]/edits/merge': { kind: 'project', action: 'merge' },
 	'/p/[repo]/sync': { kind: 'project', action: 'view' }
 };

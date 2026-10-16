@@ -22,6 +22,7 @@ const state = (repo: string, items: object[], done: object[] = []): ProjectState
 		name: repo.toUpperCase(),
 		hasBacklog: true,
 		inferenceAllowed: true,
+		batchEdits: false,
 		items,
 		done
 	}) as unknown as ProjectState;

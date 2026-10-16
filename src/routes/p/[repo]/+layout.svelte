@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { ago } from '#lib/format.ts';
 	import type { LayoutProps } from './$types';
@@ -16,6 +17,13 @@
 		{ href: `${base}/branches`, label: 'Branches', count: p.counts.branches },
 		{ href: `${base}/docs`, label: 'Docs' }
 	]);
+	const b = $derived(p.batch);
+	// Look again when a batch is due: loading the page is what saves it (PM25).
+	$effect(() => {
+		if (b.dueInMs === null) return;
+		const t = setTimeout(() => void invalidateAll(), b.dueInMs + 2000);
+		return () => clearTimeout(t);
+	});
 	const going = $derived(navigating.to?.url.pathname ?? null);
 	const from = $derived(navigating.from?.url.pathname ?? null);
 	const busy = (href: string) =>
@@ -63,6 +71,56 @@
 			>
 		{/if}
 	</div>
+{/if}
+
+{#if p.canEdit && b.allowed}
+	<div class="batch" role="status">
+		<span>
+			{#if b.pending.length}
+				<strong>{b.pending.length} unsaved edit{b.pending.length === 1 ? '' : 's'}</strong>, saved
+				together after a quiet minute.
+			{:else}
+				Batch edits are available.
+			{/if}
+		</span>
+		<span class="acts">
+			{#if b.pending.length}
+				<form method="POST" action="{base}/pending">
+					<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
+					<button class="button">Save now</button>
+				</form>
+			{/if}
+			<form method="POST" action="/settings/batch">
+				<input type="hidden" name="on" value={b.mine ? '0' : '1'} />
+				<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
+				<button
+					class="button"
+					title="Hold your edits and save them as one commit, instead of one commit each"
+					>Batch edits: {b.mine ? 'on' : 'off'}</button
+				>
+			</form>
+		</span>
+	</div>
+	{#if b.pending.length}
+		<ul class="unsaved">
+			{#each b.pending as e (e.id)}
+				<li class:conflict={e.conflict}>
+					<span>
+						{e.label}{#if e.by}<span class="muted"> by {e.by}</span>{/if}
+						{#if e.conflict}<strong> — not saved: {e.conflict}.</strong>{:else}<span class="muted">
+								· unsaved</span
+							>{/if}
+					</span>
+					<form method="POST" action="{base}/pending">
+						<input type="hidden" name="do" value="discard" />
+						<input type="hidden" name="id" value={e.id} />
+						<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
+						<button class="button">Discard</button>
+					</form>
+				</li>
+			{/each}
+		</ul>
+	{/if}
 {/if}
 
 <nav class="tabs" aria-label="Project">
@@ -123,6 +181,37 @@
 		border-radius: var(--radius);
 		margin-top: 0.75rem;
 		font-size: 13.5px;
+	}
+	.batch {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		background: var(--surface-2);
+		padding: 0.5rem 0.9rem;
+		border-radius: var(--radius);
+		margin-top: 0.75rem;
+		font-size: 13.5px;
+	}
+	.acts {
+		display: flex;
+		gap: 0.5rem;
+	}
+	.unsaved {
+		list-style: none;
+		margin: 0.4rem 0 0;
+		padding: 0;
+		font-size: 13px;
+	}
+	.unsaved li {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 1rem;
+		padding: 0.25rem 0.9rem;
+	}
+	.unsaved li.conflict {
+		color: var(--danger);
 	}
 	.tabs {
 		display: flex;

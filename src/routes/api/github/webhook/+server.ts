@@ -2,6 +2,7 @@
 // background. The payload says which repository; everything else is fetched by the sync.
 import { GITHUB_WEBHOOK_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db.ts';
+import { edits } from '#lib/server/edits.ts';
 import { projectByGitHubId } from '#lib/server/projects.ts';
 import { syncInBackground, syncProjectList } from '#lib/server/sync-runner.ts';
 import { INSTALLATION_EVENTS, PROJECT_EVENTS, verifySignature } from '#lib/server/webhook.ts';
@@ -31,6 +32,8 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (PROJECT_EVENTS.has(event) && project) {
 		await db()`update project set last_webhook_at = now() where id = ${project.id}`;
 		syncInBackground(project.id);
+		// A batch of pending edits that is due is saved on any webhook for the project (PM25).
+		waitUntil(edits.savePendingIfDue(project));
 		return json({ ok: true, sync: project.repo }, { status: 202 });
 	}
 	return json({ ok: true, ignored: event });

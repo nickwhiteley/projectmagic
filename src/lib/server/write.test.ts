@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { diffLines } from '#lib/core/diff.ts';
 import { parseMeta } from '#lib/core/meta.ts';
+import { applyBatch, describeBatch } from '#lib/core/batch.ts';
+import { itemSource } from '#lib/core/splice.ts';
 import type { GitHubClient } from './github-client.ts';
 import { setTaskStatus, taskStatusCell } from '#lib/core/progress.ts';
 import { applyChange, applyEdit, prBody, type WriteTarget } from './write.ts';
@@ -345,6 +347,34 @@ describe('applyEdit', () => {
 		const res = await applyEdit(gh, { ...target, autoMerge: false }, setStatus('NW9', 'done'));
 		expect(res).toMatchObject({ kind: 'pending', reason: 'auto_merge is off' });
 		expect(gh.calls).not.toContain('PUT /pulls/41/merge');
+	});
+});
+
+describe('applyChange: a batch (PM25)', () => {
+	it('writes several edits as one commit and one PR, leaving out the one whose item changed', async () => {
+		const gh = new FakeRepo(BACKLOG);
+		const edits = [
+			{ id: 1, op: setStatus('NW9', 'done'), base: itemSource(BACKLOG, 'NW9') },
+			{ id: 2, op: setStatus('NW7', 'built'), base: 'stale' }
+		];
+		let applied: number[] = [];
+		const res = await applyChange(gh, target, {
+			apply: (text) => {
+				const r = applyBatch(text, edits);
+				applied = r.applied;
+				return r.text;
+			},
+			describe: (text) =>
+				describeBatch(
+					text,
+					edits.filter((e) => applied.includes(e.id)).map((e) => e.op)
+				)
+		});
+		expect(res).toMatchObject({ kind: 'merged', message: 'Backlog: edit NW9 DXF export' });
+		expect(applied).toEqual([1]);
+		expect(gh.calls.filter((c) => c.startsWith('PUT /contents'))).toHaveLength(1);
+		expect(gh.text('main')).toContain('**Status:** done');
+		expect(gh.text('main')).toContain('### NW7 Renewal reminder\n**Status:** todo');
 	});
 });
 

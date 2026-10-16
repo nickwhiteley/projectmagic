@@ -1,10 +1,19 @@
 import { can } from '#lib/core/access.ts';
+import { pendingLabel } from '#lib/core/batch.ts';
+import { batchPref, listPending } from '#lib/server/batch.ts';
+import { edits } from '#lib/server/edits.ts';
 import { projectState } from '#lib/server/project-state.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const project = locals.project!;
+	// A batch of pending edits that is due is saved by whoever loads a page (PM25).
+	await edits.savePendingIfDue(project);
 	const s = await projectState({ locals, params });
+	const pending = s.batchEdits ? await listPending(project.id) : [];
+	const waiting = pending.filter((e) => !e.conflict);
+	const times = waiting.map((e) => e.createdAt);
+	const now = Date.now();
 	const h = s.health;
 	return {
 		project: {
@@ -19,6 +28,20 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 			canEdit: can(locals.user, 'edit', project, locals.memberships),
 			canMerge: can(locals.user, 'merge', project, locals.memberships),
 			edits: project.edits,
+			batch: {
+				allowed: s.batchEdits,
+				mine: s.batchEdits && locals.user ? await batchPref(locals.user.id) : false,
+				pending: pending.map((e) => ({
+					id: e.id,
+					label: pendingLabel(e.op),
+					by: e.login,
+					conflict: e.conflict
+				})),
+				// When the page should look again: the earlier of a quiet minute and five minutes.
+				dueInMs: times.length
+					? Math.max(0, Math.min(Math.max(...times) + 60_000, Math.min(...times) + 300_000) - now)
+					: null
+			},
 			counts: {
 				items: s.items.length,
 				epics: s.epics.length,

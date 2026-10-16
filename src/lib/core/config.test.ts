@@ -21,6 +21,7 @@ describe('parseConfig', () => {
 			activeBranchDays: 30,
 			newIdPrefix: null,
 			autoMerge: true,
+			batchEdits: false,
 			inference: true,
 			productionEnvironments: ['Production*']
 		});
@@ -40,6 +41,7 @@ main: trunk
 active_branch_days: 14
 new_id_prefix: BP
 auto_merge: false
+batch_edits: true
 production_environments: ["Production – orchard-web"]
 `,
 			repo
@@ -58,6 +60,7 @@ production_environments: ["Production – orchard-web"]
 			activeBranchDays: 14,
 			newIdPrefix: 'BP',
 			autoMerge: false,
+			batchEdits: true,
 			inference: true,
 			productionEnvironments: ['Production – orchard-web']
 		});

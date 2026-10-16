@@ -81,7 +81,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM25 Batch edits: save several changes as one commit
-**Status:** in progress · **Branch:** `feat/pm25-batch-edits` · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** `make migrate` (005), then Nick's check · **Branch:** `feat/pm25-batch-edits` · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
 (§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
@@ -105,16 +105,11 @@ main gets one commit for the batch.
 - **The views** show the pending edits on top of the cached state, marked as unsaved, with a
   count and a *Discard* for each.
 
-**Questions for Nick:**
-- Is the working copy per user or per project? Per project is simpler and lets everyone see the
-  pending changes; per user keeps one person's half-finished reordering out of other people's views. - If it is using the database, per project.  If it is using browser local storage then per user.  
-- How often should it save: a fixed interval (5 minutes), after a quiet period (60 seconds with
-  no new edit), or only when asked? - After a quiet period, at most 5 minutes.
-- Vercel's cron is daily on the free plan. A save every few minutes needs either a paid plan, a
-  save that piggybacks on page loads and webhooks, or a quiet-period save started by the edit
-  itself. Which would you accept? - Piggyback on page loads or use browser setinterval() is changes are stored in local storage.
-
-Note the decision to store changes in the database or local browser storage needs to be made at design time.
+**Decided with Nick (2026-10-16):** pending edits are kept in the database, per project (browser
+local storage would be per user and invisible to the server and to agents). A batch is saved after
+a quiet minute and at most five minutes after the first edit, triggered by page loads and webhooks,
+with the page reloading itself when one is due, and the daily cron as the backstop. Built in
+spec §10.5.
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent

@@ -22,11 +22,13 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/p/[repo]/i/[id]": "project: view",
   "/p/[repo]/i/[id]/edit": "project: edit",
   "/p/[repo]/new": "project: edit",
+  "/p/[repo]/pending": "project: edit",
   "/p/[repo]/plan": "project: view",
   "/p/[repo]/raw/[...path]": "project: view",
   "/p/[repo]/sync": "project: view",
   "/search": "signed-in",
   "/settings/ai": "signed-in",
+  "/settings/batch": "signed-in",
   "/signin": "public",
 }
 `;

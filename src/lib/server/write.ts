@@ -16,6 +16,8 @@ export interface WriteTarget {
 	/** The backlog's path on main. */
 	path: string;
 	autoMerge: boolean;
+	/** Whether the project allows batch edits (PM25); only edits.ts reads it. */
+	batchEdits?: boolean;
 }
 
 export type WriteResult =
