@@ -81,7 +81,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM25 Batch edits: save several changes as one commit
-**Status:** built · **Waiting:** `make migrate` (005), then Nick's check · **Branch:** `feat/pm25-batch-edits` · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Branch:** `feat/pm25-batch-edits` · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
 (§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
@@ -196,7 +196,7 @@ title from `backlog.md` and its description and target from `epics.md`; one decl
 suggestions; it accepts `EP` and a number, and clearing it removes the key.
 
 ### PM2 Bug items
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 `Type: bug` on an item, with `Found:` and `Raised:`, and an optional `bugs.md` as a second
 backlog file with a `BUG` prefix. The board gains a type filter and a bug lane. `spec.md` §13
@@ -211,7 +211,7 @@ filter covers showing only bugs).
 only when a `bugs.md` existed. With none, the bug is added to the backlog with `Type: bug`.
 
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 What PM2 left out. `spec.md` §13 and §16.4 let bugs live in an optional `bugs.md`, configured as
 a second backlog file with a `BUG` prefix, so the sync fetches and caches it, ids come from the
@@ -228,7 +228,7 @@ flagged. **Not built:** a project's first `bugs.md` has to be created in the rep
 form only adds to a file that exists.
 
 ### PM3 Inferred status for items with no meta line
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 A model reads the prose and proposes a status and waiting reason. It is cached by blob `oid` and
 shown as *inferred*.
@@ -276,13 +276,8 @@ injected link is dead text.
   AI features can't ask.
 - **Not in it**: no memory between questions, and no search of item bodies, which the digest
   leaves out to stay small. A body-level question would need retrieval first.
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
-
 ### PM5 Activity feed
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Recent commits across every project, grouped by linked item.
 
@@ -320,6 +315,11 @@ The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: i
 login, the member list for each project, changing a role, and disabling a user.
 
 The implications of PM20 need considering for this. It might be easier to add tenancies before thinking too much about users. Is full RBAC easier to implement first? Will we use Github roles or managed in Project Magic?  Can plinth help?
+
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
 
 ### PM8 Mermaid in rendered docs
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
@@ -398,7 +398,7 @@ the item page, for people who can edit. It is the Board's status edit with `done
 is cleared, and it returns to where it came from.
 
 ### PM11 Set an item's status by dropping it into a Board column
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Dropping a card into another column on the Board only reorders it today (task 5.3). Make a drop
 into **todo**, **blocked**, **built** or **done** also set `Status:` in the item's meta line, as an
@@ -410,7 +410,7 @@ dragging E5 expecting its status to change.
 Built with PM27.
 
 ### PM13 Show that a navigation is under way
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Straight after PM12. Clicking a project in the left navigation can take seconds before anything
 changes, so people click again and again. Show at once that something is happening: the clicked
@@ -454,7 +454,7 @@ sign-up and installing the App, then invitations within an organisation.
 Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment, particularly for tiers with AI model access and large numbers of users.
 
 ### PM16 Assign items to a person or an agent, and filter by it
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 So Nick can see what to work on, and agents can see what is theirs. Answers from Nick on
 2026-10-15.
