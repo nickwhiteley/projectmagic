@@ -19,13 +19,18 @@ import {
 	type WriteTarget
 } from './write.ts';
 
+/** A config cached before a key existed lacks it: the defaults fill in (as the views do). */
+function withDefaults(cached: Config | null, repo: string): Config {
+	const base = parseConfig(null, { name: repo, defaultBranch: 'main' }).config;
+	return cached ? { ...base, ...cached } : base;
+}
+
 /** `file` is the item's file when it isn't the main backlog (PM29: `bugs.md`). */
 async function target(project: ProjectRow, file: string | null = null) {
 	const [row] = await db()<
 		{ config_json: Config | null }[]
 	>`select config_json from project where id = ${project.id}`;
-	const config =
-		row?.config_json ?? parseConfig(null, { name: project.repo, defaultBranch: 'main' }).config;
+	const config = withDefaults(row?.config_json ?? null, project.repo);
 	const files = await db()<{ path: string }[]>`
 		select path from ref_file where project_id = ${project.id} and ref_name = ${config.main}`;
 	const path = file
@@ -82,8 +87,7 @@ async function targetAt(project: ProjectRow, path: string): Promise<WriteTarget>
 	const [row] = await db()<
 		{ config_json: Config | null }[]
 	>`select config_json from project where id = ${project.id}`;
-	const config =
-		row?.config_json ?? parseConfig(null, { name: project.repo, defaultBranch: 'main' }).config;
+	const config = withDefaults(row?.config_json ?? null, project.repo);
 	return {
 		owner: project.owner,
 		repo: project.repo,
