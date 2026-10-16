@@ -7,6 +7,8 @@ export interface Digest {
 	text: string;
 	/** `repo:ID` for every item in the digest, the only ones an answer may link to. */
 	known: Set<string>;
+	/** Each repository's display name, shown in front of a linked id. */
+	names?: Map<string, string>;
 	/** True when the budget left some items out. */
 	truncated: boolean;
 }
@@ -19,12 +21,14 @@ const one = (s: string) => s.replace(/\s+/g, ' ').trim();
 
 export function digest(states: ProjectState[], now = Date.now(), budget = DIGEST_CHARS): Digest {
 	const known = new Set<string>();
+	const names = new Map<string, string>();
 	const blocks: string[] = [];
 	let truncated = false;
 	// Each project gets an equal share of the budget, so a big backlog doesn't crowd out the rest.
 	const share = Math.floor(budget / Math.max(1, states.length));
 	for (const s of states) {
 		if (!s.hasBacklog) continue;
+		names.set(s.repo, s.name);
 		const head = `## ${s.repo} (${s.name})`;
 		const lines: string[] = [];
 		for (const i of s.items) {
@@ -61,7 +65,7 @@ export function digest(states: ProjectState[], now = Date.now(), budget = DIGEST
 		}
 		blocks.push(block);
 	}
-	return { text: blocks.join('\n\n'), known, truncated };
+	return { text: blocks.join('\n\n'), known, names, truncated };
 }
 
 export const ASK_SYSTEM = `You answer questions about software projects from a digest of their backlogs.
@@ -88,8 +92,14 @@ export function askPrompt(
 }
 
 /** Turns `[repo:ID]` citations into markdown links, and strips any that don't name a known item. */
-export function linkAnswer(answer: string, known: Set<string>): string {
+export function linkAnswer(
+	answer: string,
+	known: Set<string>,
+	names: Map<string, string> = new Map()
+): string {
 	return answer.replace(/\[([A-Za-z0-9._-]+):([A-Za-z0-9.]+)\]/g, (_, repo: string, id: string) =>
-		known.has(`${repo}:${id}`) ? `[${id}](/p/${repo}/i/${encodeURIComponent(id)})` : id
+		known.has(`${repo}:${id}`)
+			? `[${names.get(repo) ?? repo} ${id}](/p/${repo}/i/${encodeURIComponent(id)})`
+			: id
 	);
 }
