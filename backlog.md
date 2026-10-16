@@ -7,7 +7,7 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM26 Hide Done
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **For:** person.nickwhiteley
 
 Hide Done items from the List view.
 
