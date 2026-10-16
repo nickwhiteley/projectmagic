@@ -1,19 +1,22 @@
-// Who may sign in (spec §11.1): only GitHub accounts with an app_user row. The first comes from
-// BOOTSTRAP_ADMIN_GITHUB_LOGIN, as the platform admin, and only while none exists. Until phase 2
-// of PM20 adds sign-up, it also gets the deployment's one tenant if there isn't one yet.
+// Who may sign in (specs/tenants.md §3.1): anyone with a GitHub account while sign-up is open or
+// waits for approval, and otherwise only people who already have an app_user row. The first
+// platform admin comes from BOOTSTRAP_ADMIN_GITHUB_LOGIN, on first sign-in, while none exists.
 import { BOOTSTRAP_ADMIN_GITHUB_LOGIN, TOKEN_ENCRYPTION_KEY } from '$app/env/private';
 import type { Membership, User } from '#lib/core/access.ts';
 import { encrypt } from './crypto.ts';
 import { db } from './db.ts';
 import type { GitHubUser, UserTokens } from './github-app.ts';
+import type { SignupMode } from '#lib/core/tenants.ts';
 
 export interface SessionUser extends User {
 	githubLogin: string;
+	githubId: string;
 	name: string | null;
 }
 
 interface UserRow {
 	id: string;
+	github_id: string;
 	github_login: string;
 	name: string | null;
 	platform_role: 'admin' | 'none';
@@ -23,6 +26,7 @@ interface UserRow {
 const toUser = (r: UserRow): SessionUser => ({
 	id: String(r.id),
 	githubLogin: r.github_login,
+	githubId: String(r.github_id),
 	name: r.name,
 	platformRole: r.platform_role,
 	disabledAt: r.disabled_at?.toISOString() ?? null
@@ -30,7 +34,7 @@ const toUser = (r: UserRow): SessionUser => ({
 
 export async function userById(id: string): Promise<SessionUser | null> {
 	const [r] = await db()<UserRow[]>`
-		select id, github_login, name, platform_role, disabled_at from app_user where id = ${id}`;
+		select id, github_id, github_login, name, platform_role, disabled_at from app_user where id = ${id}`;
 	return r ? toUser(r) : null;
 }
 
@@ -41,7 +45,7 @@ export async function sessionUser(
 	const [r] = await db()<
 		(UserRow & { memberships: { project_id: string; role: Membership['role'] }[] })[]
 	>`
-		select u.id, u.github_login, u.name, u.platform_role, u.disabled_at,
+		select u.id, u.github_id, u.github_login, u.name, u.platform_role, u.disabled_at,
 			coalesce(json_agg(json_build_object('project_id', m.project_id, 'role', m.role))
 				filter (where m.project_id is not null), '[]') as memberships
 		from app_user u left join membership m on m.user_id = u.id
@@ -66,8 +70,12 @@ export async function membershipsOf(userId: string): Promise<Membership[]> {
 export type SignInResult =
 	{ ok: true; user: SessionUser } | { ok: false; reason: 'not-invited' | 'disabled' };
 
-/** After GitHub has said who they are: find their row, or create the bootstrap administrator. */
-export async function signIn(gh: GitHubUser, tokens: UserTokens): Promise<SignInResult> {
+/** After GitHub has said who they are: find their row, or make one if sign-up allows it. */
+export async function signIn(
+	gh: GitHubUser,
+	tokens: UserTokens,
+	signup: SignupMode
+): Promise<SignInResult> {
 	const sealed = tokens.refreshToken ? encrypt(tokens.refreshToken, TOKEN_ENCRYPTION_KEY) : null;
 	return db().begin(async (tx) => {
 		let [row] = await tx<UserRow[]>`
@@ -76,27 +84,19 @@ export async function signIn(gh: GitHubUser, tokens: UserTokens): Promise<SignIn
 				refresh_token_enc = coalesce(${sealed}, refresh_token_enc),
 				refresh_token_expires_at = coalesce(${tokens.refreshExpiresAt}, refresh_token_expires_at)
 			where github_id = ${gh.id}
-			returning id, github_login, name, platform_role, disabled_at`;
+			returning id, github_id, github_login, name, platform_role, disabled_at`;
 		if (!row) {
 			const bootstrap = BOOTSTRAP_ADMIN_GITHUB_LOGIN?.toLowerCase() === gh.login.toLowerCase();
-			// Serialise concurrent first sign-ins, so only one bootstrap administrator is made.
+			// Serialise concurrent first sign-ins, so only one bootstrap admin is made.
 			await tx`lock table app_user in share row exclusive mode`;
 			const [{ admins }] = await tx<{ admins: number }[]>`
 				select count(*)::int as admins from app_user where platform_role = 'admin'`;
-			if (!bootstrap || admins > 0) return { ok: false, reason: 'not-invited' } as const;
+			const first = bootstrap && admins === 0;
+			if (!first && signup === 'closed') return { ok: false, reason: 'not-invited' } as const;
 			[row] = await tx<UserRow[]>`
 				insert into app_user (github_id, github_login, name, platform_role, refresh_token_enc, refresh_token_expires_at)
-				values (${gh.id}, ${gh.login}, ${gh.name}, 'admin', ${sealed}, ${tokens.refreshExpiresAt})
-				returning id, github_login, name, platform_role, disabled_at`;
-			const [{ tenants }] = await tx<
-				{ tenants: number }[]
-			>`select count(*)::int as tenants from tenant`;
-			if (!tenants) {
-				const [t] = await tx<{ id: string }[]>`
-					insert into tenant (slug, name, created_by) values ('default', ${gh.login}, ${row.id}) returning id`;
-				await tx`insert into tenant_setting (tenant_id, join_by_github, access) values (${t.id}, false, 'managed')`;
-				await tx`insert into tenant_member (tenant_id, user_id, role) values (${t.id}, ${row.id}, 'admin')`;
-			}
+				values (${gh.id}, ${gh.login}, ${gh.name}, ${first ? 'admin' : 'none'}, ${sealed}, ${tokens.refreshExpiresAt})
+				returning id, github_id, github_login, name, platform_role, disabled_at`;
 		}
 		if (row.disabled_at) return { ok: false, reason: 'disabled' } as const;
 		return { ok: true, user: toUser(row) } as const;

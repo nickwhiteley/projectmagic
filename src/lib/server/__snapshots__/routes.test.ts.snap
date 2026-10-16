@@ -4,6 +4,12 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
 {
   "/": "public",
   "/activity": "signed-in",
+  "/admin": "platform: platform.tenants",
+  "/admin/audit": "platform: platform.tenants",
+  "/admin/installations": "platform: platform.tenants",
+  "/admin/settings": "platform: platform.settings",
+  "/admin/tenants": "platform: platform.tenants",
+  "/admin/tenants/[id]": "platform: platform.tenants",
   "/api/cron/sync": "machine",
   "/api/github/webhook": "machine",
   "/ask": "signed-in",
@@ -30,6 +36,14 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/settings/ai": "signed-in",
   "/settings/batch": "signed-in",
   "/signin": "public",
+  "/tenant": "tenant: tenant.settings",
+  "/tenant/delete": "tenant: tenant.delete",
+  "/tenant/installations": "tenant: tenant.installations",
+  "/tenant/installations/claim": "tenant: tenant.installations",
+  "/tenant/installations/connect": "tenant: tenant.installations",
+  "/tenant/installations/setup": "signed-in",
+  "/tenant/settings": "tenant: tenant.settings",
   "/tenant/switch": "signed-in",
+  "/welcome": "signed-in",
 }
 `;

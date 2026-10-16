@@ -418,14 +418,14 @@ GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection
 project's state) and fix what dominates.
 
 ### PM20 Tenants: one Project Magic for many teams
-**Status:** in progress · **Size:** L · **Type:** feature · **For:** agent · **Branch:** `feat/pm20-tenant-model`
+**Status:** in progress · **Size:** L · **Type:** feature · **For:** agent · **Branch:** `feat/pm20-signup-installations`
 
 **Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
 scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
 its questions on 2026-10-16 (its §15).
 
-**Phase 1 (the tenant model and scoping) is built** on `feat/pm20-tenant-model`; see `specs/tenants.md` §14
-for what it settled. Phases 2–4 are still to do.
+**Phase 1 (the tenant model and scoping) is merged** (#61); phase 2 (sign-up, installation claims and the admin screens) is built on `feat/pm20-signup-installations`. See `specs/tenants.md` §14
+for what each phase settled. Phases 3–4 are still to do.
 
 **PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
 disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or

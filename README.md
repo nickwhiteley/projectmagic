@@ -119,10 +119,11 @@ GitHub → **Settings → Developer settings → GitHub Apps → New GitHub App*
 | Expire user authorization tokens | **on** (sign-in returns a refresh token, stored encrypted) |
 | Request user authorization (OAuth) during installation | off |
 | Enable Device Flow | off |
+| Setup URL | `https://<your-domain>/tenant/installations/setup`, with **Redirect on update** on: GitHub sends people back here after they install, and the tenant claims the installation |
 | Webhook | **active** once deployed: `https://<your-domain>/api/github/webhook`, with a secret from `openssl rand -hex 32`. Leave it inactive until then |
 | Repository permissions | **Contents:** read and write · **Pull requests:** read and write · **Metadata:** read-only · **Deployments** and **Actions:** read-only (for the delivery measures planned in PM9) |
 | Account permissions | none |
-| Subscribe to events | **Push**, **Pull request**, **Create**, **Delete** |
+| Subscribe to events | **Push**, **Pull request**, **Create**, **Delete** (GitHub always sends the installation events to an App, so there is nothing to tick for them) |
 | Where can it be installed | only on this account |
 
 Then, on the App's page:
@@ -130,7 +131,9 @@ Then, on the App's page:
 1. note the **App ID** and **Client ID**;
 2. **generate a client secret**;
 3. **generate a private key** (a `.pem` file downloads; keep it out of the repository);
-4. **Install App** on the repositories to follow (*Only select repositories*).
+4. note the App's URL name (`github.com/apps/<name>`), which is `GITHUB_APP_SLUG`.
+
+You install the App from Project Magic itself, in step 6: *Tenant → Installations → Connect GitHub*.
 
 ### 3. Fill in the environment
 
@@ -145,9 +148,10 @@ Then, on the App's page:
 | `GITHUB_WEBHOOK_SECRET` | the webhook secret (`openssl rand -hex 32`) |
 | `SESSION_SECRET` | signs the session cookie (`openssl rand -hex 32`) |
 | `TOKEN_ENCRYPTION_KEY` | encrypts users' refresh tokens (`openssl rand -base64 32`) |
-| `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | your GitHub login: the first person to sign in with it becomes the administrator |
+| `GITHUB_APP_SLUG` | the App's URL name, for the *Connect GitHub* link |
+| `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | your GitHub login: the first person to sign in with it becomes the platform administrator, and creates the tenant |
 | `CRON_SECRET` | protects the daily sync; Vercel sends it, so set the same value there |
-| `INFERENCE_PROVIDER`, `INFERENCE_MODEL`, `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`, `INFERENCE_DAILY_TOKEN_LIMIT` | optional: a model (`ollama`, `openai` or `anthropic`) that proposes a status for items with no meta line, shown as *inferred*. Local Ollama needs `INFERENCE_BASE_URL`; Ollama cloud needs only `INFERENCE_API_KEY` (the address defaults to `https://ollama.com`); the others need `INFERENCE_API_KEY`. Unset, it is off. Each project may use 50 000 tokens a day unless you set a limit |
+| `INFERENCE_PROVIDER`, `INFERENCE_MODEL`, `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`, `INFERENCE_DAILY_TOKEN_LIMIT` | optional: a model (`ollama`, `openai` or `anthropic`) that proposes a status for items with no meta line, shown as *inferred*. Local Ollama needs `INFERENCE_BASE_URL`; Ollama cloud needs only `INFERENCE_API_KEY` (the address defaults to `https://ollama.com`); the others need `INFERENCE_API_KEY`. Unset, it is off. Each tenant may use 50 000 tokens a day unless you set a limit |
 
 ### 4. Create the tables and run it
 
@@ -176,10 +180,17 @@ To check it: GitHub's *Advanced* tab on the App lists each webhook delivery and 
 (202 for a push), and the project's *synced* time on the overview should change within seconds
 of a push. Without a webhook, page loads, the *Refresh* button and the daily cron still sync.
 
+### 6. Create your tenant and connect GitHub
+
+Sign in with the `BOOTSTRAP_ADMIN_GITHUB_LOGIN` account. You land on *Welcome*: create your tenant,
+then *Connect GitHub* sends you to GitHub to install the App on an account and choose its
+repositories. Sign-up is closed by default, so nobody else can create a tenant; *Admin → Settings*
+changes that for a hosted service (`specs/tenants.md`).
+
 ## Adding a repository
 
-1. **Install the GitHub App** on it (the App's page → *Install App* → *Configure*). It appears
-   on the overview after the next sync.
+1. **Install the GitHub App** on it (*Tenant → Installations → Connect GitHub*, or the App's page →
+   *Configure* for an account already connected). It appears on the overview after the next sync.
 2. **Add the conventions** to its agent instructions and, if it has a backlog already, migrate it
    (`specs/conventions.md`).
 3. **Optionally, add `.projectmagic.yml`** at its root. Every key has a default:

@@ -122,6 +122,14 @@ export async function syncProjectList(): Promise<number> {
 	return syncInstallations(asApp(), installationClient, db());
 }
 
+/** After a claim: list the installation's repositories as projects, then sync each. */
+export async function syncAfterClaim(installationId: string): Promise<void> {
+	await syncProjectList();
+	const projects = await db()<{ id: string }[]>`
+		select id from project where installation_id = ${installationId} and uninstalled_at is null`;
+	for (const p of projects) syncInBackground(String(p.id));
+}
+
 /** How long the cron spends syncing before it leaves the rest to the next run (§8.3). */
 const CRON_BUDGET_MS = 40_000;
 
