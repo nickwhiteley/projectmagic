@@ -621,7 +621,7 @@ other, except that an administrator is treated as `maintainer` everywhere.
   account can't write to this repository". Project Magic never uses the App's token to write on
   a user's behalf, so it can't grant someone more than GitHub does.
 - **v0.1 has no membership screens.** The single administrator sees everything. The tables,
-  `can()` and its tests exist. Invitations and the member list come with PM7.
+  `can()` and its tests exist. Invitations and the member list come with PM20 (`specs/tenants.md`, phase 3).
 
 ### 11.3 GitHub and transport
 - **App permissions**: contents read and write, pull requests read and write, metadata read,
@@ -853,3 +853,14 @@ A new `event` table holds `(project_id, kind, at, sha, ref, data)` for deploys, 
 runs and status changes, keyed so that a re-sync is idempotent. The backlog history walk (§7.3)
 records **every status change** per item, not only removals, which is what cycle time and the
 founder queue's ages need.
+
+## 17. Tenants (PM20, specced)
+
+**One deployment for many teams.** Specced in `specs/tenants.md`, not yet built. A *tenant* is a
+team with its members, its connected GitHub App installations, its settings and its tier. Anyone
+signs in with GitHub, creates a tenant, installs the one public App and brings in colleagues, who
+join by invitation or by having GitHub access to the tenant's repositories. Project roles come from
+GitHub permissions by default. Tenant admins run a tenant; platform admins run the service and see
+no tenant's content except through an audited support session. Tiers gate members, projects and AI,
+with billing through a stub provider. A self-hosted copy with one owner stays as it is: one tenant,
+sign-up closed. Until it is built, §3, §4, §8 and §11 describe the running system.
