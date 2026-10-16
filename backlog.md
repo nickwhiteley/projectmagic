@@ -260,7 +260,7 @@ Built (PM3 answers).
   no proposals until they exist.
 
 ### PM4 Ask across projects
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 A question box answered from the cached parses.
 
