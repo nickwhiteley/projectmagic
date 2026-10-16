@@ -65,7 +65,52 @@
 	const moves = $state<MoveState>({ busy: null, message: null });
 	// Reordering needs the whole list in view: not while filtered.
 	const canDrag = $derived(page.data.project.canEdit && !filtered);
-	const drag = dragHandlers(page.params.repo!, moves, () => canDrag);
+	// A dropped item shows in its new place while the move is saved, then the real data replaces it.
+	let moving = $state<{ id: string; to: string } | null>(null);
+	type Entry = (typeof data.top)[number];
+	const arranged = $derived.by(() => {
+		const same = { top: data.top, sections: data.sections };
+		if (!moving) return same;
+		const lists: Entry[][] = [data.top, ...data.sections.map((s) => s.entries)];
+		let item: Entry | undefined;
+		const rest = lists.map((l) =>
+			l.filter((e) => {
+				if (e.kind === 'item' && e.item.id === moving!.id) item = e;
+				return !(e.kind === 'item' && e.item.id === moving!.id);
+			})
+		);
+		if (!item) return same;
+		const [where, arg] = moving.to.split(':');
+		let placed = false;
+		const out = rest.map((l, n) => {
+			if (where === 'before' || where === 'after') {
+				const i = l.findIndex((e) => e.kind === 'item' && e.item.id === arg);
+				if (i < 0) return l;
+				placed = true;
+				const at = where === 'before' ? i : i + 1;
+				return [...l.slice(0, at), item!, ...l.slice(at)];
+			}
+			if (n - 1 !== Number(arg)) return l;
+			placed = true;
+			return where === 'start' ? [item!, ...l] : [...l, item!];
+		});
+		if (!placed) return same;
+		return {
+			top: out[0],
+			sections: data.sections.map((s, i) => ({ ...s, entries: out[i + 1] }))
+		};
+	});
+	const drag = dragHandlers(
+		page.params.repo!,
+		moves,
+		() => canDrag,
+		undefined,
+		() => true,
+		{
+			set: (id, to) => (moving = { id, to }),
+			clear: () => (moving = null)
+		}
+	);
 </script>
 
 <svelte:head><title>{page.data.project.name} · Project Magic</title></svelte:head>
@@ -183,8 +228,8 @@
 		ondragend={drag.ondragend}
 		ondrop={(e) => drag.ondrop(e)}
 	>
-		{@render entries(data.top)}
-		{#each data.sections as sec, i (i)}
+		{@render entries(arranged.top)}
+		{#each arranged.sections as sec, i (i)}
 			{#if (!filtered && !hidingDone) || sec.entries.some((e) => e.kind === 'item' && shown(e.item))}
 				<section>
 					<h2>{sec.title}</h2>

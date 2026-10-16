@@ -74,7 +74,9 @@ export function dragHandlers(
 	/** Called instead of a move when an item is dropped into a column other than its own. */
 	onColumn?: (id: string, from: string, to: string) => void,
 	/** Reordering needs every item in view, so a filtered view turns it off. */
-	canReorder: () => boolean = () => true
+	canReorder: () => boolean = () => true,
+	/** Lets the page show the move before it is saved. */
+	optimistic?: { set(id: string, to: string): void; clear(): void }
 ) {
 	let dragging: string | null = null;
 	let column: string | null = null;
@@ -116,9 +118,12 @@ export function dragHandlers(
 			if (!canReorder()) return;
 			const to = t.dataset.to ?? `before:${t.dataset.id}`;
 			// Show the item where it was dropped at once; the save and the reload follow.
-			const moving = document.querySelector<HTMLElement>(`[data-id="${CSS.escape(from)}"]`);
-			if (moving && t.dataset.id && t !== moving) t.parentNode?.insertBefore(moving, t);
-			await moveItem(repo, from, to, state);
+			optimistic?.set(from, to);
+			try {
+				await moveItem(repo, from, to, state);
+			} finally {
+				optimistic?.clear();
+			}
 		}
 	};
 }
