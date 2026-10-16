@@ -1,10 +1,18 @@
 <script lang="ts">
 	import StatusPill from '#lib/components/StatusPill.svelte';
-	import { ago, plural, STATUS_ORDER } from '#lib/format.ts';
+	import { ago, duration, plural, STATUS_ORDER } from '#lib/format.ts';
 
 	import type { Summary } from '#lib/server/summary.ts';
+	import type { cardLine } from '#lib/server/delivery.ts';
 
-	let { data }: { data: { cards: (Summary & { canEdit: boolean })[]; now: number } } = $props();
+	let {
+		data
+	}: {
+		data: {
+			cards: (Summary & { canEdit: boolean; delivery: ReturnType<typeof cardLine> | null })[];
+			now: number;
+		};
+	} = $props();
 	const tracked = $derived(data.cards.filter((c) => c.hasBacklog));
 	const others = $derived(data.cards.filter((c) => !c.hasBacklog));
 	const waiting = $derived(tracked.reduce((n, c) => n + c.waitingCount, 0));
@@ -56,6 +64,22 @@
 				{/each}
 				<span><StatusPill status="done" /> {c.done14} in 14 days</span>
 			</div>
+
+			{#if c.delivery?.has}
+				<p class="delivery small">
+					<a href="/p/{c.repo}/delivery#deploys"
+						>{plural(c.delivery.deploysThisWeek, 'deploy')} this week</a
+					>
+					·
+					<a href="/p/{c.repo}/delivery#lead">lead time {duration(c.delivery.leadTimeHours)}</a>
+					·
+					<a href="/p/{c.repo}/delivery#restore"
+						>{plural(c.delivery.bugs, 'production bug')} in 4 weeks</a
+					>
+					·
+					<a href="/p/{c.repo}/delivery#queue">{c.delivery.queue} in the queue</a>
+				</p>
+			{/if}
 
 			{#if c.waiting.length}
 				<div class="block">
@@ -152,6 +176,10 @@
 {/if}
 
 <style>
+	.delivery {
+		margin: 0.4rem 0 0;
+		color: var(--muted);
+	}
 	.head {
 		display: flex;
 		justify-content: space-between;

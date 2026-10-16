@@ -23,3 +23,11 @@ export const STATUS_ORDER = [
 	'todo',
 	'done'
 ] as const;
+
+/** A span in hours as "40 min", "14 h" or "3.5 days". */
+export function duration(hours: number | null | undefined): string {
+	if (hours === null || hours === undefined || Number.isNaN(hours)) return '—';
+	if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} min`;
+	if (hours < 48) return `${Math.round(hours)} h`;
+	return `${Math.round((hours / 24) * 10) / 10} days`;
+}

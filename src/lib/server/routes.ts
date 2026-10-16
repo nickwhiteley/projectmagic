@@ -30,6 +30,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/p/[repo]/board': { kind: 'project', action: 'view' },
 	'/p/[repo]/raw/[...path]': { kind: 'project', action: 'view' },
 	'/p/[repo]/epics': { kind: 'project', action: 'view' },
+	'/p/[repo]/delivery': { kind: 'project', action: 'view' },
 	'/p/[repo]/plan': { kind: 'project', action: 'view' },
 	'/p/[repo]/done': { kind: 'project', action: 'view' },
 	'/p/[repo]/branches': { kind: 'project', action: 'view' },

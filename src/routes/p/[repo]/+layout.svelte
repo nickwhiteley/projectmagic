@@ -12,6 +12,7 @@
 		{ href: `${base}/epics`, label: 'Epics', count: p.counts.epics, hide: !p.counts.epics },
 		{ href: `${base}/plan`, label: 'Plan', hide: !p.hasPlan },
 		{ href: `${base}/done`, label: 'Done', count: p.counts.done },
+		{ href: `${base}/delivery`, label: 'Delivery' },
 		{ href: `${base}/branches`, label: 'Branches', count: p.counts.branches },
 		{ href: `${base}/docs`, label: 'Docs' }
 	]);
