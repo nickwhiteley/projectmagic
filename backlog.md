@@ -138,7 +138,7 @@ don't say what they are.
 explain it on the form?  - A rename is clearer I think
 
 ### PM12 A home page that explains Project Magic, and a README for strangers
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 - **`/` for a signed-out visitor** is a home page instead of a redirect to sign in: what Project
   Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in markdown in
