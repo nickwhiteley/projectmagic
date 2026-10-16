@@ -18,5 +18,5 @@ create table pending_edit (
 );
 create index pending_edit_project on pending_edit (project_id, created_at);
 
--- A person's choice, off by default, next to the inference opt-out.
-alter table user_pref add column batch_edits boolean not null default false;
+-- A person's choice, on by default, next to the inference opt-out.
+alter table user_pref add column batch_edits boolean not null default true;

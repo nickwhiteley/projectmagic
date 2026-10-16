@@ -199,7 +199,7 @@ of a push. Without a webhook, page loads, the *Refresh* button and the daily cro
    new_id_prefix: OR          # suggested for new items; default: the most common prefix
    active_branch_days: 30     # a branch with no commit for longer is stale
    auto_merge: true           # merge each edit's pull request straight away
-   batch_edits: false         # true lets people hold edits and save them as one commit (needs migration 005)
+   batch_edits: true          # false saves every edit at once; true lets people hold edits and save them as one commit (needs migration 005)
    inference: true            # false opts out of model-inferred statuses (needs INFERENCE_PROVIDER)
    ```
 

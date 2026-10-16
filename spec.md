@@ -109,7 +109,7 @@ main: main                       # default: the repository's default branch
 active_branch_days: 30           # a branch with no commit for this long is stale
 new_id_prefix: BP                # the prefix suggested for a new item (§10.1)
 auto_merge: true                 # merge each edit's PR straight away (§10.2)
-batch_edits: false               # allow holding edits and saving them as one commit (§10.5)
+batch_edits: true                # hold edits and save them as one commit; false saves each at once (§10.5)
 inference: true                  # false opts out of model-inferred statuses (§13)
 production_environments:         # default: GitHub deployment environments named Production*
   - "Production – orchard-web"   # (§16.6)
@@ -557,9 +557,9 @@ Until that is set, §16 doesn't count deploys whose commit is a Project Magic ed
 
 Every edit is a commit, a PR and a squash merge, which takes seconds and puts one commit on main
 per click. For a run of small changes, such as setting several statuses or tidying the order, a
-project can allow **batch edits** (`batch_edits: true`) and each person can turn them on for
-themselves (a button above the tabs). Both are off by default; nothing changes for anyone who
-doesn't choose it.
+project can use **batch edits**. They are on by default: a project opts out with
+`batch_edits: false`, and each person can turn them off for themselves (a button above the tabs).
+Until migration 005 has run, edits are saved at once as before.
 
 - **What is held.** An item edit (add, edit, status, move, remove) is stored in Postgres as the
   operation itself, with the item as the person saw it, in `pending_edit`, per project. It is not

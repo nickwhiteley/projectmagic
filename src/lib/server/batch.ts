@@ -85,10 +85,17 @@ export async function discard(projectId: string, id: number): Promise<void> {
 	await db()`delete from pending_edit where project_id = ${projectId} and id = ${id}`;
 }
 
+/** On unless the person turned it off; off when the migration hasn't run, so edits save at once. */
 export async function batchPref(userId: string): Promise<boolean> {
-	const [r] = await db()<{ batch_edits: boolean }[]>`
-		select batch_edits from user_pref where user_id = ${userId}`.catch(missingTable);
-	return !!r?.batch_edits;
+	try {
+		const [r] = await db()<
+			{ batch_edits: boolean }[]
+		>`select batch_edits from user_pref where user_id = ${userId}`;
+		return r ? r.batch_edits : true;
+	} catch (e) {
+		missingTable(e as { code?: string });
+		return false;
+	}
 }
 
 /** The text of a blob never changes, so it is kept by oid. */

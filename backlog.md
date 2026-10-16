@@ -94,7 +94,7 @@ on request. The save is one commit on the `projectmagic` branch and one PR, merg
 main gets one commit for the batch.
 
 - **A project setting** (`.projectmagic.yml`, next to `auto_merge`) and a per-user choice, off by
-  default, so nobody has to use it. Saving each edit at once stays the default.
+  default on (Nick's choice, 2026-10-16), so a project or a person can opt out and save each edit at once.
 - **The pending edits are stored in Postgres**, per project, as the item edits themselves (id,
   operation, base `oid`), not as a whole file, so the batch can be replayed on the current
   backlog and a later edit by an agent doesn't conflict with it.

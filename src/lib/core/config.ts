@@ -62,7 +62,7 @@ export function defaults(repo: RepoFacts): Config {
 		activeBranchDays: 30,
 		newIdPrefix: null,
 		autoMerge: true,
-		batchEdits: false,
+		batchEdits: true,
 		inference: true,
 		productionEnvironments: ['Production*']
 	};
