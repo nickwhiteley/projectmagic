@@ -418,7 +418,7 @@ GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection
 project's state) and fix what dominates.
 
 ### PM20 Tenants: one Project Magic for many teams
-**Status:** todo · **Size:** L · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** L · **Type:** feature · **For:** agent · **Branch:** `feat/pm20-tenant-model`
 
 **Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
 scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
