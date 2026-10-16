@@ -1,5 +1,6 @@
 import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
-import { checkId, splice, type Op } from '#lib/core/splice.ts';
+import { bugsPosition } from '#lib/core/bugs.ts';
+import { checkId, splice, type Op, type Position } from '#lib/core/splice.ts';
 import { editChange, formValues, statusChange } from '#lib/core/edit-form.ts';
 import { updateMeta, type Status } from '#lib/core/meta.ts';
 import { edits } from '#lib/server/edits.ts';
@@ -45,7 +46,7 @@ export const actions: Actions = {
 
 		const op: Op = { op: 'edit', id: it.id, change: editChange(it, v) };
 		try {
-			const result = await edits.edit(locals.user!, locals.project!, op, base);
+			const result = await edits.edit(locals.user!, locals.project!, op, base, it.file);
 			if (result.kind === 'conflict') {
 				// What this edit would make of the item: the change applied to what the form opened.
 				const mine = base ? splice(base, op) : '';
@@ -68,7 +69,20 @@ export const actions: Actions = {
 	move: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const [where, target] = String(form.get('to') ?? '').split(':');
-		const to =
+		const { s, it } = await context(locals.project!.id, params.id);
+		// Each file keeps its own items (PM29): a move stays inside the one the item is in.
+		const targetFile =
+			where === 'before' || where === 'after'
+				? (s.items.find((i) => i.id === target)?.file ?? null)
+				: (s.sections[Number(target)]?.file ?? null);
+		if (targetFile !== it.file)
+			return fail(400, {
+				message: it.file
+					? `A bug stays in ${it.file}: move it among the bugs.`
+					: 'An item can’t move into the bugs file: change its Type instead.',
+				reauth: false
+			});
+		let to: Position =
 			where === 'before'
 				? { before: target }
 				: where === 'after'
@@ -77,12 +91,15 @@ export const actions: Actions = {
 							section: Number(target),
 							at: where === 'start' ? ('start' as const) : ('end' as const)
 						};
+		if ('section' in to && it.file)
+			to = bugsPosition(s.items, to.at, it.id) ?? { section: 0, at: to.at };
 		try {
 			const result = await edits.edit(
 				locals.user!,
 				locals.project!,
 				{ op: 'move', id: params.id, to },
-				null
+				null,
+				it.file
 			);
 			return respond(result, `/p/${params.repo}`);
 		} catch (e) {
@@ -109,7 +126,8 @@ export const actions: Actions = {
 				locals.user!,
 				locals.project!,
 				{ op: 'edit', id: it.id, change },
-				null
+				null,
+				it.file
 			);
 			return respond(result, safeBack(form.get('back'), `/p/${params.repo}/board`));
 		} catch (e) {
@@ -128,7 +146,7 @@ export const actions: Actions = {
 				? { op: 'edit', id: it.id, change: { meta: updateMeta(it.meta ?? [], { status: 'done' }) } }
 				: { op: 'remove', id: it.id };
 		try {
-			const result = await edits.edit(locals.user!, locals.project!, op, null);
+			const result = await edits.edit(locals.user!, locals.project!, op, null, it.file);
 			return respond(
 				result,
 				mode === 'done' ? `/p/${params.repo}/i/${encodeURIComponent(it.id)}` : `/p/${params.repo}`

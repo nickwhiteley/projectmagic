@@ -206,10 +206,18 @@ export interface SyncSummary {
 
 /** The tracked paths: the defaults, and whatever the configuration names. */
 function trackedPaths(config: Config | null): string[] {
-	const paths = new Set(['backlog.md', 'BACKLOG.md', 'PROGRESS.md', 'epics.md', CONFIG_PATH]);
+	const paths = new Set([
+		'backlog.md',
+		'BACKLOG.md',
+		'PROGRESS.md',
+		'epics.md',
+		'bugs.md',
+		CONFIG_PATH
+	]);
 	for (const p of config?.backlog ?? []) paths.add(p);
 	if (config?.progress) paths.add(config.progress);
 	if (config?.epics) paths.add(config.epics);
+	if (config?.bugs) paths.add(config.bugs);
 	return [...paths];
 }
 
@@ -290,6 +298,7 @@ export async function syncProject(
 	for (const b of branches.filter((x) => x.active)) {
 		const bp = backlogPath(b);
 		if (bp) wanted.set(b.files[bp], 'backlog');
+		if (cfg.bugs && b.files[cfg.bugs]) wanted.set(b.files[cfg.bugs], 'backlog');
 		if (cfg.progress && b.files[cfg.progress]) wanted.set(b.files[cfg.progress], 'progress');
 		if (cfg.epics && b.name === main && b.files[cfg.epics]) wanted.set(b.files[cfg.epics], 'epics');
 	}
@@ -329,9 +338,17 @@ export async function syncProject(
 
 	// 4. Done detection: main's commits to the backlog since the cursor (§7.3).
 	const mainRef = branches.find((b) => b.name === main);
+	// Both files are one list to done detection: an item removed from either shipped (PM29).
+	const bugsPath = cfg.bugs && mainRef?.files[cfg.bugs] ? cfg.bugs : null;
 	const history =
-		mainRef && backlogPath(mainRef)
-			? await syncHistory(gh, sql, project, main, backlogPath(mainRef)!)
+		mainRef && (backlogPath(mainRef) || bugsPath)
+			? await syncHistory(
+					gh,
+					sql,
+					project,
+					main,
+					[backlogPath(mainRef), bugsPath].filter((p): p is string => !!p)
+				)
 			: { newCommits: 0, done: 0 };
 
 	await sql`update project set config_json = ${sql.json(JSON.parse(JSON.stringify(cfg)))},
@@ -357,7 +374,7 @@ async function syncHistory(
 	sql: Sql,
 	project: SyncProject,
 	main: string,
-	path: string
+	paths: string[]
 ): Promise<{ newCommits: number; done: number }> {
 	const { owner, repo } = project;
 	const [cursor] = await sql<
@@ -405,29 +422,40 @@ async function syncHistory(
 	if (!line.length) return { newCommits: 0, done: 0 };
 
 	// The backlog's blob at each commit; only the commits where it changed are versions.
+	// With two files, a commit's version is both blobs together, so a change to either is a version.
 	const oidAt = new Map<string, string | null>();
-	for (let i = 0; i < line.length; i += 100) {
-		const chunk = line.slice(i, i + 100);
+	const oidsAt = new Map<string, (string | null)[]>();
+	for (let i = 0; i < line.length; i += 50) {
+		const chunk = line.slice(i, i + 50);
 		const fields = chunk
-			.map((c, j) => `c${j}: object(expression: ${JSON.stringify(`${c.sha}:${path}`)}) { oid }`)
+			.flatMap((c, j) =>
+				paths.map(
+					(path, k) =>
+						`c${j}p${k}: object(expression: ${JSON.stringify(`${c.sha}:${path}`)}) { oid }`
+				)
+			)
 			.join('\n');
 		const r = await gh.graphql<{ repository: Record<string, { oid: string } | null> }>(
 			`query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) { ${fields} } }`,
 			{ owner, name: repo }
 		);
-		chunk.forEach((c, j) => oidAt.set(c.sha, r.repository[`c${j}`]?.oid ?? null));
+		chunk.forEach((c, j) => {
+			const oids = paths.map((_, k) => r.repository[`c${j}p${k}`]?.oid ?? null);
+			oidsAt.set(c.sha, oids);
+			oidAt.set(c.sha, oids.some(Boolean) ? oids.join('+') : null);
+		});
 	}
 	const changed = line.filter((c, i) => i === 0 || oidAt.get(c.sha) !== oidAt.get(line[i - 1].sha));
 	const texts = await fetchBlobs(gh, owner, repo, [
-		...new Set(changed.map((c) => oidAt.get(c.sha)).filter((o): o is string => !!o))
+		...new Set(changed.flatMap((c) => oidsAt.get(c.sha) ?? []).filter((o): o is string => !!o))
 	]);
 	const versions: Version[] = changed.map((c) => {
-		const oid = oidAt.get(c.sha);
+		const parts = (oidsAt.get(c.sha) ?? []).flatMap((o) => (o ? [texts.get(o) ?? ''] : []));
 		return {
 			oid: c.sha,
 			date: c.commit.committer.date,
 			pr: null,
-			text: oid ? (texts.get(oid) ?? null) : null
+			text: parts.length ? parts.join('\n\n') : null
 		};
 	});
 	// The cursor is main's head, whether or not the head changed the backlog.

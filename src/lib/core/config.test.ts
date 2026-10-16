@@ -13,6 +13,8 @@ describe('parseConfig', () => {
 			backlog: ['backlog.md', 'BACKLOG.md'],
 			progress: 'PROGRESS.md',
 			epics: 'epics.md',
+			bugs: 'bugs.md',
+			bugPrefix: 'BUG',
 			docs: DEFAULT_DOCS,
 			docsExclude: [],
 			main: 'main',
@@ -30,6 +32,8 @@ describe('parseConfig', () => {
 backlog: docs/BACKLOG.md
 progress: null
 epics: planning/epics.md
+bugs: planning/bugs.md
+bug_prefix: DEF
 docs: [README.md]
 docs_exclude: [specs/archive/**]
 main: trunk
@@ -46,6 +50,8 @@ production_environments: ["Production – orchard-web"]
 			backlog: ['docs/BACKLOG.md'],
 			progress: null,
 			epics: 'planning/epics.md',
+			bugs: 'planning/bugs.md',
+			bugPrefix: 'DEF',
 			docs: ['README.md'],
 			docsExclude: ['specs/archive/**'],
 			main: 'trunk',
@@ -62,6 +68,16 @@ production_environments: ["Production – orchard-web"]
 		const bad = parseConfig('inference: "no"\n', repo);
 		expect(bad.config.inference).toBe(true);
 		expect(bad.warnings).toEqual(['inference should be true or false; using the default']);
+	});
+
+	it('reads bugs and bug_prefix, and falls back on bad values (PM29)', () => {
+		expect(parseConfig('bugs: null\n', repo).config.bugs).toBeNull();
+		const bad = parseConfig('bugs: 3\nbug_prefix: bug\n', repo);
+		expect(bad.config).toMatchObject({ bugs: 'bugs.md', bugPrefix: 'BUG' });
+		expect(bad.warnings).toEqual([
+			'bugs should be a path or null; using the default',
+			'bug_prefix should be one to four capital letters; using the default'
+		]);
 	});
 
 	it('falls back per key, with a warning for each bad value and unknown key', () => {

@@ -13,6 +13,7 @@ import { assigneeProblem } from './assignee.ts';
 import { EDIT_BRANCH } from './branchref.ts';
 import { declaredEpic, epicId, rollUp, type EpicDeclaration, type EpicRollup } from './epics.ts';
 import type { Config } from './config.ts';
+import { mergeBugs } from './bugs.ts';
 import { link, type Dangling, type Edge } from './link.ts';
 import type { MetaEntry, Status } from './meta.ts';
 import type { Group, Task } from './progress.ts';
@@ -54,6 +55,8 @@ export interface RefInput {
 	message: string;
 	prs: PrInfo[];
 	backlog: StoredBacklog | null;
+	/** The bugs file's parse (PM29), merged into `backlog` when the state is assembled. */
+	bugs?: StoredBacklog | null;
 	plan: StoredPlan | null;
 	/** The epics `epics.md` declares (PM28), read for main only. */
 	epics?: EpicDeclaration[] | null;
@@ -138,6 +141,8 @@ export interface ItemView {
 	found: string | null;
 	raised: string | null;
 	section: number | null;
+	/** The file it lives in when that is `bugs.md`, else null (PM29). */
+	file: string | null;
 	line: number;
 	start: number;
 	meta: MetaEntry[] | null;
@@ -243,6 +248,9 @@ export interface ProjectState {
 	/** Every id in use or used before: main, every active branch, and done history (§10.1). */
 	usedIds: string[];
 	newIdPrefix: string | null;
+	/** The bugs file when main has one (PM29), and the prefix for a new bug. */
+	bugsFile: string | null;
+	bugPrefix: string;
 }
 
 const prLink = (p: PrInfo): PrLink => ({
@@ -254,8 +262,15 @@ const prLink = (p: PrInfo): PrLink => ({
 	branch: p.headRefName
 });
 
-export function assembleState(input: StateInput): ProjectState {
-	const { config } = input;
+export function assembleState(raw: StateInput): ProjectState {
+	const { config } = raw;
+	// The bugs file reads as part of the backlog from here on (PM29).
+	const input: StateInput = {
+		...raw,
+		refs: raw.refs.map((r) =>
+			r.bugs && config.bugs ? { ...r, backlog: mergeBugs(r.backlog, r.bugs, config.bugs) } : r
+		)
+	};
 	const main = input.refs.find((r) => r.name === config.main) ?? null;
 	const items = main?.backlog?.items ?? [];
 	const plan = main?.plan ?? null;
@@ -357,10 +372,11 @@ export function assembleState(input: StateInput): ProjectState {
 			size: it.meta?.size ?? null,
 			assignee: it.meta?.for || null,
 			epic: epicId(it.meta?.epic),
-			type: it.meta?.type?.trim().toLowerCase() || null,
+			type: it.meta?.type?.trim().toLowerCase() || (it.file ? 'bug' : null),
 			found: it.meta?.found || null,
 			raised: it.meta?.raised || null,
 			section: it.section,
+			file: it.file ?? null,
 			line: it.line,
 			start: it.start,
 			meta: it.meta?.entries ?? null,
@@ -539,6 +555,8 @@ export function assembleState(input: StateInput): ProjectState {
 			? { branch: latest.name, at: latest.committedAt, message: latest.message }
 			: null,
 		newIdPrefix: config.newIdPrefix,
+		bugsFile: main?.bugs && config.bugs ? config.bugs : null,
+		bugPrefix: config.bugPrefix,
 		usedIds: [
 			...new Set([
 				...active.flatMap((r) => r.backlog?.items.map((i) => i.id) ?? []),
