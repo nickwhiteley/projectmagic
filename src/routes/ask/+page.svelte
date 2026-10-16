@@ -3,6 +3,16 @@
 
 	let { data, form } = $props();
 	let busy = $state(false);
+
+	// Going back from a linked item reloads this page without the answer. A snapshot keeps the last
+	// result for the browser session, so the answer is still there, without asking the model again.
+	type Result = { question?: string; html?: string; truncated?: boolean; reason?: string };
+	let restored = $state<Result | null>(null);
+	const shown = $derived<Result | null>(form ?? restored);
+	export const snapshot = {
+		capture: (): Result | null => (shown ? { ...shown } : null),
+		restore: (v: Result | null) => (restored = v)
+	};
 </script>
 
 <svelte:head><title>Ask · Project Magic</title></svelte:head>
@@ -34,7 +44,7 @@
 		<input
 			name="q"
 			type="search"
-			value={form?.question ?? ''}
+			value={shown?.question ?? ''}
 			maxlength={data.max}
 			placeholder="What is waiting on me? What shipped this week? What is blocked?"
 			aria-label="Question"
@@ -43,13 +53,13 @@
 		<button class="button" disabled={busy}>{busy ? 'Asking…' : 'Ask'}</button>
 	</form>
 
-	{#if form && 'html' in form}
-		<div class="answer prose">{@html form.html}</div>
-		{#if form.truncated}<p class="muted small">
+	{#if shown?.html}
+		<div class="answer prose">{@html shown.html}</div>
+		{#if shown.truncated}<p class="muted small">
 				The digest was too long for the model, so some items were left out.
 			</p>{/if}
-	{:else if form && 'reason' in form}
-		<p class="error" role="alert">{form.reason}</p>
+	{:else if shown?.reason}
+		<p class="error" role="alert">{shown.reason}</p>
 	{/if}
 {/if}
 
