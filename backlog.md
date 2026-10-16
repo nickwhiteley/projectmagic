@@ -186,7 +186,7 @@ epic id is flagged in the health panel. **Left for PM28:** reading `epics.md`, a
 on the item form (the key is kept when a form is saved, so it can be set in the file).
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
-**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
+**Status:** in progress · **Branch:** `feat/pm28-epics-file` · **Size:** S · **Type:** feature · **For:** agent
 
 What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
 description and an optional target, so the sync fetches and caches that file and the Epics tab
