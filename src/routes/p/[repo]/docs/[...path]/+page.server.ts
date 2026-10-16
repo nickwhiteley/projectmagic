@@ -1,3 +1,4 @@
+import { can } from '#lib/core/access.ts';
 import { parseConfig } from '#lib/core/config.ts';
 import type { TocEntry } from '#lib/core/render.ts';
 import { db } from '#lib/server/db.ts';
@@ -55,6 +56,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		html,
 		toc: toc.filter((t) => t.depth >= 2 && t.depth <= 3),
 		query,
+		// Only main's documents are edited (PM6).
+		canEdit: ref === s.main && can(locals.user, 'edit', project, locals.memberships),
 		githubUrl: `https://github.com/${project.owner}/${project.repo}/blob/${encodeURIComponent(ref)}/${doc.path}`
 	};
 };

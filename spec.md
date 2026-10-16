@@ -444,7 +444,8 @@ edit button.
 - **Remove an item**: by marking it `done` and pruning it, or by deleting it outright. Both ask
   for confirmation.
 
-Only main's `backlog.md` is edited. Editing `PROGRESS.md` and docs is out of scope for v0.1.
+The backlog is the only file v0.1 edits. Plan status cells and documents are edited too (§13, PM6),
+in the same way: a commit on the `projectmagic` branch, merged at once.
 
 ### 10.2 Every edit goes to the `projectmagic` branch
 
@@ -691,7 +692,13 @@ repository's `backlog.md`.
 - **Activity feed**: recent commits across all projects, grouped by linked item.
 - **Delivery and quality** (§16): deployment frequency, lead time, change failure rate, time to
   restore, throughput, and the founder queue.
-- **Editing `PROGRESS.md` status cells and docs.**
+- **Editing `PROGRESS.md` status cells and docs** (built, PM6). The Plan page has an *Edit* on each
+  task: a status and a note, which rewrites only that status cell (a bold word stays bold, the
+  note stays unless changed, and a number repeated across tables edits the current row). A
+  document on main has an *Edit* that opens its text in a box and saves it whole. Both are
+  commits through the §10.2 path, as the person, and a change on main to that task's cell, or to
+  that document, since it was opened is a conflict, never an overwrite. Documents are limited to
+  the project's `docs` globs and 1 MB.
 - **More users**: invitations, the member list and role management, on top of the §11.2
   model that v0.1 already enforces.
 

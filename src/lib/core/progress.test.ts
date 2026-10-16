@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { fixture, type FixtureRepo } from './fixtures.ts';
-import { parseProgress, parseStatusCell, type Plan } from './progress.ts';
+import {
+	parseProgress,
+	parseStatusCell,
+	PlanEditError,
+	setTaskStatus,
+	taskStatusCell,
+	type Plan
+} from './progress.ts';
 
 describe('parseStatusCell', () => {
 	it.each([
@@ -119,5 +126,54 @@ describe('the fixtures in particular', () => {
 			expect(branch.byNumber.has(n)).toBe(true);
 		}
 		expect(branch.byNumber.get('2.6')!.status).toBe('in progress');
+	});
+});
+
+describe('setTaskStatus (PM6)', () => {
+	const text = `# Plan
+
+## Phase 1
+
+| # | Task | Status |
+|---|------|--------|
+| 1 | First | **done**: passed on 18.6 |
+| 2 | Second | todo |
+| 3 | Third | built* |
+| 4 | Fourth | |
+
+## Phase 2
+
+| # | Task | Status |
+|---|------|--------|
+| 2 | Second again | in progress |
+`;
+	it('changes the word, keeping bold and the note', () => {
+		expect(setTaskStatus(text, '1', 'blocked')).toBe(
+			text.replace('**done**: passed on 18.6', '**blocked**: passed on 18.6')
+		);
+		expect(setTaskStatus(text, '3', 'done')).toBe(text.replace('built*', 'done'));
+	});
+	it('edits the current row for a number repeated across tables', () => {
+		expect(setTaskStatus(text, '2', 'done')).toBe(text.replace('in progress', 'done'));
+	});
+	it('sets, replaces and removes the note', () => {
+		expect(setTaskStatus(text, '2', 'done', 'merged | shipped')).toBe(
+			text.replace('| in progress |', '| done: merged \\| shipped |')
+		);
+		expect(setTaskStatus(text, '1', 'done', '')).toBe(
+			text.replace('**done**: passed on 18.6', '**done**')
+		);
+	});
+	it('fills an empty cell, and leaves an unchanged one alone', () => {
+		expect(setTaskStatus(text, '4', 'todo')).toContain('| 4 | Fourth | todo |');
+		expect(setTaskStatus(text, '2', 'todo')).not.toBe(text); // the current row is phase 2's
+		expect(setTaskStatus(text, '1', 'done')).toBe(text);
+	});
+	it('reads the same back, and refuses what it cannot do', () => {
+		expect(parseProgress(setTaskStatus(text, '1', 'blocked')).byNumber.get('1')!.status).toBe(
+			'blocked'
+		);
+		expect(() => setTaskStatus(text, '99', 'done')).toThrow(PlanEditError);
+		expect(taskStatusCell(text, '3')).toBe('built*');
 	});
 });

@@ -250,6 +250,8 @@ export interface ProjectState {
 	newIdPrefix: string | null;
 	/** The bugs file when main has one (PM29), and the prefix for a new bug. */
 	bugsFile: string | null;
+	/** The plan's file when main has one (PM6). */
+	progressPath: string | null;
 	bugPrefix: string;
 }
 
@@ -555,6 +557,7 @@ export function assembleState(raw: StateInput): ProjectState {
 			? { branch: latest.name, at: latest.committedAt, message: latest.message }
 			: null,
 		newIdPrefix: config.newIdPrefix,
+		progressPath: main?.plan && config.progress ? config.progress : null,
 		bugsFile: main?.bugs && config.bugs ? config.bugs : null,
 		bugPrefix: config.bugPrefix,
 		usedIds: [

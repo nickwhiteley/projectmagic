@@ -140,3 +140,95 @@ export function parseProgress(text: string): Plan {
 		unknown: current.filter((t) => t.status === 'unknown')
 	};
 }
+
+const BARE_WORD = /^(done|todo|in progress|blocked|built|skipped)(?![A-Za-z])/i;
+
+/** The statuses a person can set on a task; `unknown` is only ever what a bad cell reads as. */
+export const SETTABLE_PLAN_STATUSES = PLAN_STATUSES;
+
+export class PlanEditError extends Error {}
+
+interface CellSpan {
+	start: number;
+	end: number;
+	raw: string;
+}
+
+/** The span between a row's pipes where an empty cell is; the row must start with a pipe. */
+function emptyCell(text: string, row: Table['children'][number], index: number): CellSpan | null {
+	const src = text.slice(startOf(row), endOf(row));
+	if (!src.startsWith('|')) return null;
+	const pipes: number[] = [];
+	for (let i = 0; i < src.length; i++) if (src[i] === '|' && src[i - 1] !== '\\') pipes.push(i);
+	if (pipes.length < index + 2) return null;
+	const from = startOf(row) + pipes[index] + 1;
+	const to = startOf(row) + pipes[index + 1];
+	return { start: from, end: to, raw: '' };
+}
+
+/** The status cell of the current row for a task number: the last table's, as the parser reads it. */
+function statusCell(text: string, number: string): CellSpan | null {
+	let found: CellSpan | null = null;
+	for (const n of parseMarkdown(text).children) {
+		if (n.type !== 'table') continue;
+		const [head, ...rows] = n.children;
+		const headers = head.children.map((c) => plain(c).trim());
+		const si = headers.findIndex((h) => h.toLowerCase() === 'status');
+		if (headers[0] !== '#' || si < 0) continue;
+		for (const row of rows) {
+			if (plain(row.children[0]).trim() !== number) continue;
+			const cell = row.children[si];
+			if (!cell) {
+				found = null;
+				continue;
+			}
+			found = cell.children.length
+				? {
+						start: startOf(cell.children[0]),
+						end: endOf(cell.children[cell.children.length - 1]),
+						raw: cellSource(cell, text)
+					}
+				: emptyCell(text, row, si);
+		}
+	}
+	return found;
+}
+
+/** The status cell of a task as it is in `text`, for noticing a change since it was shown. */
+export function taskStatusCell(text: string, number: string): string | null {
+	return statusCell(text, number)?.raw ?? null;
+}
+
+/**
+ * Sets a task's status (PM6). The cell keeps its shape: a bold word stays bold, and the note
+ * after the word stays unless a new one is given (an empty one removes it). Nothing else in the
+ * file changes.
+ */
+export function setTaskStatus(
+	text: string,
+	number: string,
+	status: Exclude<PlanStatus, 'unknown'>,
+	note?: string
+): string {
+	if (!(PLAN_STATUSES as readonly string[]).includes(status))
+		throw new PlanEditError(`${status} is not a plan status`);
+	const cell = statusCell(text, number);
+	if (!cell) throw new PlanEditError(`There is no task ${number} with a status cell`);
+	const bold = /^\*\*(.+?)\*\*/s.test(cell.raw);
+	let next: string;
+	if (note !== undefined) {
+		const clean = note.replace(/\s+/g, ' ').trim().replace(/\|/g, '\\|');
+		next = (bold ? `**${status}**` : status) + (clean ? `: ${clean}` : '');
+	} else {
+		const m = (bold ? cell.raw.slice(2) : cell.raw).match(bold ? BARE_WORD : WORD);
+		if (!m) next = bold ? `**${status}**` : status;
+		else {
+			const at = bold ? 2 : 0;
+			next = cell.raw.slice(0, at) + status + cell.raw.slice(at + m[0].length);
+		}
+	}
+	if (next === cell.raw) return text;
+	// An empty cell is the space between its pipes, which the new text keeps one space inside.
+	if (!cell.raw) next = ` ${next} `;
+	return text.slice(0, cell.start) + next + text.slice(cell.end);
+}

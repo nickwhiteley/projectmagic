@@ -8,7 +8,14 @@ import { syncUntil } from './sync-runner.ts';
 import type { SessionUser } from './users.ts';
 import type { ProjectRow } from './projects.ts';
 import { userClient } from './user-token.ts';
-import { applyEdit, prBody, type WriteResult } from './write.ts';
+import {
+	applyChange,
+	applyEdit,
+	prBody,
+	type FileChange,
+	type WriteResult,
+	type WriteTarget
+} from './write.ts';
 
 /** `file` is the item's file when it isn't the main backlog (PM29: `bugs.md`). */
 async function target(project: ProjectRow, file: string | null = null) {
@@ -41,12 +48,61 @@ export async function edit(
 	base: string | null,
 	file: string | null = null
 ): Promise<WriteResult> {
-	const gh = userClient(user.id);
 	const t = await target(project, file);
 	const itemId = op.op === 'add' ? op.item.id : op.id;
+	return perform(user, project, t, (gh) => applyEdit(gh, t, op, base), { op: op.op, item: itemId });
+}
+
+/**
+ * A change to another file in the repository: a plan task's status, or a document (PM6). The
+ * path is trusted only as far as the caller has checked it; GitHub refuses what it can't find.
+ */
+export async function editFile(
+	user: SessionUser,
+	project: ProjectRow,
+	path: string,
+	change: FileChange,
+	base: string | null,
+	log: { op: string; item: string }
+): Promise<WriteResult> {
+	const t = await targetAt(project, path);
+	return perform(user, project, t, (gh) => applyChange(gh, t, change, base), log);
+}
+
+async function targetAt(project: ProjectRow, path: string): Promise<WriteTarget> {
+	const [row] = await db()<
+		{ config_json: Config | null }[]
+	>`select config_json from project where id = ${project.id}`;
+	const config =
+		row?.config_json ?? parseConfig(null, { name: project.repo, defaultBranch: 'main' }).config;
+	return {
+		owner: project.owner,
+		repo: project.repo,
+		main: config.main,
+		path,
+		autoMerge: config.autoMerge
+	};
+}
+
+function logMessage(op: string, item: string): string {
+	if (op === 'plan') return `Plan: set ${item}`;
+	if (op === 'doc') return `Doc: edit ${item}`;
+	return `Backlog: ${op} ${item}`;
+}
+
+async function perform(
+	user: SessionUser,
+	project: ProjectRow,
+	t: WriteTarget,
+	run: (gh: ReturnType<typeof userClient>) => Promise<WriteResult>,
+	log: { op: string; item: string }
+): Promise<WriteResult> {
+	const gh = userClient(user.id);
+	const itemId = log.item;
+	const op = { op: log.op };
 	let result: WriteResult;
 	try {
-		result = await applyEdit(gh, t, op, base);
+		result = await run(gh);
 	} catch (e) {
 		await db()`insert into edit_log (project_id, user_id, item_id, op, error)
 			values (${project.id}, ${user.id}, ${itemId}, ${op.op}, ${String(e)})`;
@@ -65,7 +121,7 @@ export async function edit(
 			await gh.send('PATCH', `/repos/${project.owner}/${project.repo}/pulls/${result.pr}`, {
 				body: prBody(
 					edits.map((e) => ({
-						message: `Backlog: ${e.op} ${e.item_id}`,
+						message: logMessage(e.op, e.item_id),
 						by: e.login,
 						at: e.at.toISOString()
 					}))
@@ -129,4 +185,4 @@ export async function justAdded(projectId: string, itemId: string): Promise<bool
 	return (r?.n ?? 0) > 0;
 }
 
-export const edits = { edit, mergeEdits, justAdded };
+export const edits = { edit, editFile, mergeEdits, justAdded };

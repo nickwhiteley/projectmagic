@@ -98,7 +98,8 @@
 		<article bind:this={article}>
 			<p class="path mono muted">
 				{data.path}{#if data.ref !== data.branches[0]}
-					on {data.ref}{/if} · <a href={data.githubUrl}>GitHub</a>
+					on {data.ref}{/if} · <a href={data.githubUrl}>GitHub</a>{#if data.canEdit}
+					· <a href="/p/{repo}/edit-doc/{data.path}">Edit</a>{/if}
 			</p>
 			<div class="prose">{@html data.html}</div>
 		</article>

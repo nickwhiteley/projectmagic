@@ -68,15 +68,43 @@ function refusal(status: number, body: unknown, doing: string): WriteResult {
 	return { kind: 'refused', detail: `GitHub refused to ${doing}: ${status} ${message}` };
 }
 
-/**
- * Applies one edit. `base`, for an edit or move of an existing item, is the item's source as the
- * user saw it; if main's copy has changed since, the result is a conflict for the user to resolve
- * (§10.3 step 4), never an overwrite.
- */
-export async function applyEdit(
+/** A change to one file: what the write path needs to know, whatever the file is (PM6). */
+export interface FileChange {
+	/** The new text from the current one. Throws SpliceError or WriteError when it can't be made. */
+	apply(text: string): string;
+	/** The commit message, from the text before the change. */
+	describe(text: string): string;
+	/** The part of the file the user based the change on, now; compared with `base`. */
+	current?(text: string): string | null;
+}
+
+/** An edit to the backlog as a change to its file. */
+export function backlogChange(op: Op): FileChange {
+	return {
+		apply: (text) => splice(text, op),
+		describe: (text) => describe(op, parseBacklog(text)),
+		current: op.op === 'add' ? undefined : (text) => itemSource(text, op.id)
+	};
+}
+
+export function applyEdit(
 	gh: GitHubClient,
 	t: WriteTarget,
 	op: Op,
+	base: string | null = null
+): Promise<WriteResult> {
+	return applyChange(gh, t, backlogChange(op), base);
+}
+
+/**
+ * Applies one change. `base`, for a change to something the user saw, is that part of the file as
+ * they saw it; if main's copy has changed since, the result is a conflict for the user to resolve
+ * (§10.3 step 4), never an overwrite.
+ */
+export async function applyChange(
+	gh: GitHubClient,
+	t: WriteTarget,
+	change: FileChange,
 	base: string | null = null
 ): Promise<WriteResult> {
 	const repo = `/repos/${enc(t.owner)}/${enc(t.repo)}`;
@@ -177,13 +205,13 @@ export async function applyEdit(
 		const text = Buffer.from(file.body.content, 'base64').toString('utf8');
 		baseOid = file.body.sha;
 
-		if (base !== null && op.op !== 'add') {
-			const now = itemSource(text, op.id);
+		if (base !== null && change.current) {
+			const now = change.current(text);
 			if (now !== base) return cleanup({ kind: 'conflict', theirs: now, baseOid });
 		}
 		let next: string;
 		try {
-			next = splice(text, op);
+			next = change.apply(text);
 		} catch (e) {
 			if (e instanceof SpliceError) {
 				await cleanup({ kind: 'unchanged' });
@@ -192,7 +220,7 @@ export async function applyEdit(
 			throw e;
 		}
 		if (next === text) return cleanup({ kind: 'unchanged' });
-		message = describe(op, parseBacklog(text));
+		message = change.describe(text);
 
 		const put = await gh.send<{ commit: { sha: string } }>(
 			'PUT',

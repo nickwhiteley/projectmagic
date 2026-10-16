@@ -290,7 +290,25 @@ no item links to are listed under "not linked to an item". Project Magic's own e
 deployment branches are left out. A full commit history would need the sync to cache commits.
 
 ### PM6 Edit `PROGRESS.md` status cells and docs
-**Status:** in progress · **Branch:** `feat/pm6-plan-edit` · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+
+The item was a title only; this is what I took it to mean (`spec.md` §13). Say if it should be less
+or more.
+
+Built:
+
+- **Plan status cells**: each task on the Plan page has an *Edit* (for editors) with the status
+  and a note. It rewrites only that cell in `PROGRESS.md`: a bold word stays bold, the note after
+  it stays unless changed, a pipe in a note is escaped, and a number repeated across tables edits
+  the current row. If the cell changed on main since the page was shown, it is a conflict.
+- **Documents**: a document on main has an *Edit* (`/p/<repo>/edit-doc/<path>`) with its text in a
+  box, saved whole, as one commit. Only the project's `docs` files, at most 1 MB; files with
+  Windows line endings keep them. A change on main since it was opened is a conflict, offering
+  your text over the new version.
+- Both go through the same path as backlog edits (the `projectmagic` branch, merged at once, the
+  edit log, the pending-PR rules).
+- **Not built**: a document editor with a preview, and creating or deleting documents or plan
+  tasks.
 
 ### PM7 More users: invitations, members and roles
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
