@@ -102,7 +102,7 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			select distinct on (b.oid, b.kind) b.oid, b.kind, b.parsed_json
 			from ref_file f
 			join ref r on r.project_id = f.project_id and r.name = f.ref_name and r.active
-			join blob_parse b on b.oid = f.oid and b.parser_version = ${PARSER_VERSION}
+			join blob_parse b on b.oid = f.oid and b.parser_version >= ${PARSER_VERSION}
 			where f.project_id = ${projectId}`
 	]);
 	const parsed = new Map(parses.map((r) => [`${r.kind}:${r.oid}`, r.parsed_json]));
