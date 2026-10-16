@@ -11,6 +11,7 @@
 		items={[
 			{ href: '/admin', label: 'Overview' },
 			{ href: '/admin/tenants', label: 'Tenants' },
+			{ href: '/admin/tiers', label: 'Tiers & prices' },
 			{ href: '/admin/users', label: 'Users' },
 			{ href: '/admin/installations', label: 'Installations' },
 			{ href: '/admin/settings', label: 'Settings' },

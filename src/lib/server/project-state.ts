@@ -13,6 +13,7 @@ import {
 import { listPending, overlayBacklog } from './batch.ts';
 import { db } from './db.ts';
 import { PARSER_VERSION, type Pr } from './sync.ts';
+import { aiAllowedCached } from './plans.ts';
 
 interface ProjectRow {
 	id: string;
@@ -22,6 +23,7 @@ interface ProjectRow {
 	config_json: Config | null;
 	last_sync_at: Date | null;
 	last_error: string | null;
+	tenant_id: string;
 }
 
 const cache = new Map<string, { key: string; state: ProjectState }>();
@@ -65,12 +67,14 @@ export async function loadProjectState(
 	const slot = withPending ? projectId : `${projectId}:saved`;
 	const sql = db();
 	const [p] = await sql<ProjectRow[]>`
-		select id, owner, repo, installation_id, config_json, last_sync_at, last_error from project where id = ${projectId}`;
+		select id, owner, repo, installation_id, config_json, last_sync_at, last_error, tenant_id from project where id = ${projectId}`;
 	if (!p) throw new Error(`no project ${projectId}`);
 	const syncKey = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}`;
 	// Pending edits (PM25) change what the views show, so they are part of the key.
 	const pending = withPending ? await listPending(projectId) : [];
-	const key = `${syncKey}|${pending.map((e) => `${e.id}${e.conflict ? 'c' : ''}`).join(',')}`;
+	// Proposed statuses are off for a tenant whose plan or admins turned AI off (specs/tenants.md §7.2).
+	const ai = await aiAllowedCached(String(p.tenant_id));
+	const key = `${ai ? 'ai' : 'noai'}|${syncKey}|${pending.map((e) => `${e.id}${e.conflict ? 'c' : ''}`).join(',')}`;
 	const hit = cache.get(slot);
 	if (hit?.key === key) return hit.state;
 
@@ -139,7 +143,7 @@ export async function loadProjectState(
 		inputs.set(projectId, (held = { key: syncKey, reads, inferences }));
 	}
 	const [refs, files, done, parses] = held.reads as Awaited<ReturnType<typeof readAll>>;
-	const inferences = held.inferences as Awaited<ReturnType<typeof readInferences>>;
+	const inferences = ai ? (held.inferences as Awaited<ReturnType<typeof readInferences>>) : [];
 	const parsed = new Map(parses.map((r) => [`${r.kind}:${r.oid}`, r.parsed_json]));
 	const fileOf = (ref: string, path: string) =>
 		files.find((f) => f.ref_name === ref && f.path === path)?.oid;

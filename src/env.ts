@@ -57,5 +57,22 @@ export const variables = defineEnvVars({
 		},
 		description: 'Tokens a project may use a day; default 50000'
 	},
+	BILLING_PROVIDER: {
+		schema: (value) => {
+			const v = optional(value);
+			if (v && v !== 'stub')
+				throw new Error('BILLING_PROVIDER must be stub (the only provider so far)');
+			return v;
+		},
+		description: 'Unset turns billing off, as for a self-hosted copy'
+	},
+	BILLING_STUB: {
+		schema: optional,
+		description: 'Allows the stub provider, which takes no money, on a production deploy'
+	},
+	VERCEL_ENV: {
+		schema: optional,
+		description: 'Set by Vercel: production, preview or development'
+	},
 	CRON_SECRET: { schema: optional, description: 'Set by Vercel for the daily cron' }
 });

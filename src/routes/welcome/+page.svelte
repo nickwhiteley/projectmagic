@@ -27,6 +27,12 @@
 		</p>
 	{/if}
 
+	{#if data.full}
+		<p class="flash error" role="alert">
+			{data.full} is full at the moment, so you could not join it. Its admins have been told.
+		</p>
+	{/if}
+
 	{#if data.invitations.length}
 		<section class="panel">
 			<h2>You have been invited</h2>

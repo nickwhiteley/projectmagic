@@ -150,6 +150,7 @@ You install the App from Project Magic itself, in step 6: *Tenant → Installati
 | `TOKEN_ENCRYPTION_KEY` | encrypts users' refresh tokens (`openssl rand -base64 32`) |
 | `GITHUB_APP_SLUG` | the App's URL name, for the *Connect GitHub* link |
 | `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | your GitHub login: the first person to sign in with it becomes the platform administrator, and creates the tenant |
+| `BILLING_PROVIDER`, `BILLING_STUB` | optional: leave unset and billing is off (a self-hosted copy). `stub` takes no money, for trying tiers; on a production deploy it also needs `BILLING_STUB` |
 | `CRON_SECRET` | protects the daily sync; Vercel sends it, so set the same value there |
 | `INFERENCE_PROVIDER`, `INFERENCE_MODEL`, `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`, `INFERENCE_DAILY_TOKEN_LIMIT` | optional: a model (`ollama`, `openai` or `anthropic`) that proposes a status for items with no meta line, shown as *inferred*. Local Ollama needs `INFERENCE_BASE_URL`; Ollama cloud needs only `INFERENCE_API_KEY` (the address defaults to `https://ollama.com`); the others need `INFERENCE_API_KEY`. Unset, it is off. Each tenant may use 50 000 tokens a day unless you set a limit |
 

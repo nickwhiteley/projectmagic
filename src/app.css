@@ -386,3 +386,7 @@ select {
 .small {
 	font-size: 13px;
 }
+.flash.warn {
+	background: var(--warn-bg);
+	color: var(--warn);
+}

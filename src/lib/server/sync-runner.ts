@@ -142,7 +142,7 @@ export async function syncAll(budgetMs = CRON_BUDGET_MS): Promise<Record<string,
 	for (const p of await db()<
 		{ id: string; owner: string; repo: string }[]
 	>`select p.id, p.owner, p.repo from project p join tenant t on t.id = p.tenant_id
-		where (to_jsonb(p)->>'uninstalled_at') is null and t.status = 'active'
+		where (to_jsonb(p)->>'uninstalled_at') is null and not p.over_limit and t.status = 'active'
 		order by p.last_sync_at asc nulls first, p.id`) {
 		if (Date.now() >= until) {
 			out[`${p.owner}/${p.repo}`] = 'deferred';

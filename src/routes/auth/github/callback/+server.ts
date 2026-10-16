@@ -35,8 +35,9 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	// Their GitHub access decides which tenants they join and what they can do in them. A failure
 	// here must not stop the sign-in: the next request tries again.
+	let full: string[] = [];
 	try {
-		await joinByGithub(result.user.id, access);
+		full = (await joinByGithub(result.user.id, access)).full;
 		for (const t of await tenantsOf(result.user.id))
 			if (t.access === 'github' && t.status === 'active')
 				await refreshGithubRoles(client, result.user.id, t.id);
@@ -44,5 +45,8 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		console.error('sign-in: github access:', e instanceof Error ? e.message : e);
 	}
 	setSession(cookies, result.user.id, SESSION_SECRET);
+	// A tenant at its member limit could not take them: say so.
+	if (full.length && !(await tenantsOf(result.user.id)).length)
+		redirect(303, `/welcome?full=${encodeURIComponent(full.join(', '))}`);
 	redirect(303, next);
 };

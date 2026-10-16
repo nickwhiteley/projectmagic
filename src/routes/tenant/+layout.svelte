@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Tabs from '#lib/components/Tabs.svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 </script>
 
 <div class="admin">
@@ -13,10 +13,12 @@
 			{ href: '/tenant/members', label: 'Members' },
 			{ href: '/tenant/access', label: 'Access' },
 			{ href: '/tenant/installations', label: 'Installations' },
+			{ href: '/tenant/billing', label: 'Plan & billing' },
 			{ href: '/tenant/settings', label: 'Settings' },
 			{ href: '/tenant/audit', label: 'Audit' },
 			{ href: '/tenant/delete', label: 'Delete tenant' }
 		]}
 	/>
+	{#each data.planNotices as n (n)}<p class="flash warn" role="status">{n}</p>{/each}
 	{@render children()}
 </div>

@@ -8,6 +8,8 @@ export interface ProjectRow extends Project {
 	/** `name` from .projectmagic.yml, else the repository's. */
 	name: string;
 	installationId: number;
+	/** Beyond the tenant's plan: listed on its Installations page, not shown or synced. */
+	overLimit: boolean;
 	/** How the project is addressed in `/p/{param}`: the repository name, or `owner--repo` where
 	 * its tenant has two of that name (specs/tenants.md §5). */
 	param: string;
@@ -30,10 +32,12 @@ interface Row {
 	edit_state: string | null;
 	edit_detail: string | null;
 	edit_pr: number | null;
+	over_limit: boolean;
 }
 
 const toProject = (r: Row): ProjectRow => ({
 	id: String(r.id),
+	overLimit: r.over_limit,
 	tenantId: String(r.tenant_id),
 	param: r.repo,
 	owner: r.owner,
@@ -46,14 +50,14 @@ const toProject = (r: Row): ProjectRow => ({
 	edits: r.edit_state ? { state: r.edit_state, detail: r.edit_detail, pr: r.edit_pr } : null
 });
 
-const COLUMNS = `id, tenant_id, owner, repo, installation_id, hidden, last_sync_at, last_error, config_json->>'name' as name, edit_state, edit_detail, edit_pr`;
+const COLUMNS = `id, tenant_id, owner, repo, installation_id, hidden, last_sync_at, last_error, config_json->>'name' as name, edit_state, edit_detail, edit_pr, over_limit`;
 
 // `(to_jsonb(p)->>'uninstalled_at') is null`: still in the GitHub App.
 /** A tenant's projects. Every lookup takes the tenant: nothing here reads across tenants. */
 export async function allProjects(tenantId: string): Promise<ProjectRow[]> {
 	const rows = await db()<Row[]>`
 		select ${db().unsafe(COLUMNS)}
-		from project p where tenant_id = ${tenantId} and (to_jsonb(p)->>'uninstalled_at') is null
+		from project p where tenant_id = ${tenantId} and (to_jsonb(p)->>'uninstalled_at') is null and not over_limit
 		order by lower(repo), lower(owner)`;
 	const projects = rows.map(toProject);
 	for (const p of projects) p.param = repoParam(p, projects);
@@ -100,7 +104,7 @@ export const projectsFor = (locals: { tenant: { id: string } | null }): Promise<
 export async function activeProjects(): Promise<ProjectRow[]> {
 	const rows = await db()<Row[]>`
 		select ${db().unsafe(COLUMNS)} from project p
-		where (to_jsonb(p)->>'uninstalled_at') is null
+		where (to_jsonb(p)->>'uninstalled_at') is null and not over_limit
 			and tenant_id in (select id from tenant where status = 'active')
 		order by last_sync_at asc nulls first`;
 	return rows.map(toProject);

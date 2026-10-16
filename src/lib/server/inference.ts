@@ -5,7 +5,6 @@
 import {
 	INFERENCE_API_KEY,
 	INFERENCE_BASE_URL,
-	INFERENCE_DAILY_TOKEN_LIMIT,
 	INFERENCE_MODEL,
 	INFERENCE_PROVIDER
 } from '$app/env/private';
@@ -13,6 +12,7 @@ import { inferencePrompt, parseInference, type Inferred } from '#lib/core/infere
 import { db } from './db.ts';
 import { completer, modelFromEnv, type Complete } from './models.ts';
 import { loadProjectState } from './project-state.ts';
+import { aiAllowed, planOf, usageOf } from './plans.ts';
 
 /** Items to ask about in one run, so one sync never waits on many model calls. */
 export const PER_RUN = 5;
@@ -76,6 +76,7 @@ export async function inferProject(projectId: string): Promise<number> {
 	if (row?.config_json?.inference === false) return 0;
 	const [{ tenant_id: tenantId }] = await db()<{ tenant_id: string }[]>`
 		select tenant_id from project where id = ${projectId}`;
+	if (!(await aiAllowed(String(tenantId)))) return 0;
 	const cached = new Map(
 		(
 			await db()<{ item_id: string; source: string }[]>`
@@ -91,11 +92,10 @@ export async function inferProject(projectId: string): Promise<number> {
 	return inferItems(candidates, {
 		complete: completer(model),
 		model: `${model.provider}:${model.model}`,
-		limit: INFERENCE_DAILY_TOKEN_LIMIT ?? 50_000,
+		// The plan's allowance for the whole tenant, counting questions asked too (§7.2).
+		limit: (await planOf(String(tenantId))).limits.ai_tokens_daily ?? Number.MAX_SAFE_INTEGER,
 		async spent() {
-			const [r] = await db()<{ tokens: string }[]>`
-				select tokens from inference_usage where scope = ${scope} and day = current_date`;
-			return Number(r?.tokens ?? 0);
+			return (await usageOf(String(tenantId))).aiTokensToday;
 		},
 		async record(tokens) {
 			await db()`insert into inference_usage (scope, day, tokens) values (${scope}, current_date, ${tokens})
