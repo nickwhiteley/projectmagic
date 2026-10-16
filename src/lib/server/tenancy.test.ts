@@ -11,6 +11,10 @@ import type { GitHubClient } from './github-client.ts';
 const url = process.env.TEST_DATABASE_URL;
 const sql = url ? postgres(url, { prepare: false, max: 2, onnotice: () => {} }) : null;
 vi.mock('./db.ts', () => ({ db: () => sql }));
+vi.mock('$app/env/private', () => ({
+	BOOTSTRAP_ADMIN_GITHUB_LOGIN: 'Boss',
+	TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64')
+}));
 
 const migrate = async (upTo: string, from = '') => {
 	for (const f of readdirSync('migrations').sort())
@@ -35,6 +39,7 @@ describe.skipIf(!sql)('tenancy', () => {
 		await sql!`insert into membership (user_id, project_id, role) values (2, 1, 'viewer')`;
 		await sql!`insert into inference_usage values ('project:1', current_date, 100), ('project:2', current_date, 50)`;
 		await migrate('008_tenants.sql', '007_uninstalled.sql');
+		await migrate('009_signup.sql', '008_tenants.sql');
 	});
 	afterAll(() => sql?.end());
 
@@ -235,19 +240,303 @@ describe.skipIf(!sql)('tenancy', () => {
 			await sql!`update tenant set status = 'active' where id = ${ids.t2}`;
 		});
 
-		it('gives a deployment with one tenant its new installations, as today', async () => {
-			await sql!`update tenant set status = 'deleted' where id in (${ids.t1}, ${ids.t2}) or slug = 'acme'`;
+		it('does not give a new installation to the only tenant: it waits to be claimed', async () => {
+			await sql!`update tenant set status = 'deleted' where slug <> 'default'`;
 			await sync.syncInstallations(
 				app([inst(3, 'newcomer')]),
 				forInstall({ 3: [repo(30, 'newcomer', 'app')] }),
 				sql!
 			);
-			const [i] =
-				await sql!`select tenant_id::text, claimed_at is not null as claimed from installation where id = 3`;
-			expect(i.claimed).toBe(true);
-			expect(i.tenant_id).toBe(
-				String((await sql!`select id from tenant where slug = 'default'`)[0].id)
+			expect(await sql!`select tenant_id from installation where id = 3`).toEqual([
+				{ tenant_id: null }
+			]);
+			await sql!`update tenant set status = 'active' where slug <> 'default'`;
+		});
+	});
+
+	describe('claiming an installation (§3.2)', () => {
+		let inst: typeof import('./installations.ts');
+		const me = { id: '1', githubId: '1001' };
+		const info = (id: number, login: string, type: 'User' | 'Organization', accountId: number) => ({
+			id,
+			account: { login, id: accountId, type },
+			repository_selection: 'all' as const,
+			suspended_at: null
+		});
+		const gh = (
+			over: Partial<import('./installations.ts').GitHubAccess> = {}
+		): import('./installations.ts').GitHubAccess => ({
+			visibleInstallationIds: async () => [70, 71, 72],
+			orgRole: async () => null,
+			fetchInstallation: async (id) =>
+				id === 71
+					? info(71, 'someorg', 'Organization', 710)
+					: id === 72
+						? info(72, 'nick', 'User', 1001)
+						: null,
+			...over
+		});
+		beforeAll(async () => {
+			inst = await import('./installations.ts');
+			await sql!`insert into installation (id, account_login, account_type, account_id) values (70, 'strangers', 'Organization', 700)`;
+		});
+
+		it('refuses an installation the person’s token cannot see', async () => {
+			const r = await inst.claimInstallation(me, ids.t1, 99, gh());
+			expect(r).toMatchObject({ ok: false, reason: expect.stringContaining('cannot see') });
+		});
+
+		it('refuses a person who is not an admin of the organisation, and says so', async () => {
+			const r = await inst.claimInstallation(me, ids.t1, 70, gh({ orgRole: async () => 'member' }));
+			expect(r).toMatchObject({ ok: false, reason: expect.stringContaining('not an admin') });
+			expect(await sql!`select tenant_id from installation where id = 70`).toEqual([
+				{ tenant_id: null }
+			]);
+		});
+
+		it('connects an organisation to an admin of it', async () => {
+			const r = await inst.claimInstallation(me, ids.t1, 70, gh({ orgRole: async () => 'admin' }));
+			expect(r).toMatchObject({ ok: true, accountLogin: 'strangers' });
+			expect(
+				await sql!`select tenant_id::text, claimed_by::text from installation where id = 70`
+			).toEqual([{ tenant_id: ids.t1, claimed_by: '1' }]);
+		});
+
+		it('says an installation held by another tenant is, naming no one', async () => {
+			const r = await inst.claimInstallation(me, ids.t2, 70, gh({ orgRole: async () => 'admin' }));
+			expect(r).toEqual({
+				ok: false,
+				reason:
+					'This GitHub account is already connected to another Project Magic tenant. Ask its admin.'
+			});
+			expect(await sql!`select tenant_id::text from installation where id = 70`).toEqual([
+				{ tenant_id: ids.t1 }
+			]);
+		});
+
+		it('lets a person connect their own account, recording an installation no webhook announced', async () => {
+			expect(await sql!`select 1 from installation where id = 72`).toEqual([]);
+			const r = await inst.claimInstallation(me, ids.t1, 72, gh());
+			expect(r).toMatchObject({ ok: true, accountLogin: 'nick' });
+		});
+
+		it('refuses someone else’s personal account', async () => {
+			const r = await inst.claimInstallation({ id: '2', githubId: '2002' }, ids.t2, 72, gh());
+			expect(r).toMatchObject({ ok: false });
+			expect(await sql!`select tenant_id::text from installation where id = 72`).toEqual([
+				{ tenant_id: ids.t1 }
+			]);
+		});
+
+		it('accepts the person who installed it, whatever the account', async () => {
+			await sql!`update installation set sender_github_id = 1001 where id = 71`.catch(() => {});
+			await sql!`insert into installation (id, account_login, account_type, account_id, sender_github_id) values (71, 'someorg', 'Organization', 710, 1001) on conflict (id) do update set sender_github_id = 1001`;
+			const r = await inst.claimInstallation(me, ids.t2, 71, gh());
+			expect(r).toMatchObject({ ok: true });
+		});
+
+		it('lists what a person could connect: unclaimed, visible, theirs', async () => {
+			await sql!`insert into installation (id, account_login, account_type, account_id) values (73, 'theirs', 'User', 1001), (74, 'notmine', 'User', 5)`;
+			const list = await inst.claimable(me, gh({ visibleInstallationIds: async () => [73, 74] }));
+			expect(list).toEqual([{ id: '73', accountLogin: 'theirs' }]);
+		});
+
+		it('spends a state once, only for its person, and not after it expires', async () => {
+			const token = await inst.newSetupState('1', ids.t1);
+			expect(await sql!`select token_hash from setup_state where token_hash = ${token}`).toEqual(
+				[]
 			);
+			expect(await inst.consumeSetupState(token, '2')).toBeNull();
+			expect(await inst.consumeSetupState(token, '1')).toEqual({ tenantId: ids.t1 });
+			expect(await inst.consumeSetupState(token, '1')).toBeNull();
+			const old = await inst.newSetupState('1', ids.t1);
+			await sql!`update setup_state set expires_at = now() - interval '1 minute'`;
+			expect(await inst.consumeSetupState(old, '1')).toBeNull();
+			expect(await inst.consumeSetupState('nonsense', '1')).toBeNull();
+		});
+
+		it('disconnects: detaches the installation and marks its projects, keeping them', async () => {
+			expect(await inst.disconnect(ids.t2, 70)).toBe(false);
+			expect(await inst.disconnect(ids.t1, 70)).toBe(true);
+			expect(await sql!`select tenant_id from installation where id = 70`).toEqual([
+				{ tenant_id: null }
+			]);
+			await sql!`insert into project (github_repo_id, owner, repo, installation_id, tenant_id) values (80, 'strangers', 'kept', 71, ${ids.t2})`;
+			expect(await inst.disconnect(ids.t2, 71)).toBe(true);
+			expect(
+				await sql!`select uninstalled_at is not null as gone from project where github_repo_id = 80`
+			).toEqual([{ gone: true }]);
+		});
+
+		it('records the installation webhook with the account that installed it', async () => {
+			await inst.recordInstallationEvent({
+				action: 'created',
+				installation: info(90, 'fresh', 'Organization', 900),
+				sender: { id: 1001 }
+			});
+			expect(
+				await sql!`select tenant_id, sender_github_id::text from installation where id = 90`
+			).toEqual([{ tenant_id: null, sender_github_id: '1001' }]);
+			await inst.recordInstallationEvent({
+				action: 'deleted',
+				installation: info(90, 'fresh', 'Organization', 900)
+			});
+			expect(
+				await sql!`select removed_at is not null as gone from installation where id = 90`
+			).toEqual([{ gone: true }]);
+		});
+	});
+
+	describe('creating a tenant', () => {
+		it('makes the person its admin and its current tenant, with an audit row', async () => {
+			const r = await tenants.createTenant('2', 'Initech', 'initech', 'active');
+			expect(r).toMatchObject({ ok: true, tenant: { slug: 'initech', role: 'admin' } });
+			if (!r.ok) return;
+			expect(
+				await sql!`select role from tenant_member where tenant_id = ${r.tenant.id} and user_id = 2`
+			).toEqual([{ role: 'admin' }]);
+			expect(tenants.currentTenant(await tenants.tenantsOf('2'))?.slug).toBe('initech');
+			expect(await sql!`select action from audit_log where tenant_id = ${r.tenant.id}`).toEqual([
+				{ action: 'tenant.created' }
+			]);
+			expect(
+				await sql!`select 1 from tenant_setting where tenant_id = ${r.tenant.id}`
+			).toHaveLength(1);
+		});
+
+		it('refuses a slug that is taken', async () => {
+			expect(await tenants.createTenant('2', 'Initech again', 'initech', 'active')).toMatchObject({
+				ok: false
+			});
+		});
+
+		it('can wait for approval', async () => {
+			const r = await tenants.createTenant('1', 'Waiting', 'waiting', 'pending');
+			expect(r).toMatchObject({ ok: true, tenant: { status: 'pending' } });
+		});
+	});
+
+	describe('running the service', () => {
+		let platform: typeof import('./platform.ts');
+		let waiting: string;
+		beforeAll(async () => {
+			platform = await import('./platform.ts');
+			waiting = String((await sql!`select id from tenant where slug = 'waiting'`)[0].id);
+		});
+
+		it('is closed to sign-up until a platform admin says otherwise, and keeps the change in the audit log', async () => {
+			expect(await platform.getSignup()).toBe('closed');
+			await platform.setSignup('approval', '1');
+			expect(await platform.getSignup()).toBe('approval');
+			expect(
+				(await platform.auditLog(null, 5)).find((a) => a.action === 'platform.signup')?.data
+			).toEqual({ before: 'closed', after: 'approval' });
+		});
+
+		it('approves a pending tenant, and only a pending one', async () => {
+			expect(await platform.moveTenant(waiting, 'restore', '1')).toMatchObject({ ok: false });
+			expect(await platform.moveTenant(waiting, 'approve', '1')).toMatchObject({ ok: true });
+			expect(await platform.moveTenant(waiting, 'approve', '1')).toMatchObject({ ok: false });
+		});
+
+		it('suspends with a reason, and restores', async () => {
+			expect(await platform.moveTenant(waiting, 'suspend', '1', '  ')).toMatchObject({ ok: false });
+			expect(await platform.moveTenant(waiting, 'suspend', '1', 'unpaid')).toMatchObject({
+				ok: true
+			});
+			expect((await platform.tenantSummary(waiting))?.statusReason).toBe('unpaid');
+			expect(await platform.moveTenant(waiting, 'restore', '1')).toMatchObject({ ok: true });
+			expect((await platform.tenantSummary(waiting))?.statusReason).toBeNull();
+		});
+
+		it('deletes: detaches installations, marks projects, and can undo it until the purge', async () => {
+			await sql!`insert into installation (id, tenant_id, account_login) values (95, ${waiting}, 'waitco')`;
+			await sql!`insert into project (github_repo_id, owner, repo, installation_id, tenant_id) values (96, 'waitco', 'thing', 95, ${waiting})`;
+			const r = await platform.moveTenant(waiting, 'delete', '1');
+			expect(r).toEqual({ ok: true, detached: [95] });
+			expect(await sql!`select tenant_id from installation where id = 95`).toEqual([
+				{ tenant_id: null }
+			]);
+			expect(
+				await sql!`select uninstalled_at is not null as gone from project where github_repo_id = 96`
+			).toEqual([{ gone: true }]);
+			expect((await platform.listTenants('waiting'))[0].status).toBe('deleted');
+			expect(await platform.moveTenant(waiting, 'undelete', '1')).toMatchObject({ ok: true });
+			await platform.moveTenant(waiting, 'delete', '1');
+		});
+
+		it('purges a tenant deleted over 30 days ago, with its projects and audit log, and nobody else', async () => {
+			expect(await platform.purgeDeletedTenants()).toBe(0);
+			await sql!`update tenant set deleted_at = now() - interval '31 days' where id = ${waiting}`;
+			expect(await platform.purgeDeletedTenants()).toBe(1);
+			expect(await sql!`select 1 from tenant where id = ${waiting}`).toEqual([]);
+			expect(await sql!`select 1 from project where tenant_id = ${waiting}`).toEqual([]);
+			expect(await sql!`select 1 from audit_log where tenant_id = ${waiting}`).toEqual([]);
+			expect(await sql!`select 1 from tenant where slug = 'default'`).toHaveLength(1);
+		});
+
+		it('lists tenants by search and counts without content', async () => {
+			expect((await platform.listTenants('INIT')).map((t) => t.slug)).toEqual(['initech']);
+			expect((await platform.platformOverview()).deleted).toBe(0);
+		});
+	});
+
+	describe('who can sign in (§3.1)', () => {
+		let users: typeof import('./users.ts');
+		const tokens = {
+			accessToken: 't',
+			accessExpiresAt: null,
+			refreshToken: null,
+			refreshExpiresAt: null
+		};
+		const gh = (id: number, login: string) => ({ id, login, name: null });
+		beforeAll(async () => {
+			users = await import('./users.ts');
+		});
+
+		it('refuses a stranger while sign-up is closed', async () => {
+			expect(await users.signIn(gh(500, 'stranger'), tokens, 'closed')).toEqual({
+				ok: false,
+				reason: 'not-invited'
+			});
+			expect(await sql!`select 1 from app_user where github_id = 500`).toEqual([]);
+		});
+
+		it.each(['open', 'approval'] as const)(
+			'lets a stranger in when sign-up is %s, as no one special',
+			async (mode) => {
+				const id = mode === 'open' ? 501 : 502;
+				const r = await users.signIn(gh(id, `new-${mode}`), tokens, mode);
+				expect(r).toMatchObject({ ok: true, user: { platformRole: 'none', githubId: String(id) } });
+			}
+		);
+
+		it('always lets in someone who already has an account', async () => {
+			expect(await users.signIn(gh(2, 'sam'), tokens, 'closed')).toMatchObject({ ok: true });
+		});
+
+		it('refuses a disabled account whatever the mode', async () => {
+			await sql!`update app_user set disabled_at = now() where github_id = 501`;
+			expect(await users.signIn(gh(501, 'new-open'), tokens, 'open')).toEqual({
+				ok: false,
+				reason: 'disabled'
+			});
+		});
+
+		it('makes the bootstrap login the first platform admin even when closed, and only while there is none', async () => {
+			expect(await users.signIn(gh(600, 'boss'), tokens, 'closed')).toEqual({
+				ok: false,
+				reason: 'not-invited'
+			});
+			await sql!`update app_user set platform_role = 'none'`;
+			expect(await users.signIn(gh(600, 'boss'), tokens, 'closed')).toMatchObject({
+				ok: true,
+				user: { platformRole: 'admin' }
+			});
+			expect(
+				await sql!`select count(*)::int as n from tenant_member where user_id = (select id from app_user where github_id = 600)`
+			).toEqual([{ n: 0 }]);
+			await sql!`update app_user set platform_role = 'admin' where github_id in (1, 600)`;
 		});
 	});
 });

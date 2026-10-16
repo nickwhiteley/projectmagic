@@ -10,11 +10,18 @@
 		<h1>Sign in</h1>
 		{#if data.message}<p class="error" role="alert">{data.message}</p>{/if}
 		<a class="button primary" href={data.href}>Sign in with GitHub</a>
-		<p class="muted small">
-			This instance is for the people its owner has invited. To follow your own projects, run your
-			own:
-			<a href="https://github.com/nickwhiteley/projectmagic#setting-up">the setup guide</a>.
-		</p>
+		{#if data.open}
+			<p class="muted small">
+				Sign in with GitHub to create a tenant for your team, or to join one you have been invited
+				to.
+			</p>
+		{:else}
+			<p class="muted small">
+				This instance is for the people its owner has invited. To follow your own projects, run your
+				own:
+				<a href="https://github.com/nickwhiteley/projectmagic#setting-up">the setup guide</a>.
+			</p>
+		{/if}
 	</div>
 </main>
 

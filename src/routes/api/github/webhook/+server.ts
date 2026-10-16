@@ -5,6 +5,7 @@
 import { GITHUB_WEBHOOK_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db.ts';
 import { edits } from '#lib/server/edits.ts';
+import { recordInstallationEvent } from '#lib/server/installations.ts';
 import { projectByGitHubId } from '#lib/server/projects.ts';
 import { syncInBackground, syncProjectList } from '#lib/server/sync-runner.ts';
 import { INSTALLATION_EVENTS, PROJECT_EVENTS, verifySignature } from '#lib/server/webhook.ts';
@@ -28,6 +29,11 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!fresh) return json({ ok: true, duplicate: true });
 
 	if (INSTALLATION_EVENTS.has(event)) {
+		// Record the installation, and who installed it, before any redirect can claim it.
+		if (event === 'installation')
+			await recordInstallationEvent(
+				payload as unknown as Parameters<typeof recordInstallationEvent>[0]
+			);
 		// If the work fails, the delivery is forgotten, so GitHub's Redeliver can run it again.
 		waitUntil(
 			syncProjectList().catch(async (e) => {

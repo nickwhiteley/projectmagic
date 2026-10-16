@@ -21,6 +21,10 @@ export const variables = defineEnvVars({
 		schema: optional,
 		description: "Or a path to the App's .pem (locally)"
 	},
+	GITHUB_APP_SLUG: {
+		schema: optional,
+		description: "The App's URL name (github.com/apps/<slug>), for the install link"
+	},
 	GITHUB_WEBHOOK_SECRET: { schema: required('GITHUB_WEBHOOK_SECRET') },
 	SESSION_SECRET: { schema: required('SESSION_SECRET') },
 	TOKEN_ENCRYPTION_KEY: {

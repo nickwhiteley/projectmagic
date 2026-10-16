@@ -542,6 +542,27 @@ Four phases, one PR each. Each leaves the deployment working, with Nick's tenant
   cross-tenant checks against Postgres when `TEST_DATABASE_URL` is set, and is skipped otherwise.
   Playwright and the per-route cross-tenant sweep arrive with the pages that need them.
 
+**Phase 2 as built** (PR `feat/pm20-signup-installations`), where it differs from or settles the above:
+
+- **Migration 009** adds `platform_setting`, `setup_state` and `tenant.status_reason`.
+- **Phase 1's interim rules are gone**: a new installation is never given to the only tenant, and the
+  bootstrap login no longer creates a tenant. The first platform admin lands on *Welcome* like anyone.
+- **Sign-in** creates an `app_user` for any GitHub account while sign-up is `open` or `approval`, and the
+  bootstrap login is let in as the first platform admin even when `closed`. Joining a tenant by GitHub
+  access or invitation is phase 3, so until then a new person has *Welcome* and can create a tenant.
+- **A platform admin creating a tenant** is never made to wait for approval.
+- **Pages**: `/welcome`, `/tenant` (Overview, Installations, Settings, Delete tenant), `/admin`
+  (Overview, Tenants and a tenant's page, Installations, Settings, Audit). Platform Users and tenant
+  Members, Access and Audit are phase 3. A tenant's slug cannot be changed.
+- **The claim** is `claimInstallation` (`installations.ts`) with GitHub's calls passed in. It records an
+  installation the webhook hasn't announced yet, and accepts the account's owner, an organisation admin
+  or the person who installed it. The Setup URL needs `GITHUB_APP_SLUG` and the App's **Setup URL** set (§8.2).
+- **Suspend, delete and restore** are `moveTenant`, each audited with before and after. Deleting detaches
+  the installations, marks the projects uninstalled, and uninstalls the App from GitHub on a best-effort
+  basis; the cron's `purgeDeletedTenants` removes a tenant 30 days after deletion.
+- **Not yet**: the *open a tenant as support* session (phase 3), and the pending-tenant notice only shows
+  in the banner, not on a Welcome-style page of its own.
+
 Sizes: phase 1 M, phase 2 M–L, phase 3 M, phase 4 M. The hosted service can take its first tenants at `signup:
 approval` after phase 3, each on a tier set by hand, before billing exists.
 

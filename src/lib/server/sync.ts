@@ -549,13 +549,6 @@ interface InstalledRepo {
 	archived: boolean;
 }
 
-/** Until PM20 phase 2 adds claims, a deployment with exactly one tenant owns every installation,
- * as it does today. Null when there are none or several: those wait to be claimed. */
-async function soleTenant(sql: Sql): Promise<string | null> {
-	const rows = await sql<{ id: string }[]>`select id from tenant where status <> 'deleted' limit 2`;
-	return rows.length === 1 ? String(rows[0].id) : null;
-}
-
 interface AppInstallation {
 	id: number;
 	account: { login: string; id: number; type: 'User' | 'Organization' } | null;
@@ -565,8 +558,7 @@ interface AppInstallation {
 
 /** The project list is the set of repositories the App is installed on that a tenant has claimed
  * (specs/tenants.md §3.2, §4). Every installation is recorded; one nobody has claimed syncs
- * nothing, except that a deployment with exactly one tenant owns them all until phase 2 adds
- * claims (`soleTenant`). A project takes its tenant from its installation. */
+ * nothing. A project takes its tenant from its installation. */
 export async function syncInstallations(
 	asApp: GitHubClient,
 	forInstallation: (id: number) => GitHubClient,
@@ -574,7 +566,6 @@ export async function syncInstallations(
 ): Promise<number> {
 	const seen: number[] = [];
 	const listed: number[] = [];
-	const sole = await soleTenant(sql);
 	let installs: string | null = '/app/installations?per_page=100';
 	while (installs) {
 		const list: { body: AppInstallation[]; next: string | null } =
@@ -590,13 +581,8 @@ export async function syncInstallations(
 					repository_selection = excluded.repository_selection,
 					suspended_at = excluded.suspended_at, removed_at = null
 				returning tenant_id, (select status from tenant where id = installation.tenant_id) as status`;
-			let tenantId = row.tenant_id;
-			let status = row.status;
-			if (!tenantId && sole) {
-				await sql`update installation set tenant_id = ${sole}, claimed_at = now() where id = ${inst.id}`;
-				tenantId = sole;
-				status = 'active';
-			}
+			const tenantId = row.tenant_id;
+			const status = row.status;
 			// Unclaimed, or its tenant is suspended or gone: nothing is synced, and nothing is marked
 			// uninstalled either.
 			if (!tenantId || status !== 'active') {

@@ -4,6 +4,7 @@ import { CRON_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db.ts';
 import { edits } from '#lib/server/edits.ts';
 import { activeProjects } from '#lib/server/projects.ts';
+import { purgeDeletedTenants } from '#lib/server/platform.ts';
 import { syncAll } from '#lib/server/sync-runner.ts';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -22,6 +23,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	for (const p of await activeProjects())
 		if (held.some((h) => String(h.project_id) === p.id)) await edits.savePendingIfDue(p);
 	await db()`delete from blob_text where fetched_at < now() - interval '14 days'`.catch(() => []);
+	await purgeDeletedTenants().catch((e) => console.error('purge', e));
 	await db()`delete from webhook_delivery where received_at < now() - interval '14 days'`;
 	return json({ ok: true, result });
 };

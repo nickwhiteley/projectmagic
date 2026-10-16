@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import { navigating, page } from '$app/state';
+	import { STATUS_NOTICE } from '#lib/core/tenants.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
@@ -89,10 +90,23 @@
 					{:else if data.tenant}
 						<span class="tenant-name" title="Tenant">{data.tenant.name}</span>
 					{/if}
+					{#if data.tenant?.admin && data.tenant.status === 'active'}
+						<a href="/tenant" aria-current={path.startsWith('/tenant') ? 'page' : undefined}
+							>Tenant</a
+						>
+					{/if}
+					{#if data.user.admin}
+						<a href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}>Admin</a>
+					{/if}
 					<span>{data.user.name ?? data.user.login}</span>
 					<form method="POST" action="/auth/signout"><button class="button">Sign out</button></form>
 				</div>
 			</header>
+			{#if data.tenant && data.tenant.status !== 'active'}
+				<p class="notice status-{data.tenant.status}" role="status">
+					{STATUS_NOTICE[data.tenant.status]}
+				</p>
+			{/if}
 			<main>{@render children()}</main>
 		</div>
 	</div>
@@ -255,6 +269,13 @@
 		background: var(--surface-1);
 		border-radius: var(--radius);
 		padding: 0.4rem 0.7rem;
+	}
+	.notice {
+		margin: 0;
+		padding: 0.6rem 2rem;
+		background: var(--warn-bg);
+		color: var(--warn);
+		border-bottom: 1px solid var(--line);
 	}
 	.tenant {
 		display: flex;

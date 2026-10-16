@@ -2,6 +2,7 @@
 // user (or create the bootstrap administrator), and start a session.
 import { SESSION_SECRET } from '$app/env/private';
 import { currentUser, exchangeCode } from '#lib/server/github-app.ts';
+import { getSignup } from '#lib/server/platform.ts';
 import { setSession } from '#lib/server/session.ts';
 import { signIn } from '#lib/server/users.ts';
 import { error, redirect } from '@sveltejs/kit';
@@ -18,7 +19,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		error(400, 'The sign-in link expired or was not started here. Try again.');
 
 	const tokens = await exchangeCode(code, `${url.origin}/auth/github/callback`);
-	const result = await signIn(await currentUser(tokens.accessToken), tokens);
+	const result = await signIn(await currentUser(tokens.accessToken), tokens, await getSignup());
 	if (!result.ok) redirect(303, `/signin?error=${result.reason}`);
 	setSession(cookies, result.user.id, SESSION_SECRET);
 	redirect(303, next);

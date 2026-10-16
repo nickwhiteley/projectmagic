@@ -4,11 +4,14 @@ import { loadProjectState } from '#lib/server/project-state.ts';
 import { projectsFor } from '#lib/server/projects.ts';
 import { summarise } from '#lib/server/summary.ts';
 import { revalidate } from '#lib/server/sync-runner.ts';
+import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) return { landing: true as const };
+	// Signed in but in no tenant yet: create one, or wait to be invited.
+	if (!locals.tenant) redirect(303, '/welcome');
 	const projects = visibleProjects(locals.user, await projectsFor(locals), accessCtx(locals));
 	await revalidate(projects.map((p) => p.id));
 	const states = await Promise.all(projects.map((p) => loadProjectState(p.id)));
