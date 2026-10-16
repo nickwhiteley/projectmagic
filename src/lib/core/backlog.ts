@@ -18,6 +18,8 @@ export interface Section extends Range {
 	/** What sits between the heading and its first `###`, usually an italic line. Markdown. */
 	intro: string;
 	line: number;
+	/** The file it was read from when that isn't the main backlog (PM29: `bugs.md`). */
+	file?: string;
 }
 
 interface Entry extends Range {
@@ -28,6 +30,8 @@ interface Entry extends Range {
 	line: number;
 	/** The markdown after the heading (and after the meta line, for an item), trimmed. */
 	body: string;
+	/** The file it was read from when that isn't the main backlog (PM29: `bugs.md`). */
+	file?: string;
 }
 
 export type Note = Entry;

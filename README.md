@@ -189,6 +189,7 @@ of a push. Without a webhook, page loads, the *Refresh* button and the daily cro
    backlog: backlog.md        # default: backlog.md, then BACKLOG.md
    progress: PROGRESS.md      # the plan; null if there isn't one
    epics: epics.md            # epics with descriptions and targets (optional)
+   bugs: bugs.md              # a second backlog for bugs (optional); new ones are BUG12
    docs:                      # documents shown in the Docs tab
      - README.md
      - spec.md

@@ -10,7 +10,8 @@ import type { ProjectRow } from './projects.ts';
 import { userClient } from './user-token.ts';
 import { applyEdit, prBody, type WriteResult } from './write.ts';
 
-async function target(project: ProjectRow) {
+/** `file` is the item's file when it isn't the main backlog (PM29: `bugs.md`). */
+async function target(project: ProjectRow, file: string | null = null) {
 	const [row] = await db()<
 		{ config_json: Config | null }[]
 	>`select config_json from project where id = ${project.id}`;
@@ -18,8 +19,12 @@ async function target(project: ProjectRow) {
 		row?.config_json ?? parseConfig(null, { name: project.repo, defaultBranch: 'main' }).config;
 	const files = await db()<{ path: string }[]>`
 		select path from ref_file where project_id = ${project.id} and ref_name = ${config.main}`;
-	const path = config.backlog.find((p) => files.some((f) => f.path === p));
-	if (!path) throw new Error('This project has no backlog to edit.');
+	const path = file
+		? files.some((f) => f.path === file)
+			? file
+			: undefined
+		: config.backlog.find((p) => files.some((f) => f.path === p));
+	if (!path) throw new Error(`This project has no ${file ?? 'backlog'} to edit.`);
 	return {
 		owner: project.owner,
 		repo: project.repo,
@@ -33,10 +38,11 @@ export async function edit(
 	user: SessionUser,
 	project: ProjectRow,
 	op: Op,
-	base: string | null
+	base: string | null,
+	file: string | null = null
 ): Promise<WriteResult> {
 	const gh = userClient(user.id);
-	const t = await target(project);
+	const t = await target(project, file);
 	const itemId = op.op === 'add' ? op.item.id : op.id;
 	let result: WriteResult;
 	try {

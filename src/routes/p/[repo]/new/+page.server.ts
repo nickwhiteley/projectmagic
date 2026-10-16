@@ -1,4 +1,5 @@
-import { checkId, suggestId, type Op } from '#lib/core/splice.ts';
+import { bugsPosition } from '#lib/core/bugs.ts';
+import { checkId, suggestId, type Op, type Position } from '#lib/core/splice.ts';
 import { updateMeta } from '#lib/core/meta.ts';
 import { asMessage, respond } from '#lib/server/edit-actions.ts';
 import { edits } from '#lib/server/edits.ts';
@@ -11,7 +12,9 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const s = await projectState({ locals, params });
 	if (!s.hasBacklog) error(404, 'This project has no backlog');
-	const suggested = suggestId(s.newIdPrefix, s.usedIds);
+	// `?bug=1` starts a bug in the bugs file, with its own prefix (PM29).
+	const bugs = !!s.bugsFile && url.searchParams.get('bug') === '1';
+	const suggested = suggestId(bugs ? s.bugPrefix : s.newIdPrefix, s.usedIds);
 	const values: ItemFormValues = {
 		id: suggested,
 		title: '',
@@ -29,7 +32,11 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	return {
 		values,
 		suggested,
-		section: Number(url.searchParams.get('section') ?? 0),
+		bugs,
+		hasBugsFile: !!s.bugsFile,
+		section: bugs
+			? (s.sections.find((x) => x.file)?.index ?? 0)
+			: Number(url.searchParams.get('section') ?? 0),
 		sections: s.sections.map((x) => ({ index: x.index, title: x.titleText })),
 		assignees: assigneesInUse(s),
 		epics: epicsInUse(s),
@@ -49,6 +56,11 @@ export const actions: Actions = {
 		const s = await loadProjectState(locals.project!.id);
 		const bad = problems(v) ?? checkId(v.id, s.usedIds);
 		if (bad) return fail(400, { values: v, message: bad, reauth: false });
+		// The Bugs section is bugs.md, which has no place of its own for it: next to its bugs (PM29).
+		const file = s.sections[section]?.file ?? null;
+		const to: Position = file
+			? (bugsPosition(s.items, at) ?? { section: 0, at })
+			: { section: s.sections[section] ? section : 0, at };
 		const op: Op = {
 			op: 'add',
 			item: {
@@ -62,14 +74,15 @@ export const actions: Actions = {
 					branch: v.branch,
 					plan: v.plan ? v.plan.split(',') : [],
 					waiting: v.waiting,
-					for: v.assignee
+					for: v.assignee,
+					epic: v.epic
 				}),
 				body: v.body
 			},
-			to: s.sections[section] ? { section, at } : { section: 0, at }
+			to
 		};
 		try {
-			const result = await edits.edit(locals.user!, locals.project!, op, null);
+			const result = await edits.edit(locals.user!, locals.project!, op, null, file);
 			return respond(result, `/p/${params.repo}/i/${encodeURIComponent(v.id)}`, { values: v });
 		} catch (e) {
 			return asMessage(e, { values: v });

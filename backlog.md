@@ -213,11 +213,21 @@ the List and the Board filter by Type when the project uses it. **Left for PM29:
 filter covers showing only bugs).
 
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
-**Status:** in progress · **Branch:** `feat/pm29-bugs-file` · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 What PM2 left out. `spec.md` §13 and §16.4 let bugs live in an optional `bugs.md`, configured as
 a second backlog file with a `BUG` prefix, so the sync fetches and caches it, ids come from the
 prefix, and the views read two backlogs. The Board gets a bug lane beside the section lanes.
+
+Built: the `bugs` key in `.projectmagic.yml` (default `bugs.md`, `null` to not read one) and
+`bug_prefix` (default `BUG`). The sync fetches and caches the file on every branch, and the state
+merges its items after the main backlog's, in a *Bugs* section (the Board's bug lane), each marked
+with its file. An item there with no `Type` counts as a bug. Edits, status changes, removals and
+moves go back to the file the item is in; a move can't cross files. *Add a bug* (`/new?bug=1`)
+starts a bug with the `BUG` prefix in `bugs.md`, after its last bug. Done detection reads both
+files as one list, so a bug removed from `bugs.md` shipped. An id in both files is shown once and
+flagged. **Not built:** a project's first `bugs.md` has to be created in the repository; the add
+form only adds to a file that exists.
 
 ### PM3 Inferred status for items with no meta line
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley

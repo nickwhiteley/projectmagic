@@ -117,6 +117,7 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		const backlogPath = config.backlog.find((path) => fileOf(r.name, path));
 		const backlogOid = backlogPath ? fileOf(r.name, backlogPath) : undefined;
 		const planOid = config.progress ? fileOf(r.name, config.progress) : undefined;
+		const bugsOid = config.bugs ? fileOf(r.name, config.bugs) : undefined;
 		const epicsOid =
 			r.name === config.main && config.epics ? fileOf(r.name, config.epics) : undefined;
 		return {
@@ -130,6 +131,9 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			prs: r.pr_json?.prs ?? [],
 			backlog: backlogOid
 				? ((parsed.get(`backlog:${backlogOid}`) as StoredBacklog | undefined) ?? null)
+				: null,
+			bugs: bugsOid
+				? ((parsed.get(`backlog:${bugsOid}`) as StoredBacklog | undefined) ?? null)
 				: null,
 			epics: epicsOid
 				? ((parsed.get(`epics:${epicsOid}`) as { epics: EpicDeclaration[] } | undefined)?.epics ??

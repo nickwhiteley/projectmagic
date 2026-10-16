@@ -11,7 +11,16 @@
 
 <svelte:head><title>Add an item · {page.data.project.name}</title></svelte:head>
 
-<h2>Add an item</h2>
+<h2>{data.bugs ? 'Add a bug' : 'Add an item'}</h2>
+{#if data.hasBugsFile}
+	<p class="muted small">
+		{#if data.bugs}
+			It goes in the bugs file. <a href="/p/{page.params.repo}/new">Add an item instead</a>.
+		{:else}
+			<a href="/p/{page.params.repo}/new?bug=1">Add a bug instead</a>, in the bugs file.
+		{/if}
+	</p>
+{/if}
 {#if form?.message}
 	<p class="message" role="alert">
 		{form.message}

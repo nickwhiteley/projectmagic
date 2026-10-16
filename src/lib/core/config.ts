@@ -8,6 +8,10 @@ export interface Config {
 	backlog: string[];
 	/** null disables the plan. */
 	progress: string | null;
+	/** The second backlog, for bugs (PM29); null to not read one. */
+	bugs: string | null;
+	/** The prefix suggested for a new bug, such as BUG12. */
+	bugPrefix: string;
 	/** The file declaring epics with descriptions and targets (PM28); null to not read one. */
 	epics: string | null;
 	docs: string[];
@@ -47,6 +51,8 @@ export function defaults(repo: RepoFacts): Config {
 		name: repo.name,
 		backlog: ['backlog.md', 'BACKLOG.md'],
 		progress: 'PROGRESS.md',
+		bugs: 'bugs.md',
+		bugPrefix: 'BUG',
 		epics: 'epics.md',
 		docs: DEFAULT_DOCS,
 		docsExclude: [],
@@ -64,6 +70,8 @@ const KEYS = [
 	'backlog',
 	'progress',
 	'epics',
+	'bugs',
+	'bug_prefix',
 	'docs',
 	'docs_exclude',
 	'main',
@@ -116,6 +124,16 @@ export function parseConfig(text: string | null, repo: RepoFacts): ConfigResult 
 		if (y.progress === null) config.progress = null;
 		else if (isString(y.progress)) config.progress = y.progress.trim();
 		else bad('progress', 'a path or null');
+	}
+	if ('bugs' in y) {
+		if (y.bugs === null) config.bugs = null;
+		else if (isString(y.bugs)) config.bugs = y.bugs.trim();
+		else bad('bugs', 'a path or null');
+	}
+	if ('bug_prefix' in y) {
+		const p = y.bug_prefix;
+		if (typeof p === 'string' && /^[A-Z]{1,4}$/.test(p)) config.bugPrefix = p;
+		else bad('bug_prefix', 'one to four capital letters');
 	}
 	if ('epics' in y) {
 		if (y.epics === null) config.epics = null;

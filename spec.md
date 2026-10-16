@@ -95,6 +95,8 @@ name: Orchard                 # default: the repository name
 backlog: backlog.md              # default: backlog.md, then BACKLOG.md
 progress: PROGRESS.md            # default: PROGRESS.md; null to disable
 epics: epics.md                  # default: epics.md; descriptions and targets for epics (§13)
+bugs: bugs.md                    # default: bugs.md; a second backlog for bugs, null to not read one (§13)
+bug_prefix: BUG                  # the prefix suggested for a new bug
 docs:                            # default: shown below
   - README.md
   - spec.md
@@ -665,10 +667,14 @@ repository's `backlog.md`.
   health panel. An optional `epics.md` (the `epics` key) declares epics too, each as a `###` or `##` heading
   `EP3 Title` with its description underneath and a `**Target:** …` line; the Epics tab shows both.
   The add and edit forms have an *Epic* field that suggests the declared epics (PM28).
-- **Bugs** (`Type: bug` with `Found:` and `Raised:`, and a Type filter, are built, PM2; the
-  rest is PM29). They can also live in their own `bugs.md`, configured as a
-  second backlog file, with a `BUG` prefix (`BUG12`), because Orchard already uses `B1`–`B14`. The board
-  gains a type filter and a bug lane. v0.1 already keeps the `Type` key.
+- **Bugs** (built, PM2 and PM29). `Type: bug` with `Found:` and `Raised:`, and a Type filter.
+  Bugs can also live in their own `bugs.md` (the `bugs` key), a second backlog in the same format
+  with a `BUG` prefix (`BUG12`, the `bug_prefix` key), because Orchard already uses `B1`–`B14`. The
+  views read the two files as one list: the bugs follow the main items, in a *Bugs* section that is
+  also the Board's bug lane, and an item with no `Type` in that file counts as a bug. An edit goes
+  back to the file the item is in, and a move stays inside its file. Done detection reads the two
+  files together, so a bug removed from `bugs.md` shipped. An id in both files is shown once and
+  flagged in the health panel.
 - **LLM fallback for status** (built, PM3): for items with no meta line, a model reads the prose
   ("Built 2026-09-30 … waits only on the lawyer") and proposes a status and waiting reason,
   shown as *inferred* and never used to derive the real status (§7.2). The model is chosen by
