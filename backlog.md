@@ -313,14 +313,6 @@ Built:
 - **Not built**: a document editor with a preview, and creating or deleting documents or plan
   tasks.
 
-### PM7 More users: invitations, members and roles
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
-
-The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: invite by GitHub
-login, the member list for each project, changing a role, and disabling a user.
-
-The implications of PM20 need considering for this. It might be easier to add tenancies before thinking too much about users. Is full RBAC easier to implement first? Will we use Github roles or managed in Project Magic?  Can plinth help?
-
 ### PM31 New test item
 **Status:** todo
 
@@ -425,8 +417,18 @@ than only hiding it: a project page reads the cached state from Postgres and sho
 GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
 project's state) and fix what dominates.
 
-### PM20 Organisations: one Project Magic for many teams
+### PM20 Tenants: one Project Magic for many teams
 **Status:** todo · **Size:** L · **Type:** feature · **For:** agent
+
+**Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
+scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
+its questions on 2026-10-16 (its §15).
+
+**PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
+disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or
+Project Magic, and whether plinth helps: fixed roles, not RBAC (§6.4); project roles from GitHub
+permissions by default, managed in Project Magic as an option (§6.1, §6.2); plinth's designs, not its
+code (§10).
 
 Anyone could set up Project Magic for their own organisation and invite their colleagues,
 without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
@@ -442,8 +444,8 @@ There are two ways to do it, and the choice decides most of the work:
   are stored in the database, encrypted. More isolation, but every organisation does the App
   set-up from the README, and the app has to route webhooks and sign tokens per organisation.
 
-It needs PM7's invitations first, and probably splits into: the organisation model and scoping,
-sign-up and installing the App, then invitations within an organisation.
+The first draft put PM7's invitations before it. The spec reverses that: tenants come first, and
+invitations are its phase 3.
 
 **Questions for Nick:**
 
