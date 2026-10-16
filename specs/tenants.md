@@ -520,6 +520,28 @@ Four phases, one PR each. Each leaves the deployment working, with Nick's tenant
 | **3. Members and access** | access by GitHub; managed access; invitations; join by GitHub; leave and remove; the last-admin trigger; tenant Members, Access and Audit pages; platform Users; support sessions. **PM7 is folded in here** | inviting a colleague |
 | **4. Tiers, quotas and billing** | `tier`, quotas and flags with their resolution; the AI flag and per-tenant token limit (PM3's tenant scope); the project and member limits; billing with the stub provider; Plan & billing; platform Tiers & prices | Plan & billing |
 
+**Phase 1 as built** (PR `feat/pm20-tenant-model`), where it differs from or settles the above:
+
+- **Migration 008 is additive.** `app_user.platform_role` is added and backfilled, and `system_role`
+  stays unused until a later migration drops it, so the running version works between the migration
+  and the deploy. Run `make migrate`, then deploy.
+- **Only the phase 1 tables exist**: `tenant`, `tenant_member`, `tenant_setting`, `installation`,
+  `audit_log`, with `project.tenant_id` and `over_limit`, `membership.source` and `synced_at`, and
+  `user_pref.current_tenant_id`. Invitations, `setup_state`, `platform_setting` and the tier and billing
+  tables come with the phase that uses them. `tenant.tier_id` and `tier_override_id` arrive with tiers.
+- **Until phase 2 adds claims**, a deployment with exactly one tenant owns every new installation
+  (`syncInstallations`), so adding a repository works as it does today. With none or several tenants
+  an installation is recorded and waits to be claimed. A fresh database's first sign-in (the bootstrap
+  login) creates the one tenant, as `default`. Both rules go when phase 2 lands *Welcome* and claims.
+- **Inference spend is counted per tenant** (`tenant:<id>`), so `INFERENCE_DAILY_TOKEN_LIMIT` is now a
+  tenant's allowance, not a project's, until phase 4 makes it a quota.
+- **A link from another of your tenants** switches to the one tenant that has it. If several do, it is a
+  404 until phase 2's switcher can ask.
+- **The cron** syncs active tenants' projects, longest since last sync first, for up to 40 seconds.
+- **Tests**: `src/lib/server/tenancy.test.ts` runs migration 008 on seeded "today" data and the
+  cross-tenant checks against Postgres when `TEST_DATABASE_URL` is set, and is skipped otherwise.
+  Playwright and the per-route cross-tenant sweep arrive with the pages that need them.
+
 Sizes: phase 1 M, phase 2 M–L, phase 3 M, phase 4 M. The hosted service can take its first tenants at `signup:
 approval` after phase 3, each on a tier set by hand, before billing exists.
 

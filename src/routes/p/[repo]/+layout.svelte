@@ -6,7 +6,7 @@
 
 	let { children, data }: LayoutProps = $props();
 	const p = $derived(data.project);
-	const base = $derived(`/p/${p.repo}`);
+	const base = $derived(`/p/${p.param}`);
 	const tabs = $derived([
 		{ href: base, label: 'List', count: p.counts.items },
 		{ href: `${base}/board`, label: 'Board' },

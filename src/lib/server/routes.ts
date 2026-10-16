@@ -1,6 +1,6 @@
 // What every route requires (spec §11.2). The hook looks each request's route up here and checks
 // it with can(); a route missing from this table is refused, and a test fails until it is added.
-import type { ProjectAction, SystemAction } from '#lib/core/access.ts';
+import type { PlatformAction, ProjectAction, TenantAction } from '#lib/core/access.ts';
 
 export type RouteAccess =
 	/** Anyone, signed in or not. */
@@ -9,7 +9,10 @@ export type RouteAccess =
 	| { kind: 'signed-in' }
 	/** A project from the `[repo]` param; a project the user can't view is a 404. */
 	| { kind: 'project'; action: ProjectAction }
-	| { kind: 'system'; action: SystemAction }
+	/** A tenant page, in the current tenant. */
+	| { kind: 'tenant'; action: TenantAction }
+	/** A platform admin page. */
+	| { kind: 'platform'; action: PlatformAction }
 	/** Machine endpoints that verify their own caller: the webhook's signature, the cron's secret. */
 	| { kind: 'machine' };
 
@@ -21,6 +24,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/settings/ai': { kind: 'signed-in' },
 	'/settings/batch': { kind: 'signed-in' },
 	'/ask': { kind: 'signed-in' },
+	'/tenant/switch': { kind: 'signed-in' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },

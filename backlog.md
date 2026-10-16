@@ -424,6 +424,9 @@ project's state) and fix what dominates.
 scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
 its questions on 2026-10-16 (its §15).
 
+**Phase 1 (the tenant model and scoping) is built** on `feat/pm20-tenant-model`; see `specs/tenants.md` §14
+for what it settled. Phases 2–4 are still to do.
+
 **PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
 disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or
 Project Magic, and whether plinth helps: fixed roles, not RBAC (§6.4); project roles from GitHub

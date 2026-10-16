@@ -3,9 +3,10 @@ import { ask, MAX_QUESTION } from '#lib/server/ask.ts';
 import { db } from '#lib/server/db.ts';
 import { configured } from '#lib/server/inference.ts';
 import { loadProjectState } from '#lib/server/project-state.ts';
-import { allProjects } from '#lib/server/projects.ts';
+import { projectsFor } from '#lib/server/projects.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: PageServerLoad = async ({ locals }) => ({
 	available: !!configured(),
@@ -25,7 +26,7 @@ export const actions: Actions = {
 		if (await optedOut(locals.user!.id))
 			return fail(403, { question, reason: 'You have hidden AI features.' });
 		// Projects that opted out of models are never sent (`inference: false`).
-		const projects = visibleProjects(locals.user, await allProjects(), locals.memberships);
+		const projects = visibleProjects(locals.user, await projectsFor(locals), accessCtx(locals));
 		const states = (await Promise.all(projects.map((p) => loadProjectState(p.id)))).filter(
 			(s) => s.hasBacklog && s.inferenceAllowed
 		);

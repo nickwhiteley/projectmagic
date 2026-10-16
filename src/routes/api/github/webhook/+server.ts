@@ -1,5 +1,7 @@
 // GitHub's webhook (spec §7.4): verify, deduplicate by delivery, and start a sync in the
-// background. The payload says which repository; everything else is fetched by the sync.
+// background. The payload says which repository, and the project says which tenant; everything
+// else is fetched by the sync. A delivery for a project whose tenant isn't active is recorded and
+// acknowledged, and starts no sync (specs/tenants.md §5).
 import { GITHUB_WEBHOOK_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db.ts';
 import { edits } from '#lib/server/edits.ts';
@@ -36,6 +38,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: true, sync: 'projects' }, { status: 202 });
 	}
 	if (PROJECT_EVENTS.has(event) && project) {
+		const [tenant] = await db()<{ status: string }[]>`
+			select status from tenant where id = ${project.tenantId}`;
+		if (tenant?.status !== 'active') return json({ ok: true, ignored: 'tenant is not active' });
 		await db()`update project set last_webhook_at = now() where id = ${project.id}`;
 		syncInBackground(project.id);
 		// A batch of pending edits that is due is saved on any webhook for the project (PM25).

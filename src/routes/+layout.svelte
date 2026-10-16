@@ -41,13 +41,13 @@
 			</nav>
 			<div class="label group">Projects</div>
 			<nav aria-label="Projects">
-				{#each data.projects as p (p.repo)}
+				{#each data.projects as p (p.param)}
 					<a
-						href="/p/{p.repo}"
-						aria-current={path === `/p/${p.repo}` || path.startsWith(`/p/${p.repo}/`)
+						href="/p/{p.param}"
+						aria-current={path === `/p/${p.param}` || path.startsWith(`/p/${p.param}/`)
 							? 'page'
 							: undefined}
-						aria-busy={busy(`/p/${p.repo}`) || undefined}
+						aria-busy={busy(`/p/${p.param}`) || undefined}
 					>
 						<span class="dot" class:failed={p.failed}></span>{p.name}
 					</a>
@@ -76,6 +76,18 @@
 								>Inferred statuses: {data.ai.optedOut ? 'hidden' : 'shown'}</button
 							>
 						</form>
+					{/if}
+					{#if data.tenants.length > 1}
+						<form method="POST" action="/tenant/switch" class="tenant">
+							<select name="tenant" aria-label="Tenant">
+								{#each data.tenants as t (t.id)}
+									<option value={t.id} selected={t.id === data.tenant?.id}>{t.name}</option>
+								{/each}
+							</select>
+							<button class="button">Switch</button>
+						</form>
+					{:else if data.tenant}
+						<span class="tenant-name" title="Tenant">{data.tenant.name}</span>
 					{/if}
 					<span>{data.user.name ?? data.user.login}</span>
 					<form method="POST" action="/auth/signout"><button class="button">Sign out</button></form>
@@ -243,6 +255,14 @@
 		background: var(--surface-1);
 		border-radius: var(--radius);
 		padding: 0.4rem 0.7rem;
+	}
+	.tenant {
+		display: flex;
+		gap: 0.4rem;
+	}
+	.tenant-name {
+		font-weight: 600;
+		color: var(--text-1, inherit);
 	}
 	.who {
 		display: flex;

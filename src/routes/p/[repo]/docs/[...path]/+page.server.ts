@@ -7,6 +7,7 @@ import { projectState } from '#lib/server/project-state.ts';
 import { md } from '#lib/server/views.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const project = locals.project!;
@@ -60,7 +61,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		toc: toc.filter((t) => t.depth >= 2 && t.depth <= 3),
 		query,
 		// Only main's documents are edited (PM6).
-		canEdit: ref === s.main && can(locals.user, 'edit', project, locals.memberships),
+		canEdit: ref === s.main && can(locals.user, 'edit', accessCtx(locals, project)),
 		githubUrl: `https://github.com/${project.owner}/${project.repo}/blob/${encodeURIComponent(ref)}/${doc.path}`
 	};
 };

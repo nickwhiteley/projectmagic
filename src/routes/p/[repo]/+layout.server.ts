@@ -5,6 +5,7 @@ import { edits } from '#lib/server/edits.ts';
 import { waitUntil } from '@vercel/functions';
 import { projectState } from '#lib/server/project-state.ts';
 import type { LayoutServerLoad } from './$types';
+import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const project = locals.project!;
@@ -21,6 +22,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	return {
 		project: {
 			repo: s.repo,
+			param: project.param,
 			owner: s.owner,
 			name: s.name,
 			main: s.main,
@@ -28,8 +30,8 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 			lastError: h.lastError,
 			hasBacklog: s.hasBacklog,
 			hasPlan: !!s.plan,
-			canEdit: can(locals.user, 'edit', project, locals.memberships),
-			canMerge: can(locals.user, 'merge', project, locals.memberships),
+			canEdit: can(locals.user, 'edit', accessCtx(locals, project)),
+			canMerge: can(locals.user, 'merge', accessCtx(locals, project)),
 			edits: project.edits,
 			batch: {
 				allowed: s.batchEdits,

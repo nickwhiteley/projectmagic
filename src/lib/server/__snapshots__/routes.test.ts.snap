@@ -30,5 +30,6 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/settings/ai": "signed-in",
   "/settings/batch": "signed-in",
   "/signin": "public",
+  "/tenant/switch": "signed-in",
 }
 `;

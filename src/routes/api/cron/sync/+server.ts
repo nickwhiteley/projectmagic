@@ -3,7 +3,7 @@
 import { CRON_SECRET } from '$app/env/private';
 import { db } from '#lib/server/db.ts';
 import { edits } from '#lib/server/edits.ts';
-import { allProjects } from '#lib/server/projects.ts';
+import { activeProjects } from '#lib/server/projects.ts';
 import { syncAll } from '#lib/server/sync-runner.ts';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	const held = await db()<
 		{ project_id: string }[]
 	>`select distinct project_id from pending_edit`.catch(() => []);
-	for (const p of await allProjects())
+	for (const p of await activeProjects())
 		if (held.some((h) => String(h.project_id) === p.id)) await edits.savePendingIfDue(p);
 	await db()`delete from blob_text where fetched_at < now() - interval '14 days'`.catch(() => []);
 	await db()`delete from webhook_delivery where received_at < now() - interval '14 days'`;

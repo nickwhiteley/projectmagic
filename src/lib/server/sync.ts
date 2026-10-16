@@ -549,28 +549,73 @@ interface InstalledRepo {
 	archived: boolean;
 }
 
-/** The project list is the set of repositories the App is installed on (§4). */
+/** Until PM20 phase 2 adds claims, a deployment with exactly one tenant owns every installation,
+ * as it does today. Null when there are none or several: those wait to be claimed. */
+async function soleTenant(sql: Sql): Promise<string | null> {
+	const rows = await sql<{ id: string }[]>`select id from tenant where status <> 'deleted' limit 2`;
+	return rows.length === 1 ? String(rows[0].id) : null;
+}
+
+interface AppInstallation {
+	id: number;
+	account: { login: string; id: number; type: 'User' | 'Organization' } | null;
+	repository_selection: 'all' | 'selected';
+	suspended_at: string | null;
+}
+
+/** The project list is the set of repositories the App is installed on that a tenant has claimed
+ * (specs/tenants.md §3.2, §4). Every installation is recorded; one nobody has claimed syncs
+ * nothing, except that a deployment with exactly one tenant owns them all until phase 2 adds
+ * claims (`soleTenant`). A project takes its tenant from its installation. */
 export async function syncInstallations(
 	asApp: GitHubClient,
 	forInstallation: (id: number) => GitHubClient,
 	sql: Sql
 ): Promise<number> {
 	const seen: number[] = [];
+	const listed: number[] = [];
+	const sole = await soleTenant(sql);
 	let installs: string | null = '/app/installations?per_page=100';
 	while (installs) {
-		const list: { body: { id: number }[]; next: string | null } =
-			await asApp.rest<{ id: number }[]>(installs);
+		const list: { body: AppInstallation[]; next: string | null } =
+			await asApp.rest<AppInstallation[]>(installs);
 		for (const inst of list.body) {
+			listed.push(inst.id);
+			const [row] = await sql<{ tenant_id: string | null; status: string | null }[]>`
+				insert into installation (id, account_login, account_type, account_id, repository_selection, suspended_at)
+				values (${inst.id}, ${inst.account?.login ?? ''}, ${inst.account?.type ?? null}, ${inst.account?.id ?? null},
+					${inst.repository_selection ?? null}, ${inst.suspended_at})
+				on conflict (id) do update set account_login = excluded.account_login,
+					account_type = excluded.account_type, account_id = excluded.account_id,
+					repository_selection = excluded.repository_selection,
+					suspended_at = excluded.suspended_at, removed_at = null
+				returning tenant_id, (select status from tenant where id = installation.tenant_id) as status`;
+			let tenantId = row.tenant_id;
+			let status = row.status;
+			if (!tenantId && sole) {
+				await sql`update installation set tenant_id = ${sole}, claimed_at = now() where id = ${inst.id}`;
+				tenantId = sole;
+				status = 'active';
+			}
+			// Unclaimed, or its tenant is suspended or gone: nothing is synced, and nothing is marked
+			// uninstalled either.
+			if (!tenantId || status !== 'active') {
+				if (tenantId)
+					for (const p of await sql<{ github_repo_id: string }[]>`
+						select github_repo_id from project where installation_id = ${inst.id}`)
+						seen.push(Number(p.github_repo_id));
+				continue;
+			}
 			const gh = forInstallation(inst.id);
 			let url: string | null = '/installation/repositories?per_page=100';
 			while (url) {
 				const page: { body: { repositories: InstalledRepo[] }; next: string | null } =
 					await gh.rest<{ repositories: InstalledRepo[] }>(url);
 				for (const r of page.body.repositories) {
-					await sql`insert into project (github_repo_id, owner, repo, installation_id)
-						values (${r.id}, ${r.owner.login}, ${r.name}, ${inst.id})
+					await sql`insert into project (github_repo_id, owner, repo, installation_id, tenant_id)
+						values (${r.id}, ${r.owner.login}, ${r.name}, ${inst.id}, ${tenantId})
 						on conflict (github_repo_id) do update set owner = excluded.owner, repo = excluded.repo,
-							installation_id = excluded.installation_id`;
+							installation_id = excluded.installation_id, tenant_id = excluded.tenant_id`;
 					seen.push(r.id);
 				}
 				url = page.next;
@@ -578,6 +623,9 @@ export async function syncInstallations(
 		}
 		installs = list.next;
 	}
+	// An installation GitHub no longer lists was uninstalled: marked, as projects are below.
+	if (listed.length)
+		await sql`update installation set removed_at = coalesce(removed_at, now()) where id <> all(${listed})`;
 	// Repositories no longer in any installation are marked, not deleted (migration 007), and
 	// unmarked if they come back. Only after a complete listing: an error above stops before this,
 	// and an empty one is more likely a fault than every repository removed.

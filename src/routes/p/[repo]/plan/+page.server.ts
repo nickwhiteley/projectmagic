@@ -13,6 +13,7 @@ import { inline } from '#lib/server/views.ts';
 import { error, fail } from '@sveltejs/kit';
 import { WriteError } from '#lib/server/write.ts';
 import type { Actions, PageServerLoad } from './$types';
+import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const s = await projectState({ locals, params });
@@ -44,7 +45,7 @@ export const actions: Actions = {
 	// Set a task's status in PROGRESS.md (PM6): the status word, and the note after it if changed.
 	status: async ({ locals, params, request }) => {
 		const project = locals.project!;
-		if (!can(locals.user, 'edit', project, locals.memberships)) error(403, 'Not allowed');
+		if (!can(locals.user, 'edit', accessCtx(locals, project))) error(403, 'Not allowed');
 		const form = await request.formData();
 		const number = String(form.get('number') ?? '');
 		const status = String(form.get('status') ?? '');

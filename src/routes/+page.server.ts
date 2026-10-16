@@ -1,14 +1,15 @@
 import { can, visibleProjects } from '#lib/core/access.ts';
 import { cardLine, loadDelivery } from '#lib/server/delivery.ts';
 import { loadProjectState } from '#lib/server/project-state.ts';
-import { allProjects } from '#lib/server/projects.ts';
+import { projectsFor } from '#lib/server/projects.ts';
 import { summarise } from '#lib/server/summary.ts';
 import { revalidate } from '#lib/server/sync-runner.ts';
 import type { PageServerLoad } from './$types';
+import { accessCtx } from '#lib/server/tenants.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) return { landing: true as const };
-	const projects = visibleProjects(locals.user, await allProjects(), locals.memberships);
+	const projects = visibleProjects(locals.user, await projectsFor(locals), accessCtx(locals));
 	await revalidate(projects.map((p) => p.id));
 	const states = await Promise.all(projects.map((p) => loadProjectState(p.id)));
 	const lines = await Promise.all(
@@ -18,7 +19,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const cards = states
 		.map((s, i) => ({
 			...summarise(s),
-			canEdit: can(locals.user, 'edit', projects[i], locals.memberships),
+			// How the project is addressed, which is its bare name unless its tenant has two of them.
+			repo: projects[i].param,
+			canEdit: can(locals.user, 'edit', accessCtx(locals, projects[i])),
 			delivery: lines[i]
 		}))
 		.sort((a, b) => Number(b.hasBacklog) - Number(a.hasBacklog));
