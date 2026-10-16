@@ -49,19 +49,29 @@ export function projectState(event: {
 /** Drops the cached state, after something other than a sync changed what it shows (PM3). */
 export function forgetState(projectId: string): void {
 	cache.delete(projectId);
+	cache.delete(`${projectId}:saved`);
 	inputs.delete(projectId);
 }
 
-export async function loadProjectState(projectId: string): Promise<ProjectState> {
+/**
+ * `pending: false` leaves out the pending batch edits (PM25): what an edit that is saved at once
+ * must be built from, so it never carries someone else's unsaved edit to main.
+ */
+export async function loadProjectState(
+	projectId: string,
+	opts: { pending?: boolean } = {}
+): Promise<ProjectState> {
+	const withPending = opts.pending ?? true;
+	const slot = withPending ? projectId : `${projectId}:saved`;
 	const sql = db();
 	const [p] = await sql<ProjectRow[]>`
 		select id, owner, repo, installation_id, config_json, last_sync_at, last_error from project where id = ${projectId}`;
 	if (!p) throw new Error(`no project ${projectId}`);
 	const syncKey = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}`;
 	// Pending edits (PM25) change what the views show, so they are part of the key.
-	const pending = await listPending(projectId);
+	const pending = withPending ? await listPending(projectId) : [];
 	const key = `${syncKey}|${pending.map((e) => `${e.id}${e.conflict ? 'c' : ''}`).join(',')}`;
-	const hit = cache.get(projectId);
+	const hit = cache.get(slot);
 	if (hit?.key === key) return hit.state;
 
 	const base = parseConfig(null, { name: p.repo, defaultBranch: 'main' }).config;
@@ -216,6 +226,6 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		lastError: p.last_error,
 		now: Date.now()
 	});
-	cache.set(projectId, { key, state });
+	cache.set(slot, { key, state });
 	return state;
 }

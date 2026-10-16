@@ -10,8 +10,14 @@ import { loadProjectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
-async function context(projectId: string, id: string) {
-	const s = await loadProjectState(projectId);
+/**
+ * The item as this person edits it: with the pending batch edits when theirs are batched too, and
+ * as saved on main when their edit is saved at once, so it never carries someone else's unsaved
+ * edit (PM25).
+ */
+async function context(locals: App.Locals, id: string) {
+	const pending = await edits.batching(locals.user!, locals.project!);
+	const s = await loadProjectState(locals.project!.id, { pending });
 	const it = s.items.find((i) => i.id === id);
 	if (!it) error(404, `No item ${id} on main`);
 	return { s, it };
@@ -19,7 +25,7 @@ async function context(projectId: string, id: string) {
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	void params.repo; // a dependency, so moving between projects re-runs this load
-	const { s, it } = await context(locals.project!.id, params.id);
+	const { s, it } = await context(locals, params.id);
 	const values = formValues(it);
 	return {
 		values,
@@ -40,7 +46,7 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const v = readItemForm(form);
 		const base = readBase(form);
-		const { s, it } = await context(locals.project!.id, params.id);
+		const { s, it } = await context(locals, params.id);
 		const bad = problems(v) ?? (v.id !== it.id ? checkId(v.id, s.usedIds) : null);
 		if (bad) return fail(400, { values: v, base, message: bad, reauth: false });
 
@@ -69,7 +75,7 @@ export const actions: Actions = {
 	move: async ({ locals, params, request }) => {
 		const form = await request.formData();
 		const [where, target] = String(form.get('to') ?? '').split(':');
-		const { s, it } = await context(locals.project!.id, params.id);
+		const { s, it } = await context(locals, params.id);
 		// Each file keeps its own items (PM29): a move stays inside the one the item is in.
 		const targetFile =
 			where === 'before' || where === 'after'
@@ -119,7 +125,7 @@ export const actions: Actions = {
 				reauth: false
 			});
 		const waiting = form.get('waiting');
-		const { it } = await context(locals.project!.id, params.id);
+		const { it } = await context(locals, params.id);
 		const change = statusChange(it, status, waiting === null ? undefined : String(waiting).trim());
 		try {
 			const result = await edits.edit(
@@ -140,7 +146,7 @@ export const actions: Actions = {
 		if (form.get('confirm') !== 'yes')
 			return fail(400, { message: 'Tick the box to confirm.', reauth: false });
 		const mode = form.get('mode');
-		const { it } = await context(locals.project!.id, params.id);
+		const { it } = await context(locals, params.id);
 		const op: Op =
 			mode === 'done'
 				? { op: 'edit', id: it.id, change: { meta: updateMeta(it.meta ?? [], { status: 'done' }) } }

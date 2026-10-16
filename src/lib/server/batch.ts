@@ -84,8 +84,11 @@ export async function queue(
 	return r?.n ?? 1;
 }
 
-export async function discard(projectId: string, id: number): Promise<void> {
-	await db()`delete from pending_edit where project_id = ${projectId} and id = ${id}`;
+/** False when a save holds the edit: it may already be on its way to main, so it stays. */
+export async function discard(projectId: string, id: number): Promise<boolean> {
+	const gone = await db()`delete from pending_edit where project_id = ${projectId} and id = ${id}
+		and (claimed_at is null or claimed_at < now() - ${STALE_CLAIM}::interval) returning id`;
+	return gone.length > 0;
 }
 
 /** On unless the person turned it off; off when the migration hasn't run, so edits save at once. */

@@ -77,8 +77,8 @@
 	<div class="batch" role="status">
 		<span>
 			{#if b.pending.length}
-				<strong>{b.pending.length} unsaved edit{b.pending.length === 1 ? '' : 's'}</strong>, saved
-				together after a quiet minute.
+				<strong>{b.pending.length} unsaved edit{b.pending.length === 1 ? '' : 's'}</strong
+				>{#if b.saving}, saving now…{:else}, saved together after a quiet minute.{/if}
 			{:else}
 				Batch edits are available.
 			{/if}
