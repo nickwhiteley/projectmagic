@@ -127,7 +127,7 @@ export async function syncAll(): Promise<Record<string, string>> {
 	const out: Record<string, string> = {};
 	for (const p of await db()<
 		{ id: string; repo: string }[]
-	>`select id, repo from project order by repo`)
+	>`select id, repo from project p where (to_jsonb(p)->>'uninstalled_at') is null order by repo`)
 		out[p.repo] = await syncNow(String(p.id));
 	return out;
 }

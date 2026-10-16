@@ -451,7 +451,7 @@ describe('prBody', () => {
 				{ message: 'Backlog: edit NW9 DXF export', by: 'nickwhiteley', at: '2026-10-14T13:05:00Z' }
 			])
 		).toBe(
-			'Edits made in Project Magic. Each line is one commit on the `projectmagic` branch.\n\n- Backlog: edit NW9 DXF export (nickwhiteley, 2026-10-14 13:05)'
+			'Edits made in Project Magic, on the `projectmagic` branch. Each line is one edit.\n\n- Backlog: edit NW9 DXF export (nickwhiteley, 2026-10-14 13:05)'
 		);
 	});
 });

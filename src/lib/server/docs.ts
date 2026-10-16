@@ -35,6 +35,8 @@ export async function listDocs(
 		path,
 		oid: blobs.get(path)!
 	}));
+	// A tree per commit viewed: kept to a bounded number, oldest first out.
+	if (trees.size >= 200) trees.delete(trees.keys().next().value!);
 	trees.set(key, docs);
 	return docs;
 }

@@ -31,8 +31,22 @@ export function respond<E extends object>(result: EditResult, done: string, extr
 
 /** Where a form asked to go back to: a path on this site, never another site. */
 export function safeBack(raw: FormDataEntryValue | null, fallback: string): string {
-	const to = typeof raw === 'string' ? raw : '';
-	return /^\/(?![/\\])/.test(to) ? to : fallback;
+	return localPath(typeof raw === 'string' ? raw : '') ?? fallback;
+}
+
+/**
+ * A path on this site, or null. Browsers drop tabs and newlines from a URL and read `\` as `/`,
+ * so `/\t/evil.example` would leave the site: no control characters or spaces at all, and the
+ * path must resolve to this origin.
+ */
+export function localPath(to: string): string | null {
+	if (!/^\/(?![/\\])/.test(to) || /[\s\x00-\x1f\x7f]/.test(to)) return null;
+	const base = 'http://local.invalid';
+	try {
+		return new URL(to, base).origin === base ? to : null;
+	} catch {
+		return null;
+	}
 }
 
 /** Errors a person can act on become messages; anything else is a bug and is thrown. */

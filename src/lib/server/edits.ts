@@ -187,7 +187,7 @@ export async function mergeEdits(
 	);
 	if (res.status !== 200)
 		return { ok: false, detail: res.body?.message ?? `GitHub said ${res.status}` };
-	await gh.send('DELETE', `${repo}/git/refs/heads/projectmagic`);
+	await gh.send('DELETE', `${repo}/git/refs/heads/${EDIT_BRANCH}`);
 	await db()`update project set edit_state = null, edit_detail = null, edit_pr = null where id = ${project.id}`;
 	if (res.body?.sha) await syncUntil(project.id, (await target(project)).main, res.body.sha);
 	return { ok: true, detail: `Merged PR #${row.edit_pr}.` };

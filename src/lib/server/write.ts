@@ -283,10 +283,12 @@ export async function applyChange(
 }
 
 /** The PR's body: the edits it holds, newest last (§10.3 step 5). */
-export function prBody(edits: { message: string; by: string; at: string }[]): string {
+export function prBody(edits: { message: string; by: string | null; at: string }[]): string {
 	return [
-		'Edits made in Project Magic. Each line is one commit on the `projectmagic` branch.',
+		'Edits made in Project Magic, on the `projectmagic` branch. Each line is one edit.',
 		'',
-		...edits.map((e) => `- ${e.message} (${e.by}, ${e.at.slice(0, 16).replace('T', ' ')})`)
+		...edits.map(
+			(e) => `- ${e.message} (${e.by ?? 'unknown'}, ${e.at.slice(0, 16).replace('T', ' ')})`
+		)
 	].join('\n');
 }

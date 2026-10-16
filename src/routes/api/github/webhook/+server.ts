@@ -26,7 +26,13 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (!fresh) return json({ ok: true, duplicate: true });
 
 	if (INSTALLATION_EVENTS.has(event)) {
-		waitUntil(syncProjectList().catch((e) => console.error('project list', e)));
+		// If the work fails, the delivery is forgotten, so GitHub's Redeliver can run it again.
+		waitUntil(
+			syncProjectList().catch(async (e) => {
+				console.error('project list', e);
+				await db()`delete from webhook_delivery where delivery_id = ${delivery}`;
+			})
+		);
 		return json({ ok: true, sync: 'projects' }, { status: 202 });
 	}
 	if (PROJECT_EVENTS.has(event) && project) {

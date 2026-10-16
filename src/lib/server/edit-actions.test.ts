@@ -7,7 +7,16 @@ describe('safeBack', () => {
 		expect(safeBack('/p/orchard/i/B1', '/x')).toBe('/p/orchard/i/B1');
 	});
 	it('never leaves the site', () => {
-		for (const to of ['https://evil.example', '//evil.example', '/\\evil.example', '', 'p/x'])
+		for (const to of [
+			'https://evil.example',
+			'//evil.example',
+			'/\\evil.example',
+			'/\t/evil.example',
+			'/\n/evil.example',
+			'/ /evil.example',
+			'',
+			'p/x'
+		])
 			expect(safeBack(to, '/x'), to).toBe('/x');
 		expect(safeBack(null, '/x')).toBe('/x');
 	});

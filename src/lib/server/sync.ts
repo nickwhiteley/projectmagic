@@ -555,24 +555,37 @@ export async function syncInstallations(
 	forInstallation: (id: number) => GitHubClient,
 	sql: Sql
 ): Promise<number> {
-	const { body: installs } = await asApp.rest<{ id: number }[]>('/app/installations?per_page=100');
-	let n = 0;
-	for (const inst of installs) {
-		const gh = forInstallation(inst.id);
-		let url: string | null = '/installation/repositories?per_page=100';
-		while (url) {
-			const page: { body: { repositories: InstalledRepo[] }; next: string | null } = await gh.rest<{
-				repositories: InstalledRepo[];
-			}>(url);
-			for (const r of page.body.repositories) {
-				await sql`insert into project (github_repo_id, owner, repo, installation_id)
-					values (${r.id}, ${r.owner.login}, ${r.name}, ${inst.id})
-					on conflict (github_repo_id) do update set owner = excluded.owner, repo = excluded.repo,
-						installation_id = excluded.installation_id`;
-				n++;
+	const seen: number[] = [];
+	let installs: string | null = '/app/installations?per_page=100';
+	while (installs) {
+		const list: { body: { id: number }[]; next: string | null } =
+			await asApp.rest<{ id: number }[]>(installs);
+		for (const inst of list.body) {
+			const gh = forInstallation(inst.id);
+			let url: string | null = '/installation/repositories?per_page=100';
+			while (url) {
+				const page: { body: { repositories: InstalledRepo[] }; next: string | null } =
+					await gh.rest<{ repositories: InstalledRepo[] }>(url);
+				for (const r of page.body.repositories) {
+					await sql`insert into project (github_repo_id, owner, repo, installation_id)
+						values (${r.id}, ${r.owner.login}, ${r.name}, ${inst.id})
+						on conflict (github_repo_id) do update set owner = excluded.owner, repo = excluded.repo,
+							installation_id = excluded.installation_id`;
+					seen.push(r.id);
+				}
+				url = page.next;
 			}
-			url = page.next;
 		}
+		installs = list.next;
 	}
-	return n;
+	// Repositories no longer in any installation are marked, not deleted (migration 007), and
+	// unmarked if they come back. Only after a complete listing: an error above stops before this,
+	// and an empty one is more likely a fault than every repository removed.
+	if (seen.length)
+		await sql`update project set uninstalled_at = case
+				when github_repo_id = any(${seen}) then null
+				else coalesce(uninstalled_at, now()) end`.catch((e: { code?: string }) => {
+			if (e?.code !== '42703') throw e;
+		});
+	return seen.length;
 }

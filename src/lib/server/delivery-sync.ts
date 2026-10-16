@@ -194,7 +194,10 @@ async function syncRuns(gh: GitHubClient, sql: Sql, projectId: string, base: str
 			let started = true;
 			// A failed run whose jobs ran no steps never started (as when Actions billing fails): that
 			// is not a failure of main, so it is marked and left out of the figures (§16.1).
-			if (r.conclusion === 'failure' && jobs < JOBS_PER_SYNC) {
+			if (r.conclusion === 'failure') {
+				// Past this sync's budget for job checks, a failed run is left for the next sync
+				// rather than stored unchecked, so one that never started is never counted.
+				if (jobs >= JOBS_PER_SYNC) continue;
 				jobs++;
 				const list = (
 					await gh.rest<{ jobs: Job[] }>(`${base}/actions/runs/${r.id}/jobs?per_page=100`)

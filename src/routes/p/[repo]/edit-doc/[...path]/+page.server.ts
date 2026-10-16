@@ -19,8 +19,9 @@ async function document(locals: App.Locals, path: string) {
 	const s = await loadProjectState(project.id);
 	const [row] = await db()<{ config_json: ReturnType<typeof parseConfig>['config'] | null }[]>`
 		select config_json from project where id = ${project.id}`;
-	const config =
-		row?.config_json ?? parseConfig(null, { name: project.repo, defaultBranch: s.main }).config;
+	// A config cached before a key existed lacks it: the defaults fill in.
+	const defaults = parseConfig(null, { name: project.repo, defaultBranch: s.main }).config;
+	const config = row?.config_json ? { ...defaults, ...row.config_json } : defaults;
 	const [head] = await db()<{ head_oid: string }[]>`
 		select head_oid from ref where project_id = ${project.id} and name = ${s.main}`;
 	if (!head) error(404, `No branch ${s.main}`);
