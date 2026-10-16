@@ -43,7 +43,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 		return json({ ok: true, sync: 'projects' }, { status: 202 });
 	}
-	if (PROJECT_EVENTS.has(event) && project) {
+	// A repository over the tenant's plan is not synced (specs/tenants.md §7.2).
+	if (PROJECT_EVENTS.has(event) && project && !project.overLimit) {
 		const [tenant] = await db()<{ status: string }[]>`
 			select status from tenant where id = ${project.tenantId}`;
 		if (tenant?.status !== 'active') return json({ ok: true, ignored: 'tenant is not active' });

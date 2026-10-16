@@ -8,10 +8,11 @@ import type { Actions, PageServerLoad } from './$types';
 /** A platform admin may always create a tenant, and is never made to wait for approval. */
 const canCreate = (signup: string, platformAdmin: boolean) => signup !== 'closed' || platformAdmin;
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	const signup = await getSignup();
 	const admin = locals.user!.platformRole === 'admin';
 	return {
+		full: url.searchParams.get('full'),
 		signup,
 		canCreate: canCreate(signup, admin),
 		waits: signup === 'approval' && !admin,

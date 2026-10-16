@@ -1,5 +1,6 @@
 import { nameProblem } from '#lib/core/tenants.ts';
 import { saveTenantSettings, tenantSettings } from '#lib/server/tenants.ts';
+import { forgetAiCache } from '#lib/server/plans.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -19,6 +20,7 @@ export const actions: Actions = {
 			aiEnabled: form.get('ai') === 'on',
 			batchEditsDefault: form.get('batch') === 'on'
 		});
+		forgetAiCache(locals.tenant!.id);
 		return { done: 'Saved.' };
 	}
 };

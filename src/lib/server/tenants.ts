@@ -100,7 +100,9 @@ export async function createTenant(
 	try {
 		return await db().begin(async (tx) => {
 			const [t] = await tx<{ id: string }[]>`
-				insert into tenant (slug, name, status, created_by) values (${slug}, ${name.trim()}, ${status}, ${userId})
+				insert into tenant (slug, name, status, created_by, tier_id)
+				values (${slug}, ${name.trim()}, ${status}, ${userId},
+					(select (value_json #>> '{}')::bigint from platform_setting where key = 'default_tier'))
 				returning id`;
 			await tx`insert into tenant_setting (tenant_id) values (${t.id})`;
 			await tx`insert into tenant_member (tenant_id, user_id, role, source) values (${t.id}, ${userId}, 'admin', 'signup')`;

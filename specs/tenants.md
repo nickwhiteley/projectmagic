@@ -1,8 +1,8 @@
 # Tenants: one Project Magic for many teams (PM20)
 
-**Draft 2, 2026-10-16**, with Nick's answers (§15). Backlog item PM20. When it is built, `spec.md` §3, §4, §8, §11 and §13
-are updated to match and this file becomes the record of how tenancy works. Until then `spec.md`
-describes the running system.
+**Built (all four phases), 2026-10-16**, with Nick's answers (§15). Backlog item PM20. `spec.md` §3, §4, §8, §11,
+§13 and §17 are updated to match, and this file is the record of how tenancy works. Where a
+phase differs from the text above, §14's "as built" notes say so.
 
 ## 1. What changes
 
@@ -592,6 +592,34 @@ Four phases, one PR each. Each leaves the deployment working, with Nick's tenant
   role each has and where it comes from.
 - **Not yet**: the member limit (phase 4), a prompt to choose between several of your tenants for a link
   that several have, and per-tenant project roles for platform admins (by design, none).
+
+**Phase 4 as built** (PR `feat/pm20-tiers-billing`), where it differs from or settles the above:
+
+- **Migration 011** adds `tier`, `tier_quota`, `flag`, `tenant_quota_override`, `tenant_flag_override`,
+  `billing_price`, `billing_customer`, `subscription`, `checkout`, `stub_subscription`, `tenant.tier_id` and
+  `tier_override_id`, and `project.pinned`. It seeds one tier, *Default*, with no limits of its own, and puts
+  every tenant on it. **Flags are simpler than §4 says**: one `flag` table with `min_tier_id` (null is every
+  tier) instead of a `tier_flag` join table. The one flag is `ai`.
+- **Resolution** is `core/plans.ts`, pure and tested: a live tenant override, else the tier or the nearest tier
+  below it with a row (an explicit unlimited beats an inherited number), else the declared default, else
+  unlimited. The declared default for `ai_tokens_daily` is `INFERENCE_DAILY_TOKEN_LIMIT` (50 000), so a
+  deployment with no tiers set behaves as it did.
+- **Limits**: *members* stops auto-join and invitations (waiting invitations count; nobody is removed; the
+  person is told on *Welcome*); *projects* marks the oldest beyond the limit `over_limit` at each sync, after
+  pinned ones, and a tenant admin pins on *Installations*; *ai_tokens_daily* counts the tenant's inference and
+  every member's questions, and stops both until midnight UTC. The `ai` flag and the tenant's own AI switch
+  turn off inferred statuses and Ask. A banner on every tenant admin page says what is over or at 80%.
+- **Billing** (`billing.ts`): the stub provider keeps its own record (`stub_subscription`); `reconcile` copies
+  it onto our subscriptions and moves the tenant to the best entitled subscription's tier (active; past due
+  within seven days; cancelled with the period still running), else the default tier. It runs when the admin
+  returns from the provider's page, and in the daily cron. The stub's page says plainly that no money is
+  taken. It is available only with `BILLING_PROVIDER=stub`, and on a production deploy only with
+  `BILLING_STUB` too. Prices are in pounds, per month or year; blank takes one off sale.
+- **Pages**: tenant *Plan & billing*; platform *Tiers & prices* (tiers in order, limits, prices, the `ai`
+  feature, enable/disable and reorder), *Settings* gains the default tier, and a tenant's admin page gains
+  the plan, a tier override and limit and feature overrides with a reason and an expiry.
+- **Not built**: a real payment provider and its webhook (reconcile is the place it plugs in), invoices, tax,
+  proration and dunning (§1), and a tenant's own model key.
 
 Sizes: phase 1 M, phase 2 M–L, phase 3 M, phase 4 M. The hosted service can take its first tenants at `signup:
 approval` after phase 3, each on a tier set by hand, before billing exists.

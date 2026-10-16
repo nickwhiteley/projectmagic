@@ -91,6 +91,102 @@
 	</form>
 {/if}
 
+<section class="panel">
+	<h2>Plan: {data.plan.tier ?? 'none'}</h2>
+	<table class="data">
+		<tbody>
+			{#each data.plan.limits as l (l.key)}
+				<tr>
+					<td>{l.label}</td>
+					<td
+						>{l.used.toLocaleString()} of {l.limit === null
+							? 'unlimited'
+							: l.limit.toLocaleString()}</td
+					>
+				</tr>
+			{/each}
+			{#each data.plan.flags as f (f.key)}
+				<tr><td>{f.key}</td><td>{f.on ? 'on' : 'off'}</td></tr>
+			{/each}
+		</tbody>
+	</table>
+
+	<form method="POST" action="?/tier" class="form">
+		<label>
+			<span>Put on a tier without payment (a trial, a friend, an exception)</span>
+			<select name="tier">
+				<option value="" selected={data.overrides.tierOverrideId === null}
+					>none: use the tier it pays for</option
+				>
+				{#each data.tiers as t (t.id)}
+					<option value={t.id} selected={data.overrides.tierOverrideId === t.id}>{t.name}</option>
+				{/each}
+			</select>
+		</label>
+		<button class="button">Save</button>
+	</form>
+
+	<form method="POST" action="?/quota" class="form">
+		<h3>Override a limit</h3>
+		<label>
+			<span>Limit</span>
+			<select name="quota">
+				{#each data.plan.limits as l (l.key)}<option value={l.key}>{l.label}</option>{/each}
+			</select>
+		</label>
+		<label
+			><span>Value (a number, “unlimited”, or “remove”)</span><input
+				type="text"
+				name="value"
+				required
+			/></label
+		>
+		<label><span>Reason</span><input type="text" name="reason" /></label>
+		<label><span>Expires (optional)</span><input type="date" name="expires" /></label>
+		<button class="button">Save override</button>
+	</form>
+	{#if data.overrides.quotas.length}
+		<ul class="small">
+			{#each data.overrides.quotas as o (o.quota)}
+				<li>
+					<code>{o.quota}</code> = {o.value === null ? 'unlimited' : o.value}: {o.reason}{o.expiresAt
+						? `, until ${o.expiresAt.slice(0, 10)}`
+						: ''}
+				</li>
+			{/each}
+		</ul>
+	{/if}
+
+	{#each data.flagKeys as f (f.key)}
+		<form method="POST" action="?/flag" class="form">
+			<h3>{f.label}</h3>
+			<input type="hidden" name="flag" value={f.key} />
+			<label>
+				<span>Override</span>
+				<select name="state">
+					<option value="remove">none: follow the plan</option>
+					<option value="on">force on</option>
+					<option value="off">force off</option>
+				</select>
+			</label>
+			<label><span>Reason</span><input type="text" name="reason" /></label>
+			<label><span>Expires (optional)</span><input type="date" name="expires" /></label>
+			<button class="button">Save</button>
+		</form>
+	{/each}
+	{#if data.overrides.flags.length}
+		<ul class="small">
+			{#each data.overrides.flags as o (o.flag)}
+				<li>
+					<code>{o.flag}</code> forced {o.on ? 'on' : 'off'}: {o.reason}{o.expiresAt
+						? `, until ${o.expiresAt.slice(0, 10)}`
+						: ''}
+				</li>
+			{/each}
+		</ul>
+	{/if}
+</section>
+
 <section>
 	<h2>Audit</h2>
 	{#if data.audit.length}

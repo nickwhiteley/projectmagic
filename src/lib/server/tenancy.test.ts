@@ -13,6 +13,10 @@ const sql = url ? postgres(url, { prepare: false, max: 2, onnotice: () => {} }) 
 vi.mock('./db.ts', () => ({ db: () => sql }));
 vi.mock('$app/env/private', () => ({
 	BOOTSTRAP_ADMIN_GITHUB_LOGIN: 'Boss',
+	INFERENCE_DAILY_TOKEN_LIMIT: 50000,
+	BILLING_PROVIDER: 'stub',
+	BILLING_STUB: '1',
+	VERCEL_ENV: undefined,
 	TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64')
 }));
 
@@ -39,7 +43,7 @@ describe.skipIf(!sql)('tenancy', () => {
 		await sql!`insert into membership (user_id, project_id, role) values (2, 1, 'viewer')`;
 		await sql!`insert into inference_usage values ('project:1', current_date, 100), ('project:2', current_date, 50)`;
 		await migrate('008_tenants.sql', '007_uninstalled.sql');
-		await migrate('010_members.sql', '008_tenants.sql');
+		await migrate('011_tiers.sql', '008_tenants.sql');
 	});
 	afterAll(() => sql?.end());
 
@@ -721,11 +725,17 @@ describe.skipIf(!sql)('tenancy', () => {
 			it('admits a person who can see the tenant’s organisation, and says so in the audit log', async () => {
 				const stranger = await user(1300, 'stranger1');
 				expect(await members.admitsStranger('1300', access([200]))).toBe(true);
-				expect(await members.joinByGithub(stranger, access([200]))).toEqual([team]);
+				expect(await members.joinByGithub(stranger, access([200]))).toEqual({
+					joined: [team],
+					full: []
+				});
 				expect(
 					await sql!`select role, source from tenant_member where tenant_id = ${team} and user_id = ${stranger}`
 				).toEqual([{ role: 'member', source: 'github' }]);
-				expect(await members.joinByGithub(stranger, access([200]))).toEqual([]);
+				expect(await members.joinByGithub(stranger, access([200]))).toEqual({
+					joined: [],
+					full: []
+				});
 				await members.removeMember(team, boss, stranger);
 			});
 
@@ -960,6 +970,334 @@ describe.skipIf(!sql)('tenancy', () => {
 				);
 				expect(await sql!`select 1 from app_user where id = ${boss}`).toHaveLength(1);
 			});
+		});
+	});
+
+	describe('tiers, quotas and billing (§7)', () => {
+		let tiers: typeof import('./tiers.ts');
+		let planQ: typeof import('./plan-queries.ts');
+		let plans: typeof import('./plans.ts');
+		let billing: typeof import('./billing.ts');
+		let members: typeof import('./members.ts');
+		let pt: string; // a tenant for this block
+		let free: string, team: string, biz: string;
+		const admin = '1';
+		beforeAll(async () => {
+			tiers = await import('./tiers.ts');
+			planQ = await import('./plan-queries.ts');
+			plans = await import('./plans.ts');
+			billing = await import('./billing.ts');
+			members = await import('./members.ts');
+			free = String((await sql!`select id from tier order by position limit 1`)[0].id);
+			await tiers.createTier(admin, 'Team');
+			await tiers.createTier(admin, 'Business');
+			[team, biz] = (
+				await sql!`select id::text from tier where name in ('Team', 'Business') order by position`
+			).map((r) => r.id as string);
+			pt = String(
+				(
+					await sql!`insert into tenant (slug, name, tier_id) values ('plantest', 'Plan Test', ${free}) returning id`
+				)[0].id
+			);
+			await sql!`insert into tenant_setting (tenant_id) values (${pt})`;
+			await sql!`insert into tenant_member (tenant_id, user_id, role) values (${pt}, 1, 'admin')`;
+		});
+
+		it('starts with one free, unlimited tier whose AI allowance is the deployment’s own', async () => {
+			const plan = await plans.planOf(pt);
+			expect(plan.tier?.name).toBe('Default');
+			expect(plan.limits).toEqual({ members: null, projects: null, ai_tokens_daily: 50_000 });
+			expect(plan.flags.ai).toBe(true);
+		});
+
+		it('orders tiers, and refuses to disable the default', async () => {
+			expect((await tiers.tiersView()).tiers.map((t) => t.name)).toEqual([
+				'Default',
+				'Team',
+				'Business'
+			]);
+			await tiers.moveTier(admin, biz, 'up');
+			expect((await tiers.tiersView()).tiers.map((t) => t.name)).toEqual([
+				'Default',
+				'Business',
+				'Team'
+			]);
+			await tiers.moveTier(admin, biz, 'down');
+			expect(await tiers.updateTier(admin, free, 'Default', false)).toMatchObject({ ok: false });
+		});
+
+		it('sets limits per tier, inheriting from below, with an explicit unlimited that beats a number', async () => {
+			await tiers.setTierQuota(admin, free, 'members', '3');
+			await tiers.setTierQuota(admin, team, 'members', '20');
+			await tiers.setTierQuota(admin, biz, 'members', 'unlimited');
+			await tiers.setTierQuota(admin, free, 'projects', '2');
+			expect(await tiers.setTierQuota(admin, free, 'members', 'lots')).toMatchObject({ ok: false });
+			const at = async (tier: string) => {
+				await sql!`update tenant set tier_id = ${tier} where id = ${pt}`;
+				return (await plans.planOf(pt)).limits;
+			};
+			expect(await at(free)).toMatchObject({ members: 3, projects: 2 });
+			expect(await at(team)).toMatchObject({ members: 20, projects: 2 });
+			expect(await at(biz)).toMatchObject({ members: null, projects: 2 });
+			await sql!`update tenant set tier_id = ${free} where id = ${pt}`;
+		});
+
+		it('puts the AI flag on from a tier, off below it', async () => {
+			await tiers.setFlag(admin, 'ai', true, team);
+			expect(await plans.aiAllowed(pt)).toBe(false);
+			await sql!`update tenant set tier_id = ${team} where id = ${pt}`;
+			expect(await plans.aiAllowed(pt)).toBe(true);
+			await sql!`update tenant_setting set ai_enabled = false where tenant_id = ${pt}`;
+			expect(await plans.aiAllowed(pt)).toBe(false);
+			await sql!`update tenant_setting set ai_enabled = true where tenant_id = ${pt}`;
+			await sql!`update tenant set tier_id = ${free} where id = ${pt}`;
+			await tiers.setFlagOverride(admin, pt, 'ai', 'on', 'a trial', '');
+			expect(await plans.aiAllowed(pt)).toBe(true);
+			await tiers.setFlagOverride(admin, pt, 'ai', 'remove', '', '');
+			expect(await plans.aiAllowed(pt)).toBe(false);
+			await tiers.setFlag(admin, 'ai', true, null);
+		});
+
+		it('overrides one limit with a reason and an expiry, and one tier without payment', async () => {
+			expect(await tiers.setQuotaOverride(admin, pt, 'members', '50', '', '')).toMatchObject({
+				ok: false
+			});
+			await tiers.setQuotaOverride(admin, pt, 'members', '50', 'a friend', '');
+			expect((await plans.planOf(pt)).limits.members).toBe(50);
+			await tiers.setQuotaOverride(admin, pt, 'members', '50', 'a friend', '2020-01-01');
+			expect((await plans.planOf(pt)).limits.members).toBe(3);
+			await tiers.setQuotaOverride(admin, pt, 'members', 'remove', '', '');
+			await tiers.setTierOverride(admin, pt, biz);
+			expect((await plans.planOf(pt)).limits.members).toBeNull();
+			expect((await plans.planOf(pt)).overridden).toBe(true);
+			await tiers.setTierOverride(admin, pt, null);
+			expect((await tiers.tenantOverrides(pt)).quotas).toEqual([]);
+		});
+
+		it('writes every change to the audit log with before and after', async () => {
+			const log = await (await import('./platform.ts')).auditLog(null, 60);
+			const q = log.find(
+				(a) => a.action === 'tier.quota' && (a.data as { after?: string }).after === 'unlimited'
+			);
+			expect(q?.data).toMatchObject({ quota: 'members', after: 'unlimited' });
+			expect(log.some((a) => a.action === 'tier.created')).toBe(true);
+		});
+
+		describe('limits', () => {
+			beforeAll(async () => {
+				await sql!`insert into installation (id, tenant_id, account_login, account_type, account_id) values (400, ${pt}, 'planorg', 'Organization', 4000)`;
+				for (const n of [1, 2, 3, 4])
+					await sql!`insert into project (github_repo_id, owner, repo, installation_id, tenant_id) values (${500 + n}, 'planorg', ${`r${n}`}, 400, ${pt})`;
+			});
+
+			it('keeps the oldest projects within the project limit and lists the rest as over the plan', async () => {
+				expect(await planQ.applyProjectLimit(sql!, pt)).toHaveLength(2);
+				expect(
+					await sql!`select repo from project where tenant_id = ${pt} and over_limit order by id`
+				).toEqual([{ repo: 'r3' }, { repo: 'r4' }]);
+				const shown = await (await import('./projects.ts')).allProjects(pt);
+				expect(shown.map((p) => p.repo)).toEqual(['r1', 'r2']);
+				expect(
+					(await (await import('./projects.ts')).activeProjects()).some((p) => p.repo === 'r3')
+				).toBe(false);
+				expect((await plans.usageOf(pt)).projects).toBe(2);
+			});
+
+			it('lets an admin choose which stay, and takes nothing away', async () => {
+				await sql!`update project set pinned = true where repo = 'r4'`;
+				await planQ.applyProjectLimit(sql!, pt);
+				expect(
+					await sql!`select repo from project where tenant_id = ${pt} and over_limit order by id`
+				).toEqual([{ repo: 'r2' }, { repo: 'r3' }]);
+				expect(await sql!`select count(*)::int as n from project where tenant_id = ${pt}`).toEqual([
+					{ n: 4 }
+				]);
+			});
+
+			it('applies a raised limit at once', async () => {
+				await tiers.setTierQuota(admin, free, 'projects', '10');
+				await tiers.reapplyAll();
+				expect(await sql!`select 1 from project where tenant_id = ${pt} and over_limit`).toEqual(
+					[]
+				);
+				await tiers.setTierQuota(admin, free, 'projects', '2');
+				await tiers.reapplyAll();
+				expect(
+					await sql!`select count(*)::int as n from project where tenant_id = ${pt} and over_limit`
+				).toEqual([{ n: 2 }]);
+			});
+
+			it('refuses new members and invitations at the member limit, and nobody is removed', async () => {
+				await tiers.setTierQuota(admin, free, 'members', '2');
+				await sql!`insert into app_user (github_id, github_login) values (2001, 'm2'), (2002, 'm3') on conflict do nothing`;
+				const [m2, m3] = (
+					await sql!`select id::text from app_user where github_id in (2001, 2002) order by github_id`
+				).map((r) => r.id as string);
+				await sql!`insert into tenant_member (tenant_id, user_id, role) values (${pt}, ${m2}, 'member')`;
+				expect(
+					await members.createInvitation(pt, admin, { id: 2002, login: 'm3' }, 'member')
+				).toMatchObject({ ok: false, reason: expect.stringContaining('allows 2 members') });
+				await sql!`delete from invitation where tenant_id = ${pt}`;
+				const g = {
+					visibleInstallationIds: async () => [400],
+					orgRole: async () => null,
+					fetchInstallation: async () => null
+				};
+				await expect(members.joinByGithub(m3, g)).resolves.toEqual({
+					joined: [],
+					full: ['Plan Test']
+				});
+				expect(
+					await sql!`select count(*)::int as n from tenant_member where tenant_id = ${pt}`
+				).toEqual([{ n: 2 }]);
+				await tiers.setTierQuota(admin, free, 'members', '5');
+				await expect(members.joinByGithub(m3, g)).resolves.toEqual({ joined: [pt], full: [] });
+			});
+
+			it('reports what is over or close, for the banner', async () => {
+				await tiers.setTierQuota(admin, free, 'members', '3');
+				const r = await plans.planReport(pt);
+				expect(r.levels.members).toBe('over');
+				expect(r.notices.join(' ')).toContain('limit of 3 members');
+				await tiers.setTierQuota(admin, free, 'members', 'inherit');
+			});
+
+			it('stops AI for the day at the tenant’s allowance, counting questions asked by its members', async () => {
+				await tiers.setTierQuota(admin, free, 'ai_tokens_daily', '1000');
+				expect(await plans.aiTokensLeft(pt)).toBe(1000);
+				await sql!`insert into inference_usage (scope, day, tokens) values (${`tenant:${pt}`}, current_date, 600)`;
+				const [{ id: member }] =
+					await sql!`select user_id as id from tenant_member where tenant_id = ${pt} and role = 'member' limit 1`;
+				await sql!`insert into inference_usage (scope, day, tokens) values (${`ask:${member}`}, current_date, 500)`;
+				expect(await plans.aiTokensLeft(pt)).toBe(0);
+				await tiers.setTierQuota(admin, free, 'ai_tokens_daily', 'unlimited');
+				expect(await plans.aiTokensLeft(pt)).toBeNull();
+				await tiers.setTierQuota(admin, free, 'ai_tokens_daily', 'inherit');
+			});
+		});
+
+		describe('billing with the stub provider', () => {
+			it('sells only what has an active price', async () => {
+				expect(await billing.startCheckout(pt, admin, team, 'month')).toMatchObject({
+					ok: false,
+					reason: 'That plan is not on sale.'
+				});
+				await tiers.setPrice(admin, team, 'month', '1200');
+				await tiers.setPrice(admin, team, 'year', '12000');
+				expect(
+					(await tiers.tiersView()).tiers
+						.find((t) => t.id === team)!
+						.prices.map((p) => [p.interval, p.amountMinor])
+				).toEqual([
+					['month', 1200],
+					['year', 12000]
+				]);
+			});
+
+			it('makes a customer, a subscription and a checkout, and moves nobody until it is paid', async () => {
+				const r = await billing.startCheckout(pt, admin, team, 'month');
+				expect(r).toMatchObject({ ok: true, url: expect.stringMatching(/^\/billing\/stub\/\d+$/) });
+				expect(
+					await sql!`select provider_ref from billing_customer where tenant_id = ${pt}`
+				).toHaveLength(1);
+				const [co] = await sql!`select id::text, status from checkout where tenant_id = ${pt}`;
+				expect(co.status).toBe('open');
+				await billing.reconcile(pt);
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					free
+				);
+			});
+
+			it('abandons: nothing changes, and the checkout says so', async () => {
+				const [co] =
+					await sql!`select id::text, (select provider_ref from subscription s where s.id = c.subscription_id) as ref from checkout c where tenant_id = ${pt}`;
+				await billing.stubAbandon(co.ref);
+				expect(await billing.finishCheckout(pt, co.id)).toBe('abandoned');
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					free
+				);
+			});
+
+			it('completes: reconcile reads the provider and moves the tenant to the paid tier', async () => {
+				await billing.startCheckout(pt, admin, team, 'month');
+				const [co] =
+					await sql!`select c.id::text, s.provider_ref as ref from checkout c join subscription s on s.id = c.subscription_id where c.tenant_id = ${pt} and c.status = 'open'`;
+				await billing.stubComplete(co.ref);
+				expect(await billing.finishCheckout(pt, co.id)).toBe('complete');
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					team
+				);
+				const subs = await billing.subscriptionsOf(pt);
+				expect(subs[0]).toMatchObject({
+					tierName: 'Team',
+					status: 'active',
+					interval: 'month',
+					amountMinor: 1200
+				});
+				expect(new Date(subs[0].currentPeriodEnd!).getTime()).toBeGreaterThan(
+					Date.now() + 25 * 86_400_000
+				);
+			});
+
+			it('cancel keeps the tier until the period ends, then reconcile drops to the default', async () => {
+				expect(await billing.cancelSubscription(pt, admin)).toBe(true);
+				expect((await billing.subscriptionsOf(pt))[0]).toMatchObject({
+					status: 'active',
+					cancelAtPeriodEnd: true
+				});
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					team
+				);
+				await sql!`update stub_subscription set period_end = now() - interval '1 hour' where status = 'active'`;
+				await billing.reconcile(pt);
+				expect((await billing.subscriptionsOf(pt))[0].status).toBe('cancelled');
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					free
+				);
+				expect(await billing.cancelSubscription(pt, admin)).toBe(false);
+			});
+
+			it('keeps a cancelled subscription’s tier while the paid period still runs', async () => {
+				await billing.startCheckout(pt, admin, team, 'year');
+				const [co] =
+					await sql!`select c.id::text, s.provider_ref as ref from checkout c join subscription s on s.id = c.subscription_id where c.tenant_id = ${pt} and c.status = 'open'`;
+				await billing.stubComplete(co.ref);
+				await billing.finishCheckout(pt, co.id);
+				await billing.cancelSubscription(pt, admin);
+				await billing.reconcileAll();
+				expect((await sql!`select tier_id::text from tenant where id = ${pt}`)[0].tier_id).toBe(
+					team
+				);
+			});
+
+			it('renews on its own, as a card would', async () => {
+				await sql!`update stub_subscription set period_end = now() - interval '1 day', cancel_at_period_end = false where status = 'active'`;
+				await billing.reconcile(pt);
+				const sub = (await billing.subscriptionsOf(pt)).find((s) => s.status === 'active');
+				expect(new Date(sub!.currentPeriodEnd!).getTime()).toBeGreaterThan(Date.now());
+			});
+
+			it('writes the audit trail', async () => {
+				const log = await (await import('./platform.ts')).auditLog(pt, 40);
+				expect(log.map((a) => a.action)).toEqual(
+					expect.arrayContaining(['billing.checkout', 'billing.tier', 'billing.cancelled'])
+				);
+			});
+		});
+
+		it('gives a new tenant the default tier', async () => {
+			const made = await tenants.createTenant('2', 'Tiered', 'tiered', 'active');
+			expect(made.ok).toBe(true);
+			expect((await sql!`select tier_id::text from tenant where slug = 'tiered'`)[0].tier_id).toBe(
+				free
+			);
+			await tiers.setDefaultTier(admin, team);
+			const m2 = await tenants.createTenant('2', 'Tiered 2', 'tiered-2', 'active');
+			expect(m2.ok).toBe(true);
+			expect(
+				(await sql!`select tier_id::text from tenant where slug = 'tiered-2'`)[0].tier_id
+			).toBe(team);
+			expect(await tiers.setDefaultTier(admin, '999999')).toMatchObject({ ok: false });
 		});
 	});
 });

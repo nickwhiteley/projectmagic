@@ -1,10 +1,10 @@
 // Ask across projects (PM4): one question, answered by the configured model from a digest of
 // every project the person can see. Spend is counted per person against the daily token limit.
-import { INFERENCE_DAILY_TOKEN_LIMIT } from '$app/env/private';
 import { askPrompt, digest, linkAnswer } from '#lib/core/ask.ts';
 import { renderMarkdown } from '#lib/core/render.ts';
 import { db } from './db.ts';
 import { configured } from './inference.ts';
+import { aiAllowed, aiTokensLeft } from './plans.ts';
 import { completer } from './models.ts';
 import type { ProjectState } from '#lib/core/state.ts';
 
@@ -14,6 +14,7 @@ export type AskResult =
 export const MAX_QUESTION = 500;
 
 export async function ask(
+	tenantId: string,
 	userId: string,
 	login: string,
 	question: string,
@@ -27,13 +28,14 @@ export async function ask(
 		return { ok: false, reason: `Keep the question under ${MAX_QUESTION} characters.` };
 
 	const scope = `ask:${userId}`;
-	const limit = INFERENCE_DAILY_TOKEN_LIMIT ?? 50_000;
-	const [used] = await db()<{ tokens: string }[]>`
-		select tokens from inference_usage where scope = ${scope} and day = current_date`.catch(() => []);
-	if (Number(used?.tokens ?? 0) >= limit)
+	// The plan's allowance is the tenant's: inference and every member's questions draw on it (§7.2).
+	if (!(await aiAllowed(tenantId)))
+		return { ok: false, reason: 'AI features are off for this tenant.' };
+	const left = await aiTokensLeft(tenantId);
+	if (left !== null && left <= 0)
 		return {
 			ok: false,
-			reason: 'You have used today’s allowance for questions. It resets tomorrow.'
+			reason: 'This tenant has used today’s AI allowance. It resets at midnight UTC.'
 		};
 
 	const d = digest(states);

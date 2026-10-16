@@ -6,6 +6,8 @@ import type { ProjectRole, TenantRole } from '#lib/core/access.ts';
 import { randomToken } from './crypto.ts';
 import { db } from './db.ts';
 import type { GitHubAccess } from './installations.ts';
+import { planOf, usageOf } from './plans.ts';
+import { hasRoom } from '#lib/core/plans.ts';
 
 const hash = (token: string) => createHash('sha256').update(token).digest('hex');
 
@@ -215,6 +217,16 @@ export async function createInvitation(
 		select 1 from tenant_member m join app_user u on u.id = m.user_id
 		where m.tenant_id = ${tenantId} and u.github_id = ${ghUser.id}`;
 	if (already) return { ok: false, reason: `${ghUser.login} is already a member.` };
+	// At the member limit there are no new invitations; waiting ones count, so a tenant can't invite its way past it.
+	const [plan, usage] = await Promise.all([planOf(tenantId), usageOf(tenantId)]);
+	const [{ waiting }] = await db()<{ waiting: number }[]>`
+		select count(*)::int as waiting from invitation
+		where tenant_id = ${tenantId} and github_id <> ${ghUser.id} and accepted_at is null and revoked_at is null and expires_at > now()`;
+	if (!hasRoom(usage.members + waiting, plan.limits.members))
+		return {
+			ok: false,
+			reason: `Your plan allows ${plan.limits.members} members, and they are taken or promised.`
+		};
 	const token = randomToken(32);
 	await db().begin(async (tx) => {
 		await tx`update invitation set revoked_at = now()
@@ -273,6 +285,14 @@ export async function acceptInvitation(
 			from invitation i join tenant t on t.id = i.tenant_id
 			where i.id = ${invitationId} and t.status <> 'deleted' and ${tx.unsafe(OPEN)} for update of i`;
 		if (!i) return { ok: false, reason: 'That invitation has expired or was withdrawn.' } as const;
+		const [members] = await tx<
+			{ n: number }[]
+		>`select count(*)::int as n from tenant_member where tenant_id = ${i.tenant_id}`;
+		const [already] =
+			await tx`select 1 from tenant_member where tenant_id = ${i.tenant_id} and user_id = ${user.id}`;
+		const limit = (await planOf(String(i.tenant_id))).limits.members;
+		if (!already && !hasRoom(members.n, limit))
+			return { ok: false, reason: 'This tenant is full. Ask its admins to make room.' } as const;
 		if (String(i.github_id) !== user.githubId)
 			return { ok: false, reason: 'That invitation is for a different GitHub account.' } as const;
 		await tx`insert into tenant_member (tenant_id, user_id, role, source, invited_by)
@@ -313,10 +333,24 @@ export async function admitsStranger(githubId: string, gh: GitHubAccess): Promis
 }
 
 /** Adds the person, as a member, to every tenant that admits by GitHub access and that they can
- * reach and are not yet in. */
-export async function joinByGithub(userId: string, gh: GitHubAccess): Promise<string[]> {
+ * reach and are not yet in. A tenant at its member limit does not take them: `full` names those, so
+ * the person can be told, and the tenant's admins see its banner (§3.3). */
+export async function joinByGithub(
+	userId: string,
+	gh: GitHubAccess
+): Promise<{ joined: string[]; full: string[] }> {
 	const joined: string[] = [];
+	const full: string[] = [];
 	for (const t of await admittingTenants(await gh.visibleInstallationIds().catch(() => []))) {
+		const [member] =
+			await db()`select 1 from tenant_member where tenant_id = ${t.id} and user_id = ${userId}`;
+		if (member) continue;
+		if (
+			!hasRoom((await usageOf(String(t.id))).members, (await planOf(String(t.id))).limits.members)
+		) {
+			full.push(t.name);
+			continue;
+		}
 		const [added] = await db()`
 			insert into tenant_member (tenant_id, user_id, role, source) values (${t.id}, ${userId}, 'member', 'github')
 			on conflict (tenant_id, user_id) do nothing returning user_id`;
@@ -325,7 +359,7 @@ export async function joinByGithub(userId: string, gh: GitHubAccess): Promise<st
 			values (${t.id}, ${userId}, 'member.joined', ${`user:${userId}`}, ${db().json({ via: 'github', role: 'member' })})`;
 		joined.push(String(t.id));
 	}
-	return joined;
+	return { joined, full };
 }
 
 export async function setJoinByGithub(

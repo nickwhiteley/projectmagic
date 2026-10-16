@@ -17,6 +17,7 @@ import { parseProgress } from '#lib/core/progress.ts';
 import type { PrInfo } from '#lib/core/state.ts';
 import type postgres from 'postgres';
 import type { GitHubClient } from './github-client.ts';
+import { applyProjectLimit } from './plan-queries.ts';
 
 type Sql = postgres.Sql;
 
@@ -566,6 +567,7 @@ export async function syncInstallations(
 ): Promise<number> {
 	const seen: number[] = [];
 	const listed: number[] = [];
+	const touchedTenants = new Set<string>();
 	let installs: string | null = '/app/installations?per_page=100';
 	while (installs) {
 		const list: { body: AppInstallation[]; next: string | null } =
@@ -593,6 +595,7 @@ export async function syncInstallations(
 				continue;
 			}
 			const gh = forInstallation(inst.id);
+			touchedTenants.add(tenantId);
 			let url: string | null = '/installation/repositories?per_page=100';
 			while (url) {
 				const page: { body: { repositories: InstalledRepo[] }; next: string | null } =
@@ -621,5 +624,7 @@ export async function syncInstallations(
 				else coalesce(uninstalled_at, now()) end`.catch((e: { code?: string }) => {
 			if (e?.code !== '42703') throw e;
 		});
+	// A tenant over its plan's project limit keeps the pinned and the oldest; the rest stop syncing (§7.2).
+	for (const t of touchedTenants) await applyProjectLimit(sql, String(t));
 	return seen.length;
 }

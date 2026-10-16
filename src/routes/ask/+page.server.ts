@@ -7,9 +7,10 @@ import { projectsFor } from '#lib/server/projects.ts';
 import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { accessCtx } from '#lib/server/tenants.ts';
+import { aiAllowedCached } from '#lib/server/plans.ts';
 
 export const load: PageServerLoad = async ({ locals }) => ({
-	available: !!configured(),
+	available: !!configured() && !!locals.tenant && (await aiAllowedCached(locals.tenant.id)),
 	max: MAX_QUESTION,
 	optedOut: await optedOut(locals.user!.id)
 });
@@ -33,7 +34,13 @@ export const actions: Actions = {
 		const states = (await Promise.all(projects.map((p) => loadProjectState(p.id)))).filter(
 			(s) => s.hasBacklog && s.inferenceAllowed
 		);
-		const result = await ask(locals.user!.id, locals.user!.githubLogin, question, states);
+		const result = await ask(
+			locals.tenant!.id,
+			locals.user!.id,
+			locals.user!.githubLogin,
+			question,
+			states
+		);
 		return result.ok ? { question, ...result } : fail(400, { question, reason: result.reason });
 	}
 };

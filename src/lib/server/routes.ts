@@ -30,6 +30,10 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/invite/[token]': { kind: 'signed-in' },
 	'/tenant/members': { kind: 'tenant', action: 'tenant.members' },
 	'/tenant/access': { kind: 'tenant', action: 'tenant.members' },
+	'/tenant/billing': { kind: 'tenant', action: 'tenant.billing' },
+	'/tenant/billing/return': { kind: 'tenant', action: 'tenant.billing' },
+	// The stub provider's own page, standing in for a payment provider's; it checks the checkout is yours.
+	'/billing/stub/[checkout]': { kind: 'signed-in' },
 	'/tenant/audit': { kind: 'tenant', action: 'tenant.audit' },
 	'/tenant': { kind: 'tenant', action: 'tenant.settings' },
 	'/tenant/installations': { kind: 'tenant', action: 'tenant.installations' },
@@ -44,6 +48,7 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/admin/tenants/[id]': { kind: 'platform', action: 'platform.tenants' },
 	'/admin/installations': { kind: 'platform', action: 'platform.tenants' },
 	'/admin/settings': { kind: 'platform', action: 'platform.settings' },
+	'/admin/tiers': { kind: 'platform', action: 'platform.tiers' },
 	'/admin/users': { kind: 'platform', action: 'platform.users' },
 	'/admin/support/end': { kind: 'platform', action: 'platform.support' },
 	'/admin/audit': { kind: 'platform', action: 'platform.tenants' },

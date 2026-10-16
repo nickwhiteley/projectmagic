@@ -31,10 +31,10 @@ edit is a commit to the repository, the same as an agent's.
 
 ### Who it is for
 
-**One user (Nick) in v0.1, designed for many.** Users, project memberships and roles exist in
-the data model from the start, and every route asks one permission function (§11). For v0.1
-there is one user, who is a system administrator. Adding a second user, or real role-based
-access, means adding rows and screens, not reworking the code.
+**Teams, each in its own tenant** (§17, `specs/tenants.md`). Anyone with a GitHub account can sign
+in where sign-up allows, create a tenant, connect their GitHub accounts and bring in colleagues. Users,
+tenants, project roles and tiers are in the data model, and every route asks one permission function
+(§11). A self-hosted copy with one owner is one tenant with sign-up closed, and works as v0.1 did.
 
 ### What it is not
 
@@ -75,7 +75,8 @@ browser ──> SvelteKit on Vercel ──> Neon Postgres (cache)
   Orchard's web tier. Server routes do everything, and there is no separate API service.
 - **Neon Postgres** through the Vercel integration, for the cache, the project registry and
   the edit log.
-- **A GitHub App** installed on the selected repositories. It gives:
+- **A GitHub App** (one, public on the hosted service) installed on the repositories of each tenant's
+  GitHub accounts. A project belongs to the tenant that connected its installation (§17). It gives:
   - installation tokens for reading, at higher rate limits than a personal token;
   - webhooks for keeping the cache fresh;
   - user-to-server tokens, so an edit is committed **as Nick**, not as a bot.
@@ -372,10 +373,13 @@ A sync is a few GraphQL calls and a few parses, so it fits comfortably in a func
 ## 8. Data model (the cache)
 
 ```
-app_user       (id, github_id, github_login, name, system_role admin|member, disabled_at,
+app_user       (id, github_id, github_login, name, platform_role admin|none, disabled_at,
                 refresh_token_enc, created_at)
-membership     (user_id, project_id, role viewer|editor|maintainer, granted_by, granted_at)
-project        (id, owner, repo, installation_id, hidden, config_json, last_sync_at, last_error)
+tenant         (id, slug, name, status pending|active|suspended|deleted, tier_id, tier_override_id, ...)
+tenant_member  (tenant_id, user_id, role admin|member, source, github_synced_at, last_seen_at)
+installation   (id, tenant_id, account_login, account_type, ...)       -- GitHub App installations
+membership     (user_id, project_id, role none|viewer|editor|maintainer, source manual|github, ...)
+project        (id, tenant_id, owner, repo, installation_id, hidden, over_limit, pinned, config_json, ...)
 ref            (project_id, name, head_oid, committed_at, ahead, behind, active, pr_json)
 blob_parse     (oid primary key, kind backlog|progress|config, parsed_json, parser_version)
 ref_file       (project_id, ref_name, path, oid)
@@ -387,8 +391,10 @@ webhook_delivery (delivery_id primary key, project_id, event, received_at)
 ```
 
 Bumping `parser_version` invalidates every `blob_parse`. **Two kinds of table are kept:**
-`app_user`, `membership`, `project.hidden` and `edit_log` are real data and are backed up.
-Everything else is cache, and can be truncated and rebuilt.
+`app_user`, `membership`, `project.hidden` and `edit_log` are real data and are backed up, and so
+are the tenant tables of §17 (tenants, members, installations, invitations, settings, tiers, billing,
+the audit log). Everything else is cache, and can be truncated and rebuilt. `specs/tenants.md` §4
+lists the tenant tables in full.
 
 ## 9. The views
 
@@ -587,11 +593,12 @@ Until migration 005 has run, edits are saved at once as before.
 
 ### 11.1 Identity
 
-- **Sign in with the GitHub App's user OAuth flow.** Only GitHub accounts with an `app_user` row
-  can sign in. The first one comes from `BOOTSTRAP_ADMIN_GITHUB_LOGIN`, which creates that user as
-  a system administrator on first sign-in and is ignored once any administrator exists. Later
-  users are invited by an administrator, which creates their row. The session is an HTTP-only,
-  signed cookie that carries the user id and is checked against `disabled_at` on each request.
+- **Sign in with the GitHub App's user OAuth flow.** While sign-up is `open` or `approval`, any
+  GitHub account can sign in and gets an `app_user` row; while it is `closed` (the default), only an
+  account that already has a row, an invitation, or GitHub access to a tenant that admits by it. The
+  first platform admin comes from `BOOTSTRAP_ADMIN_GITHUB_LOGIN`, on first sign-in, while none exists.
+  The session is an HTTP-only, signed cookie that carries the user id and is checked against
+  `disabled_at` on each request.
 - The user's refresh token is stored **encrypted** (`TOKEN_ENCRYPTION_KEY`) and used only for
   that user's writes. Reads use installation tokens.
 
@@ -605,11 +612,15 @@ Until migration 005 has run, edits are saved at once as before.
 | `editor`     | edit the backlog (§10)                                              |
 | `maintainer` | merge the edit PR, hide the project, manage the project's members  |
 
-A **system administrator** sees and maintains every project, invites and disables users, and
-installs the GitHub App. A system role and a project role are separate, and neither implies the
-other, except that an administrator is treated as `maintainer` everywhere.
+Three layers (`specs/tenants.md` §6.4): a **platform admin** runs the service (tenants, users, tiers,
+sign-up) and gets no access to a tenant's content except through an audited, read-only, one-hour
+support session; a **tenant** has `admin`s and `member`s, and an admin is `maintainer` on every
+project in the tenant and runs its members, installations and settings; a **project role** is the
+table above, derived from the person's GitHub permission on the repository by default, or set by
+admins.
 
-- **One pure function decides:** `can(user, action, project, memberships) → boolean`. Every
+- **One pure function decides:** `can(user, action, ctx) → boolean`, where `ctx` holds the tenant, the
+  project and the memberships. Every
   route and every server action calls it, and none checks roles inline. A test lists every
   route and asserts which action it checks.
 - **A project the user can't see is a 404**, not a 403, and is absent from the overview and
@@ -620,8 +631,9 @@ other, except that an administrator is treated as `maintainer` everywhere.
   `editor` without push access to the repository gets GitHub's refusal, shown as "your GitHub
   account can't write to this repository". Project Magic never uses the App's token to write on
   a user's behalf, so it can't grant someone more than GitHub does.
-- **v0.1 has no membership screens.** The single administrator sees everything. The tables,
-  `can()` and its tests exist. Invitations and the member list come with PM20 (`specs/tenants.md`, phase 3).
+- **Membership screens** are the tenant's Members and Access pages, and the platform's Users page
+  (PM20, `specs/tenants.md` §9). A tenant and the service each keep an active admin, enforced by the
+  database.
 
 ### 11.3 GitHub and transport
 - **App permissions**: contents read and write, pull requests read and write, metadata read,
@@ -663,7 +675,9 @@ and install it on the chosen repositories (*Only select repositories*).
 | `GITHUB_WEBHOOK_SECRET` | the webhook's secret (`openssl rand -hex 32`) |
 | `SESSION_SECRET` | signs the session cookie (`openssl rand -hex 32`) |
 | `TOKEN_ENCRYPTION_KEY` | encrypts refresh tokens: 32 bytes, base64 (`openssl rand -base64 32`) |
-| `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | the first administrator's GitHub login (§11.1) |
+| `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | the first platform admin's GitHub login (§11.1) |
+| `GITHUB_APP_SLUG` | the App's URL name, for the *Connect GitHub* link |
+| `BILLING_PROVIDER`, `BILLING_STUB` | unset, billing is off; `stub` takes no money, and on a production deploy needs `BILLING_STUB` too |
 | `CRON_SECRET` | set by Vercel; the daily cron route checks it |
 
 ## 12. Code layout and testing
@@ -711,7 +725,8 @@ repository's `backlog.md`.
   ("Built 2026-09-30 … waits only on the lawyer") and proposes a status and waiting reason,
   shown as *inferred* and never used to derive the real status (§7.2). The model is chosen by
   environment (Ollama first; OpenAI and Anthropic too). A project may use a daily token limit
-  (default 50 000), counted by scope so it can move to tenants (PM20). A project opts out with
+  (default 50 000, a declared default that a tier or an override replaces), counted per tenant, with
+  its members' questions (PM20). A project opts out with
   `inference: false`, and a person hides the proposals from their own views. A proposal is cached
   against the item's text and dropped when the item changes.
 - **Ask across projects** (built, PM4): a question box answered from the cached parses, such as
@@ -854,13 +869,13 @@ runs and status changes, keyed so that a re-sync is idempotent. The backlog hist
 records **every status change** per item, not only removals, which is what cycle time and the
 founder queue's ages need.
 
-## 17. Tenants (PM20, specced)
+## 17. Tenants (PM20, built)
 
-**One deployment for many teams.** Specced in `specs/tenants.md`, not yet built. A *tenant* is a
+**One deployment for many teams.** Specified in `specs/tenants.md`, which is the record of how it works. A *tenant* is a
 team with its members, its connected GitHub App installations, its settings and its tier. Anyone
 signs in with GitHub, creates a tenant, installs the one public App and brings in colleagues, who
 join by invitation or by having GitHub access to the tenant's repositories. Project roles come from
 GitHub permissions by default. Tenant admins run a tenant; platform admins run the service and see
 no tenant's content except through an audited support session. Tiers gate members, projects and AI,
 with billing through a stub provider. A self-hosted copy with one owner stays as it is: one tenant,
-sign-up closed. Until it is built, §3, §4, §8 and §11 describe the running system.
+sign-up closed.

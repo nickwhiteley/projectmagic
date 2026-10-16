@@ -50,6 +50,42 @@
 	<p class="muted">Nothing is connected yet.</p>
 {/if}
 
+{#if data.repos.length}
+	<section>
+		<h2>Repositories</h2>
+		{#if data.projectLimit !== null}
+			<p class="muted small">
+				Your plan syncs {data.projectLimit} project{data.projectLimit === 1 ? '' : 's'}. Pinned ones
+				are kept first, then the oldest; the rest are listed here as over the plan and not synced.
+			</p>
+		{/if}
+		<table class="data">
+			<tbody>
+				{#each data.repos as r (r.id)}
+					<tr>
+						<td>{r.name}</td>
+						<td
+							>{#if r.over}<span class="pill suspended">over the plan: not synced</span
+								>{:else if r.pinned}<span class="pill active">pinned</span>{/if}</td
+						>
+						<td>
+							{#if data.projectLimit !== null}
+								<form method="POST" action="?/pin">
+									<input type="hidden" name="project" value={r.id} />
+									<input type="hidden" name="pinned" value={r.pinned ? '0' : '1'} />
+									<button class="button"
+										>{r.pinned ? 'Unpin' : r.over ? 'Sync this one' : 'Pin'}</button
+									>
+								</form>
+							{/if}
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+	</section>
+{/if}
+
 <section class="panel">
 	<h2>Connect GitHub</h2>
 	<p>
