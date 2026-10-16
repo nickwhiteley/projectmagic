@@ -288,6 +288,8 @@ deployment branches are left out. A full commit history would need the sync to c
 The model and `can()` exist in v0.1 (`spec.md` §11.2). This adds the screens: invite by GitHub
 login, the member list for each project, changing a role, and disabling a user.
 
+The implications of PM20 need considering for this. It might be easier to add tenancies before thinking too much about users. Is full RBAC easier to implement first? Will we use Github roles or managed in Project Magic?  Can plinth help?
+
 ### PM8 Mermaid in rendered docs
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
