@@ -55,7 +55,9 @@ export const actions: Actions = {
 		const v = readItemForm(form);
 		const section = Number(form.get('section'));
 		const at = form.get('at') === 'start' ? ('start' as const) : ('end' as const);
-		const s = await loadProjectState(locals.project!.id);
+		const s = await loadProjectState(locals.project!.id, {
+			pending: await edits.batching(locals.user!, locals.project!)
+		});
 		const bug = form.get('bug') === '1';
 		const bad = problems(v) ?? checkId(v.id, s.usedIds);
 		if (bad) return fail(400, { values: v, message: bad, reauth: false });

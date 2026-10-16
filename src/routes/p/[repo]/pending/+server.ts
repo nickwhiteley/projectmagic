@@ -12,8 +12,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	let note: string;
 	try {
 		if (form.get('do') === 'discard') {
-			await discard(locals.project!.id, Number(form.get('id')));
-			note = 'Discarded.';
+			note = (await discard(locals.project!.id, Number(form.get('id'))))
+				? 'Discarded.'
+				: 'That edit is being saved right now, so it can’t be discarded. Reload in a moment.';
 		} else {
 			const r = await edits.savePending(locals.project!, locals.user!);
 			note =

@@ -111,6 +111,11 @@ a quiet minute and at most five minutes after the first edit, triggered by page 
 with the page reloading itself when one is due, and the daily cron as the backstop. Built in
 spec §10.5.
 
+**Review fixes (2026-10-16):** an edit saved at once is built from main without anyone's pending
+edits, so it can't carry them to main or hit a false conflict. A batch logs each edit under its
+author, so the PR body, deleted detection and just-added checks see them. A page load saves a due
+batch in the background instead of waiting for it. A pending edit can't be discarded while a save holds it.
+
 ### PM1 Epics
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 

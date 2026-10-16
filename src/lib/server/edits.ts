@@ -52,6 +52,12 @@ async function target(project: ProjectRow, file: string | null = null) {
 	};
 }
 
+/** Whether this person's item edits are held for a batch (PM25): the project allows it and they chose it. */
+export async function batching(user: SessionUser, project: ProjectRow): Promise<boolean> {
+	const [t, mine] = await Promise.all([target(project).catch(() => null), batchPref(user.id)]);
+	return !!t?.batchEdits && mine;
+}
+
 /** What an edit returns: a write's result, or `queued` when it is held for the next save (PM25). */
 export type EditResult = WriteResult | { kind: 'queued'; count: number };
 
@@ -107,28 +113,43 @@ function logMessage(op: string, item: string): string {
 	return `Backlog: ${op} ${item}`;
 }
 
+/** An edit_log row: the operation, the item, and who made it when not the acting user. */
+interface LogEntry {
+	op: string;
+	item: string;
+	user?: string;
+}
+
 async function perform(
 	user: SessionUser,
 	project: ProjectRow,
 	t: WriteTarget,
 	run: (gh: ReturnType<typeof userClient>) => Promise<WriteResult>,
-	log: { op: string; item: string }
+	/** What to record: one edit, or (for a batch) the edits it applied, read after the write. */
+	log: LogEntry | (() => LogEntry[])
 ): Promise<WriteResult> {
 	const gh = userClient(user.id);
-	const itemId = log.item;
-	const op = { op: log.op };
+	const entries = () => {
+		const list = typeof log === 'function' ? log() : [log];
+		return list.length ? list : [{ op: 'batch', item: '' }];
+	};
+	const failed = async (error: string) => {
+		for (const l of entries())
+			await db()`insert into edit_log (project_id, user_id, item_id, op, error)
+				values (${project.id}, ${l.user ?? user.id}, ${l.item}, ${l.op}, ${error})`;
+	};
 	let result: WriteResult;
 	try {
 		result = await run(gh);
 	} catch (e) {
-		await db()`insert into edit_log (project_id, user_id, item_id, op, error)
-			values (${project.id}, ${user.id}, ${itemId}, ${op.op}, ${String(e)})`;
+		await failed(String(e));
 		throw e;
 	}
 
 	if (result.kind === 'merged' || result.kind === 'pending') {
-		await db()`insert into edit_log (project_id, user_id, item_id, op, base_oid, commit_oid, pr_number)
-			values (${project.id}, ${user.id}, ${itemId}, ${op.op}, ${result.baseOid}, ${result.commit}, ${result.pr})`;
+		for (const l of entries())
+			await db()`insert into edit_log (project_id, user_id, item_id, op, base_oid, commit_oid, pr_number)
+				values (${project.id}, ${l.user ?? user.id}, ${l.item}, ${l.op}, ${result.baseOid}, ${result.commit}, ${result.pr})`;
 		if (result.kind === 'pending') {
 			// The PR stays open: describe every edit it holds.
 			const edits = await db()<{ op: string; item_id: string; login: string; at: Date }[]>`
@@ -146,8 +167,7 @@ async function perform(
 			});
 		}
 	} else if (result.kind === 'blocked' || result.kind === 'refused') {
-		await db()`insert into edit_log (project_id, user_id, item_id, op, error)
-			values (${project.id}, ${user.id}, ${itemId}, ${op.op}, ${result.detail})`;
+		await failed(result.detail);
 	}
 
 	const state =
@@ -257,11 +277,15 @@ export async function savePending(
 								batch.filter((e) => applied.includes(e.id)).map((e) => e.op)
 							)
 					}),
-				{
-					op: 'batch',
-					item: [...new Set(batch.filter((e) => applied.includes(e.id)).map((e) => itemOf(e.op)))]
-						.slice(0, 20)
-						.join(', ')
+				// Read after the write: each applied edit, as its author made it.
+				// A failure before anything applied is recorded against every edit in the batch.
+				() => {
+					const done = batch.filter((e) => applied.includes(e.id));
+					return (done.length ? done : batch).map((e) => ({
+						op: e.op.op,
+						item: itemOf(e.op),
+						user: e.user
+					}));
 				}
 			);
 			if (result.kind === 'merged' || result.kind === 'pending' || result.kind === 'unchanged') {
@@ -309,4 +333,12 @@ export async function justAdded(projectId: string, itemId: string): Promise<bool
 	return (r?.n ?? 0) > 0;
 }
 
-export const edits = { edit, editFile, mergeEdits, justAdded, savePending, savePendingIfDue };
+export const edits = {
+	batching,
+	edit,
+	editFile,
+	mergeEdits,
+	justAdded,
+	savePending,
+	savePendingIfDue
+};
