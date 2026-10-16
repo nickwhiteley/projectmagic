@@ -719,7 +719,7 @@ repository's `backlog.md`.
 
 None that block phase 0.
 
-## 16. Delivery and quality (after v0.1)
+## 16. Delivery and quality (built, PM9)
 
 **A view of how fast each project moves and how often it breaks production, inspired by DORA
 but sized for one person and a team of agents.** It is backlog item PM9. Nothing here needs
@@ -783,6 +783,31 @@ show production faults that no PR has fixed yet.
   time, production bugs in the last four weeks, the founder queue), each a link.
 - **A Delivery tab per project**: the charts in §16.1, a list of production bugs with time to
   restore, and the founder queue, oldest first.
+
+### 16.7 As built (PM9)
+
+What differs from the plan above, so the figures are read for what they are:
+
+- **Lead time and time to restore find the deploy by time, not ancestry.** A merged PR's deploy is
+  the production deploy created for its merge commit, else the first successful one after it
+  merged. Vercel deploys main on every push, so this is almost always the same answer; a failed
+  deploy followed by a fix would credit the fix's deploy.
+- **A deploy counts if it ever succeeded.** Vercel marks a deploy `inactive` once a newer one
+  replaces it, so the latest status is not used.
+- **Edit deploys** are the deploys of a merge commit whose PR is titled *Project Magic edits*.
+- **Cycle time** starts at an item's first `Status: in progress` in the backlog's history, not at
+  a linked branch, so an item that was never marked in progress has a lead time but no cycle time.
+- **Throughput** is items shipped per week, size-weighted. Plan tasks per week are not counted yet:
+  `PROGRESS.md` has no history walk.
+- **The founder queue** is the built and blocked items that have a waiting reason or are for a
+  person; its age is the time since the item entered that status, from history.
+- **Main's CI**: a failed run whose jobs ran no step is stored as not started and left out, with
+  its count shown. The window is four weeks.
+- **Backfill**: up to four pages (400) of deployments, closed PRs and runs on the first sync, and
+  60 new PRs per sync (each needs a request for its first commit), newest first; the rest follow on
+  later syncs. Migration 004 starts the backlog history walk again so every past status change is
+  recorded.
+- Without the migration the app works as before and the Delivery tab says nothing is stored.
 
 ### 16.6 Data
 

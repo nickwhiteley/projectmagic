@@ -152,7 +152,7 @@ Then, on the App's page:
 ### 4. Create the tables and run it
 
 ```sh
-make migrate   # creates the tables (migrations/*.sql), once per database
+make migrate   # creates the tables (migrations/*.sql), once per database; run again after an update
 make sync      # first sync of every installed repository; the first can take a minute
 make dev       # http://localhost:5173
 ```

@@ -353,7 +353,7 @@ shown only to people who can edit the project.
 **Question for Nick:** should the Board's cards get the same button?
 
 ### PM9 Delivery and quality
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** `make migrate` (004), then Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 DORA's four measures sized for one person and a team of agents: deployment frequency, lead time
 for changes, change failure rate and time to restore, from Vercel's GitHub deployments and
@@ -364,6 +364,22 @@ has waited. A line on each overview card, and a Delivery tab. `spec.md` §16.
 The `Bug:` PR convention went into orchard#35 and lantern#70 on 2026-10-14, so
 production bugs are labelled from now on. Earlier `fix/` PRs aren't labelled and are counted as
 fixes, not production bugs.
+
+Built (`spec.md` §16.7 says how it differs from the plan):
+
+- **Data**: migration `004_events.sql` adds an `event` table (production deploys, merged PRs, CI
+  runs on main, status changes). The sync reads them from GitHub incrementally and never fails
+  because of them. Without the migration everything works and the tab is empty. It also restarts
+  the backlog history walk so every past status change is recorded.
+- **Figures** (pure functions, tested): deploys a week (edit deploys left out), lead time, change
+  failure, time to restore, size-weighted throughput, item lead and cycle time, the founder queue
+  with ages, and main's CI where a run that never started is not a failure. Counts stay counts
+  until a denominator reaches 10; no thresholds; weekly bars with a 4-week rolling line.
+- **Where**: a *Delivery* tab per project, and a line on each overview card (deploys this week,
+  lead time, production bugs in 4 weeks, the queue), each linking to the tab.
+- Tried against the real GitHub API for this repository (12 production deploys, 3 of them edits)
+  and plinth (CI runs and PRs).
+- **Not built**: plan tasks a week, ancestry matching for deploys, per-project thresholds.
 
 ### PM10 Accept a built item from the founder queue
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley

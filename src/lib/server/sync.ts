@@ -6,10 +6,12 @@ import { parseBacklog } from '#lib/core/backlog.ts';
 import { defaults, parseConfig, type Config } from '#lib/core/config.ts';
 import {
 	advanceHistory,
+	statusChanges,
 	emptyHistory,
 	type HistoryState,
 	type Version
 } from '#lib/core/history.ts';
+import { saveEvents, syncDelivery } from './delivery-sync.ts';
 import { parseEpicsFile } from '#lib/core/epics.ts';
 import { parseProgress } from '#lib/core/progress.ts';
 import type { PrInfo } from '#lib/core/state.ts';
@@ -351,6 +353,8 @@ export async function syncProject(
 				)
 			: { newCommits: 0, done: 0 };
 
+	await syncDelivery(gh, sql, project, cfg);
+
 	await sql`update project set config_json = ${sql.json(JSON.parse(JSON.stringify(cfg)))},
 		last_sync_at = now(), last_error = null where id = ${project.id}`;
 
@@ -462,6 +466,7 @@ async function syncHistory(
 	const last = line[line.length - 1];
 	if (versions[versions.length - 1]?.oid !== last.sha)
 		versions.push({ oid: last.sha, date: last.commit.committer.date, pr: null, text: null });
+	const changes = statusChanges(state, versions);
 	state = advanceHistory(state, versions);
 
 	// The PR that merged each newly done item's commit.
@@ -515,6 +520,25 @@ async function syncHistory(
 			on conflict (project_id) do update set last_commit_oid = excluded.last_commit_oid,
 				present_json = excluded.present_json`;
 	});
+	// Every status change, for cycle time and the founder queue's ages (PM9). The rows are keyed, so
+	// walking again from the start writes the same ones. Outside the transaction above: before the
+	// migration the table is missing, which must not undo the cursor.
+	try {
+		if (!found) await sql`delete from event where project_id = ${project.id} and kind = 'status'`;
+		await saveEvents(
+			sql,
+			project.id,
+			changes.map((c) => ({
+				kind: 'status' as const,
+				key: `${c.id}@${c.oid}`,
+				at: c.at,
+				sha: c.oid,
+				data: { id: c.id, from: c.from, to: c.to }
+			}))
+		);
+	} catch (e) {
+		if ((e as { code?: string })?.code !== '42P01') console.error('delivery: status changes:', e);
+	}
 	return { newCommits: line.length, done: state.done.size };
 }
 
