@@ -384,7 +384,7 @@ homepage is `https://www.projectmagic.work`, and three settings that today are b
 | ------- | ----- |
 | Setup URL | `https://www.projectmagic.work/tenant/installations/setup` |
 | Redirect on update | on, so changing an installation's repositories comes back too |
-| Events | add `installation` and `installation_repositories` (already handled, `webhook.ts`) |
+| Events | nothing to add: GitHub always sends `installation` and `installation_repositories` to an App, and `webhook.ts` handles them |
 
 Permissions don't change. Each installation has its own rate limit, so tenants don't spend each
 other's.

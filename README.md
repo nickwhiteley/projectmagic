@@ -123,7 +123,7 @@ GitHub → **Settings → Developer settings → GitHub Apps → New GitHub App*
 | Webhook | **active** once deployed: `https://<your-domain>/api/github/webhook`, with a secret from `openssl rand -hex 32`. Leave it inactive until then |
 | Repository permissions | **Contents:** read and write · **Pull requests:** read and write · **Metadata:** read-only · **Deployments** and **Actions:** read-only (for the delivery measures planned in PM9) |
 | Account permissions | none |
-| Subscribe to events | **Push**, **Pull request**, **Create**, **Delete**, **Installation**, **Installation repositories** |
+| Subscribe to events | **Push**, **Pull request**, **Create**, **Delete** (GitHub always sends the installation events to an App, so there is nothing to tick for them) |
 | Where can it be installed | only on this account |
 
 Then, on the App's page:
@@ -174,7 +174,7 @@ On Vercel:
    `GITHUB_APP_PRIVATE_KEY` with the key's contents rather than the path, and set `CRON_SECRET`.
 3. **Deploy**, and add your domain if you have one.
 4. **Back on the GitHub App:** add the deployed callback URL, then make the webhook active with
-   the deployed URL and the secret, and check the six events are still ticked.
+   the deployed URL and the secret, and check the four events are still ticked.
 
 To check it: GitHub's *Advanced* tab on the App lists each webhook delivery and its response
 (202 for a push), and the project's *synced* time on the overview should change within seconds
