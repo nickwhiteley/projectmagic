@@ -162,7 +162,10 @@
 			signedIn={!!page.data.user}
 			onchange={(v) => filter('for', v)}
 		/>
-		{#if page.data.project.canEdit}<a class="button" href="/p/{repo}/new">Add item</a>{/if}
+		{#if page.data.project.canEdit}
+			<a class="button" href="/p/{repo}/new">Add item</a>
+			<a class="button" href="/p/{repo}/new?bug=1">Add bug</a>
+		{/if}
 	</div>
 
 	{#if notices}

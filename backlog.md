@@ -207,6 +207,9 @@ the List and the Board filter by Type when the project uses it. **Left for PM29:
 `bugs.md` second backlog file with a `BUG` prefix, and a separate bug lane on the Board (the Type
 filter covers showing only bugs).
 
+**Fix (2026-10-16):** the List has an *Add bug* button. The form was only reachable from *Add item*, and
+only when a `bugs.md` existed. With none, the bug is added to the backlog with `Type: bug`.
+
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
