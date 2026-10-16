@@ -673,8 +673,12 @@ repository's `backlog.md`.
   (default 50 000), counted by scope so it can move to tenants (PM20). A project opts out with
   `inference: false`, and a person hides the proposals from their own views. A proposal is cached
   against the item's text and dropped when the item changes.
-- **Ask across projects**: a question box answered from the cached parses, such as "what is
-  blocked on the lawyer?"
+- **Ask across projects** (built, PM4): a question box answered from the cached parses, such as
+  "what is blocked on the lawyer?". A model reads a digest of every visible project's items
+  (status, waiting reason, who it is for, branches, PRs, and what shipped in 30 days), within the
+  same daily token limit counted per person. An answer's citations become links only to items in
+  the digest. Projects with `inference: false` are never sent, and a person who hid AI features
+  can't ask.
 - **Activity feed**: recent commits across all projects, grouped by linked item.
 - **Delivery and quality** (§16): deployment frequency, lead time, change failure rate, time to
   restore, throughput, and the founder queue.

@@ -220,10 +220,9 @@ shown as *inferred*.
 
 
 Model is selectable (OpenAI, Anthropic, Ollama) but initially uses Ollama models.
-Limits on token usage per tenant (see PM26) or designed with tenant in mind. Users and tenants can opt out.
+Limits on token usage per tenant (see PM20) or designed with tenant in mind. Users and tenants can opt out.
 
-Built (PM3 answers). One reading to check: your note says "per tenant (see PM26)", and PM26 is
-Hide Done, so I took PM20, the tenant item.
+Built (PM3 answers).
 
 - **Model**: chosen by environment, `INFERENCE_PROVIDER` of `ollama`, `openai` or `anthropic`,
   with `INFERENCE_MODEL`, `INFERENCE_BASE_URL` (Ollama) or `INFERENCE_API_KEY`. Unset, it is off.
@@ -244,10 +243,24 @@ Hide Done, so I took PM20, the tenant item.
   no proposals until they exist.
 
 ### PM4 Ask across projects
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 A question box answered from the cached parses.
 
+Built as the *Ask* page, shown in the navigation when a model is configured (PM3's `INFERENCE_*`
+variables). The page sends the question with a digest of every project you can see: each item's
+id, status, title, what it waits on, who it is for, epic, type, size, branches and PRs, and what
+shipped in the last 30 days. The digest is about 28 000 characters, split evenly between projects,
+and says when items were left out. The model is told to use only the digest and to cite items as
+`[repo:ID]`; a citation becomes a link only if that item is in the digest, so an invented or
+injected link is dead text.
+
+- **Cost**: counted per person against `INFERENCE_DAILY_TOKEN_LIMIT`, in `inference_usage` under
+  `ask:<user>`. Needs PM3's migration (`make migrate`).
+- **Opt out**: a project with `inference: false` is left out of the digest, and a person who hid
+  AI features can't ask.
+- **Not in it**: no memory between questions, and no search of item bodies, which the digest
+  leaves out to stay small. A body-level question would need retrieval first.
 ### PM5 Activity feed
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 

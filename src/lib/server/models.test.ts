@@ -31,6 +31,22 @@ describe('modelFromEnv', () => {
 	});
 });
 
+describe('completer: free text', () => {
+	it('asks for no JSON, and caps the reply', async () => {
+		let sent: { format?: string; options?: { num_predict: number } } = {};
+		const c = completer(
+			{ provider: 'ollama', model: 'm', baseUrl: 'http://h', apiKey: null },
+			(async (_u: unknown, init: { body: string }) => {
+				sent = JSON.parse(init.body);
+				return new Response(JSON.stringify({ message: { content: 'hi' } }));
+			}) as unknown as typeof fetch
+		);
+		await c('s', 'u', { json: false, maxTokens: 500 });
+		expect(sent.format).toBeUndefined();
+		expect(sent.options?.num_predict).toBe(500);
+	});
+});
+
 describe('completer', () => {
 	it('reads Ollama', async () => {
 		const c = completer(

@@ -14,7 +14,18 @@ export interface Completion {
 	tokens: number;
 }
 
-export type Complete = (system: string, user: string) => Promise<Completion>;
+export interface CompleteOptions {
+	/** Ask for a JSON object (the default); false for free text. */
+	json?: boolean;
+	/** The most tokens in the reply (Anthropic requires one). */
+	maxTokens?: number;
+}
+
+export type Complete = (
+	system: string,
+	user: string,
+	options?: CompleteOptions
+) => Promise<Completion>;
 
 const DEFAULT_MODEL: Record<Provider, string> = {
 	ollama: 'llama3.1',
@@ -69,7 +80,7 @@ async function post<T>(
 
 export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 	const base = cfg.baseUrl.replace(/\/$/, '');
-	return async (system, user) => {
+	return async (system, user, { json = true, maxTokens = 200 } = {}) => {
 		if (cfg.provider === 'ollama') {
 			const r = await post<{
 				message?: { content?: string };
@@ -81,7 +92,7 @@ export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 				{
 					model: cfg.model,
 					stream: false,
-					format: 'json',
+					...(json ? { format: 'json' } : { options: { num_predict: maxTokens } }),
 					messages: [
 						{ role: 'system', content: system },
 						{ role: 'user', content: user }
@@ -103,7 +114,7 @@ export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 				{ authorization: `Bearer ${cfg.apiKey}` },
 				{
 					model: cfg.model,
-					response_format: { type: 'json_object' },
+					...(json ? { response_format: { type: 'json_object' } } : { max_tokens: maxTokens }),
 					messages: [
 						{ role: 'system', content: system },
 						{ role: 'user', content: user }
@@ -121,7 +132,7 @@ export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 			{ 'x-api-key': cfg.apiKey!, 'anthropic-version': '2023-06-01' },
 			{
 				model: cfg.model,
-				max_tokens: 200,
+				max_tokens: maxTokens,
 				system,
 				messages: [{ role: 'user', content: user }]
 			},

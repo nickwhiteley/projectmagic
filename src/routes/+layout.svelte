@@ -37,6 +37,7 @@
 				>
 				<a href="/activity" aria-current={path === '/activity' ? 'page' : undefined}>Activity</a>
 				<a href="/search" aria-current={path === '/search' ? 'page' : undefined}>Search</a>
+				{#if data.ai}<a href="/ask" aria-current={path === '/ask' ? 'page' : undefined}>Ask</a>{/if}
 			</nav>
 			<div class="label group">Projects</div>
 			<nav aria-label="Projects">
