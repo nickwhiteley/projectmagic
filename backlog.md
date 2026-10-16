@@ -111,6 +111,18 @@ a quiet minute and at most five minutes after the first edit, triggered by page 
 with the page reloading itself when one is due, and the daily cron as the backstop. Built in
 spec §10.5.
 
+### PM1 Epics
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+
+Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
+are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
+`spec.md` §13.
+
+Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
+The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
+and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
+epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
@@ -133,7 +145,7 @@ don't say what they are.
 explain it on the form?  - A rename is clearer I think
 
 ### PM12 A home page that explains Project Magic, and a README for strangers
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 - **`/` for a signed-out visitor** is a home page instead of a redirect to sign in: what Project
   Magic is (a dashboard over backlogs, plans, branches and PRs that AI agents keep in markdown in
@@ -166,18 +178,6 @@ So going public is one of: delete the repository and push the rewritten history 
 the same name (losing the PR history; the GitHub App is reinstalled and Vercel reconnected, since
 the repository's id changes), or keep this one private as the full record and publish the
 rewritten history as a new repository under another name. Nick chooses when the time comes.
-
-### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
-
-Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
-are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
-`spec.md` §13.
-
-Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
-The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
-and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
-epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
@@ -255,7 +255,7 @@ Built (PM3 answers).
   no proposals until they exist.
 
 ### PM4 Ask across projects
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 A question box answered from the cached parses.
 
@@ -273,6 +273,11 @@ injected link is dead text.
   AI features can't ask.
 - **Not in it**: no memory between questions, and no search of item bodies, which the digest
   leaves out to stay small. A body-level question would need retrieval first.
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
+
 ### PM5 Activity feed
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
@@ -492,3 +497,8 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 **Status:** todo · **Size:** M–L
 
 Such as BitBucket
+
+### PM32 Information for agents
+**Status:** todo · **Size:** M · **For:** agent
+
+WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
