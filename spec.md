@@ -94,6 +94,7 @@ optional, and every key has a default:
 name: Orchard                 # default: the repository name
 backlog: backlog.md              # default: backlog.md, then BACKLOG.md
 progress: PROGRESS.md            # default: PROGRESS.md; null to disable
+epics: epics.md                  # default: epics.md; descriptions and targets for epics (§13)
 docs:                            # default: shown below
   - README.md
   - spec.md
@@ -661,7 +662,9 @@ repository's `backlog.md`.
   `EP` in `backlog.md`. Items join one with `Epic: EP3`. The *Epics* tab rolls each epic up
   across its items' statuses, counting items that shipped (read from the item as it was removed),
   and the List and Board filter by it. A value that isn't `EP` and a number is flagged in the
-  health panel. An `epics.md` file with descriptions and targets is not read yet.
+  health panel. An optional `epics.md` (the `epics` key) declares epics too, each as a `###` or `##` heading
+  `EP3 Title` with its description underneath and a `**Target:** …` line; the Epics tab shows both.
+  The add and edit forms have an *Epic* field that suggests the declared epics (PM28).
 - **Bugs** (`Type: bug` with `Found:` and `Raised:`, and a Type filter, are built, PM2; the
   rest is PM29). They can also live in their own `bugs.md`, configured as a
   second backlog file, with a `BUG` prefix (`BUG12`), because Orchard already uses `B1`–`B14`. The board

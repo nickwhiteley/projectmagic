@@ -94,6 +94,8 @@ export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 				{
 					model: cfg.model,
 					stream: false,
+					// A thinking model would spend the reply's budget on its reasoning and answer nothing.
+					think: false,
 					...(json ? { format: 'json' } : { options: { num_predict: maxTokens } }),
 					messages: [
 						{ role: 'system', content: system },

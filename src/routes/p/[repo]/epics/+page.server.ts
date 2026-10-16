@@ -1,5 +1,5 @@
 import { projectState } from '#lib/server/project-state.ts';
-import { inline } from '#lib/server/views.ts';
+import { inline, md } from '#lib/server/views.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -10,6 +10,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		epics: s.epics.map((e) => ({
 			id: e.id,
 			title: e.title,
+			descriptionHtml: e.description ? md(s, e.description) : '',
+			target: e.target,
 			declared: e.declared,
 			hasItem: byId.has(e.id),
 			counts: e.counts,

@@ -12,6 +12,7 @@ describe('parseConfig', () => {
 			name: 'orchard',
 			backlog: ['backlog.md', 'BACKLOG.md'],
 			progress: 'PROGRESS.md',
+			epics: 'epics.md',
 			docs: DEFAULT_DOCS,
 			docsExclude: [],
 			main: 'main',
@@ -28,6 +29,7 @@ describe('parseConfig', () => {
 			`name: Orchard
 backlog: docs/BACKLOG.md
 progress: null
+epics: planning/epics.md
 docs: [README.md]
 docs_exclude: [specs/archive/**]
 main: trunk
@@ -43,6 +45,7 @@ production_environments: ["Production – orchard-web"]
 			name: 'Orchard',
 			backlog: ['docs/BACKLOG.md'],
 			progress: null,
+			epics: 'planning/epics.md',
 			docs: ['README.md'],
 			docsExclude: ['specs/archive/**'],
 			main: 'trunk',

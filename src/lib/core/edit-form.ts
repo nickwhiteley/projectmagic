@@ -16,6 +16,8 @@ export interface ItemFormValues {
 	branch: string;
 	/** Who it is for (PM16); '' is anyone's. */
 	assignee: string;
+	/** Its epic's id (PM28); '' is none. */
+	epic: string;
 	body: string;
 }
 
@@ -48,6 +50,7 @@ export function formValues(it: EditableItem): ItemFormValues {
 		plan: meta('plan'),
 		branch: meta('branch').replace(/`/g, ''),
 		assignee: meta('for').replace(/`/g, ''),
+		epic: meta('epic'),
 		body: it.body
 	};
 }
@@ -83,6 +86,7 @@ export function editChange(it: EditableItem, v: ItemFormValues): ItemChange {
 			: {}),
 		...(v.waiting !== was.waiting ? { waiting: v.waiting } : {}),
 		...(v.assignee !== was.assignee ? { for: v.assignee } : {}),
+		...(v.epic !== was.epic ? { epic: v.epic } : {}),
 		...(metaJob && v.job !== was.job ? { job: v.job } : {})
 	};
 	const meta = updateMeta(it.meta ?? [], fields);

@@ -11,7 +11,7 @@ import {
 } from './backlog.ts';
 import { assigneeProblem } from './assignee.ts';
 import { EDIT_BRANCH } from './branchref.ts';
-import { declaredEpic, epicId, rollUp, type EpicRollup } from './epics.ts';
+import { declaredEpic, epicId, rollUp, type EpicDeclaration, type EpicRollup } from './epics.ts';
 import type { Config } from './config.ts';
 import { link, type Dangling, type Edge } from './link.ts';
 import type { MetaEntry, Status } from './meta.ts';
@@ -55,6 +55,8 @@ export interface RefInput {
 	prs: PrInfo[];
 	backlog: StoredBacklog | null;
 	plan: StoredPlan | null;
+	/** The epics `epics.md` declares (PM28), read for main only. */
+	epics?: EpicDeclaration[] | null;
 }
 
 export interface DoneInput {
@@ -510,7 +512,8 @@ export function assembleState(input: StateInput): ProjectState {
 				...(main?.backlog?.sections ?? []).flatMap((sec) => {
 					const id = declaredEpic(sec.titleText.split(/\s+/)[0] ?? '');
 					return id ? [{ id, title: sec.titleText.slice(id.length).trim() }] : [];
-				})
+				}),
+				...(main?.epics ?? [])
 			],
 			views.map((v) => ({ id: v.id, epic: v.epic, status: v.status })),
 			done.filter((d) => !d.unpruned).map((d) => ({ id: d.id, epic: d.epic }))

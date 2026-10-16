@@ -38,6 +38,7 @@
 			jobs={data.jobs}
 			tasks={data.tasks}
 			assignees={data.assignees}
+			epics={data.epics}
 			idHint="Next free: {data.suggested}. Or a plan task’s number, to add its reasoning."
 		/>
 	{/key}

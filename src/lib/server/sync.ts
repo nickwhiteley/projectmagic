@@ -10,6 +10,7 @@ import {
 	type HistoryState,
 	type Version
 } from '#lib/core/history.ts';
+import { parseEpicsFile } from '#lib/core/epics.ts';
 import { parseProgress } from '#lib/core/progress.ts';
 import type { PrInfo } from '#lib/core/state.ts';
 import type postgres from 'postgres';
@@ -18,7 +19,7 @@ import type { GitHubClient } from './github-client.ts';
 type Sql = postgres.Sql;
 
 /** Bump when a parser's output changes: every cached parse is redone on the next sync (§8). */
-export const PARSER_VERSION = 2;
+export const PARSER_VERSION = 3;
 
 const CONFIG_PATH = '.projectmagic.yml';
 
@@ -155,11 +156,12 @@ export async function fetchBlobs(
 
 /** What is cached for a blob: the parse, in JSON form. */
 export function parseBlob(
-	kind: 'backlog' | 'progress' | 'config',
+	kind: 'backlog' | 'progress' | 'config' | 'epics',
 	text: string,
 	repo: string,
 	main: string
 ) {
+	if (kind === 'epics') return { epics: parseEpicsFile(text) };
 	if (kind === 'backlog') {
 		const b = parseBacklog(text);
 		// Each item's source, for the item view's branch diffs (§7.2).
@@ -199,9 +201,10 @@ export interface SyncSummary {
 
 /** The tracked paths: the defaults, and whatever the configuration names. */
 function trackedPaths(config: Config | null): string[] {
-	const paths = new Set(['backlog.md', 'BACKLOG.md', 'PROGRESS.md', CONFIG_PATH]);
+	const paths = new Set(['backlog.md', 'BACKLOG.md', 'PROGRESS.md', 'epics.md', CONFIG_PATH]);
 	for (const p of config?.backlog ?? []) paths.add(p);
 	if (config?.progress) paths.add(config.progress);
+	if (config?.epics) paths.add(config.epics);
 	return [...paths];
 }
 
@@ -221,7 +224,7 @@ export async function syncProject(
 	let parsed = 0;
 	const store = async (
 		oid: string,
-		kind: 'backlog' | 'progress' | 'config',
+		kind: 'backlog' | 'progress' | 'config' | 'epics',
 		text: string,
 		main: string
 	) => {
@@ -277,11 +280,12 @@ export async function syncProject(
 	const backlogPath = (b: Branch) => cfg.backlog.find((p) => b.files[p]);
 
 	// 2. Text for the blobs on active branches that aren't parsed yet.
-	const wanted = new Map<string, 'backlog' | 'progress'>();
+	const wanted = new Map<string, 'backlog' | 'progress' | 'epics'>();
 	for (const b of branches.filter((x) => x.active)) {
 		const bp = backlogPath(b);
 		if (bp) wanted.set(b.files[bp], 'backlog');
 		if (cfg.progress && b.files[cfg.progress]) wanted.set(b.files[cfg.progress], 'progress');
+		if (cfg.epics && b.name === main && b.files[cfg.epics]) wanted.set(b.files[cfg.epics], 'epics');
 	}
 	const missing: string[] = [];
 	for (const [oid, kind] of wanted) if (!(await cached(oid, kind))) missing.push(oid);

@@ -15,6 +15,7 @@ export const MAX_QUESTION = 500;
 
 export async function ask(
 	userId: string,
+	login: string,
 	question: string,
 	states: ProjectState[]
 ): Promise<AskResult> {
@@ -37,21 +38,23 @@ export async function ask(
 
 	const d = digest(states);
 	if (!d.known.size) return { ok: false, reason: 'There are no items to ask about yet.' };
-	const p = askPrompt(q, d);
+	const p = askPrompt(q, d, login);
 	let reply;
 	try {
-		reply = await completer(model)(p.system, p.user, { json: false, maxTokens: 600 });
+		reply = await completer(model)(p.system, p.user, { json: false, maxTokens: 1000 });
 	} catch (e) {
 		console.error('ask:', e instanceof Error ? e.message : e);
 		return { ok: false, reason: 'The model did not answer. Try again in a moment.' };
 	}
+	const text = reply.text.trim();
 	await db()`insert into inference_usage (scope, day, tokens) values (${scope}, current_date, ${reply.tokens})
 		on conflict (scope, day) do update set tokens = inference_usage.tokens + excluded.tokens`.catch(
 		(e) => console.error('ask usage:', e instanceof Error ? e.message : e)
 	);
+	if (!text) return { ok: false, reason: 'The model sent back an empty answer. Try asking again.' };
 	return {
 		ok: true,
-		html: renderMarkdown(linkAnswer(reply.text.trim(), d.known)),
+		html: renderMarkdown(linkAnswer(text, d.known)),
 		truncated: d.truncated,
 		projects: states.filter((s) => s.hasBacklog).length
 	};

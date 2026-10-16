@@ -3,7 +3,7 @@ import { updateMeta } from '#lib/core/meta.ts';
 import { asMessage, respond } from '#lib/server/edit-actions.ts';
 import { edits } from '#lib/server/edits.ts';
 import { problems, readItemForm, type ItemFormValues } from '#lib/server/item-form.ts';
-import { assigneesInUse } from '#lib/server/item-view.ts';
+import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
 import { loadProjectState, projectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		plan: '',
 		branch: '',
 		assignee: '',
+		epic: '',
 		body: ''
 	};
 	return {
@@ -31,6 +32,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		section: Number(url.searchParams.get('section') ?? 0),
 		sections: s.sections.map((x) => ({ index: x.index, title: x.titleText })),
 		assignees: assigneesInUse(s),
+		epics: epicsInUse(s),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		tasks: (s.plan?.tasks ?? [])
 			.filter((t) => !t.superseded && !s.items.some((i) => i.id === t.number))

@@ -70,6 +70,7 @@
 			jobs={data.jobs}
 			tasks={data.tasks}
 			assignees={data.assignees}
+			epics={data.epics}
 		/>{/key}
 	<div class="foot">
 		<p class="muted small">
