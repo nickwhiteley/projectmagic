@@ -109,13 +109,23 @@ async function blobText(
 ): Promise<string | null> {
 	const hit = texts.get(oid);
 	if (hit !== undefined) return hit;
-	const got = await fetchBlobs(installationClient(installation), owner, repo, [oid]);
-	const text = got.get(oid) ?? null;
-	if (text !== null) {
+	const keep = (text: string) => {
 		if (texts.size > 50) texts.clear();
 		texts.set(oid, text);
-	}
-	return text;
+		return text;
+	};
+	// The database next (a round trip), GitHub last (a second or more).
+	const [row] = await db()<{ text: string }[]>`select text from blob_text where oid = ${oid}`.catch(
+		missingTable
+	);
+	if (row) return keep(row.text);
+	const got = await fetchBlobs(installationClient(installation), owner, repo, [oid]);
+	const text = got.get(oid) ?? null;
+	if (text === null) return null;
+	await db()`insert into blob_text (oid, text) values (${oid}, ${text}) on conflict do nothing`.catch(
+		missingTable
+	);
+	return keep(text);
 }
 
 /**

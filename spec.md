@@ -567,7 +567,7 @@ Until migration 005 has run, edits are saved at once as before.
   another item doesn't conflict with it. Plan and document edits (PM6) are saved at once as before.
 - **What the views show.** The state is built from main's backlog (and `bugs.md`) with the pending
   edits replayed on top, so an edit shows immediately, for everyone on the project. The blob text
-  comes from GitHub by oid and is kept in memory. A list above the tabs shows each unsaved edit
+  comes from GitHub by oid, once, and is kept in memory and in `blob_text` (migration 006, a cache). A list above the tabs shows each unsaved edit
   with a *Discard*, and *Save now*.
 - **When it is saved.** After a quiet minute with no new edit, and at most five minutes after the
   first. Vercel's cron is daily, so nothing runs on a timer: the check is made when any page of

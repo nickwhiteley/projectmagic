@@ -21,6 +21,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	>`select distinct project_id from pending_edit`.catch(() => []);
 	for (const p of await allProjects())
 		if (held.some((h) => String(h.project_id) === p.id)) await edits.savePendingIfDue(p);
+	await db()`delete from blob_text where fetched_at < now() - interval '14 days'`.catch(() => []);
 	await db()`delete from webhook_delivery where received_at < now() - interval '14 days'`;
 	return json({ ok: true, result });
 };
