@@ -499,6 +499,6 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 Such as BitBucket
 
 ### PM31 New test item
-**Status:** todo
+**Status:** in progress
 
-See if batching works.  Foo, baa
+See if batching works.  Foo, baa, moo, shoo
