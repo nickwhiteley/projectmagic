@@ -44,7 +44,7 @@ describe('modelFromEnv', () => {
 
 describe('completer: free text', () => {
 	it('asks for no JSON, and caps the reply', async () => {
-		let sent: { format?: string; options?: { num_predict: number } } = {};
+		let sent: { format?: string; think?: boolean; options?: { num_predict: number } } = {};
 		const c = completer(
 			{ provider: 'ollama', model: 'm', baseUrl: 'http://h', apiKey: null },
 			(async (_u: unknown, init: { body: string }) => {
@@ -55,6 +55,7 @@ describe('completer: free text', () => {
 		await c('s', 'u', { json: false, maxTokens: 500 });
 		expect(sent.format).toBeUndefined();
 		expect(sent.options?.num_predict).toBe(500);
+		expect(sent.think).toBe(false);
 	});
 });
 
