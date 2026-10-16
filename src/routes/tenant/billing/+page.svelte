@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { formatMoney } from '#lib/core/plans.ts';
-	import { ago } from '#lib/format.ts';
 
 	let { data, form } = $props();
 	const MESSAGES: Record<string, string> = {
