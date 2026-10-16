@@ -29,7 +29,7 @@ export const actions: Actions = {
 		const states = (await Promise.all(projects.map((p) => loadProjectState(p.id)))).filter(
 			(s) => s.hasBacklog && s.inferenceAllowed
 		);
-		const result = await ask(locals.user!.id, question, states);
+		const result = await ask(locals.user!.id, locals.user!.githubLogin, question, states);
 		return result.ok ? { question, ...result } : fail(400, { question, reason: result.reason });
 	}
 };

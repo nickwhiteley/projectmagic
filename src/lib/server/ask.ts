@@ -15,6 +15,7 @@ export const MAX_QUESTION = 500;
 
 export async function ask(
 	userId: string,
+	login: string,
 	question: string,
 	states: ProjectState[]
 ): Promise<AskResult> {
@@ -37,7 +38,7 @@ export async function ask(
 
 	const d = digest(states);
 	if (!d.known.size) return { ok: false, reason: 'There are no items to ask about yet.' };
-	const p = askPrompt(q, d);
+	const p = askPrompt(q, d, login);
 	let reply;
 	try {
 		reply = await completer(model)(p.system, p.user, { json: false, maxTokens: 1000 });

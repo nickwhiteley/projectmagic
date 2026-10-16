@@ -89,6 +89,16 @@ describe('askPrompt', () => {
 		expect(p.user).toContain('incomplete');
 		expect(p.system).toContain('[repo:ID]');
 	});
+	it('says who is asking, so "me" means someone (PM4)', () => {
+		const p = askPrompt(
+			'What is waiting on me?',
+			{ text: 'D', known: new Set(), truncated: false },
+			'nickwhiteley'
+		);
+		expect(p.user).toContain('Asked by: nickwhiteley');
+		expect(p.user).toContain('for: person.nickwhiteley');
+		expect(p.system).toContain('"Me" and "my"');
+	});
 });
 
 describe('linkAnswer', () => {
