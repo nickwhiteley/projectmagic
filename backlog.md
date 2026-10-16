@@ -372,7 +372,7 @@ GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection
 project's state) and fix what dominates.
 
 ### PM20 Organisations: one Project Magic for many teams
-**Status:** todo · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
+**Status:** todo · **Size:** L · **Type:** feature · **For:** agent
 
 Anyone could set up Project Magic for their own organisation and invite their colleagues,
 without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
