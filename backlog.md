@@ -331,7 +331,7 @@ dependency; the fix is Mermaid 12.2.0, released on 2026-10-13, which is worth ta
 aged.
 
 ### PM21 Images in rendered docs
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 The Docs tab shows a document's images as broken: `render.ts` resolves a relative `src` to the
 docs view, as it does for links, and GitHub's raw URLs need a token for a private repository.
@@ -385,7 +385,7 @@ Built (`spec.md` §16.7 says how it differs from the plan):
 - **Not built**: plan tasks a week, ancestry matching for deploys, per-project thresholds.
 
 ### PM10 Accept a built item from the founder queue
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 From Stitch’s *Awaiting Human Check* screen: an **Accept**
 button on each built item in the founder queue (and on the item page) that marks it done. It is
