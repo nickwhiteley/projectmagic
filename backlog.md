@@ -212,11 +212,6 @@ the List and the Board filter by Type when the project uses it. **Left for PM29:
 `bugs.md` second backlog file with a `BUG` prefix, and a separate bug lane on the Board (the Type
 filter covers showing only bugs).
 
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
-
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
@@ -502,6 +497,11 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 **Status:** todo · **Size:** M–L
 
 Such as BitBucket
+
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
 
 ### PM32 Information for agents
 **Status:** todo · **Size:** M · **For:** agent
