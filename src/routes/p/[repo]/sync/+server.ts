@@ -5,6 +5,13 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, request, url }) => {
 	await syncNow(locals.project!.id);
-	const back = request.headers.get('referer');
-	redirect(303, back && new URL(back).origin === url.origin ? new URL(back).pathname : '/');
+	// Back to the page the button was on, when the Referer is a well-formed URL on this site.
+	let to = '/';
+	try {
+		const back = new URL(request.headers.get('referer') ?? '');
+		if (back.origin === url.origin) to = back.pathname;
+	} catch {
+		// No Referer, or not a URL: the overview.
+	}
+	redirect(303, to);
 };
