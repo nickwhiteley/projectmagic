@@ -122,13 +122,26 @@ export async function syncProjectList(): Promise<number> {
 	return syncInstallations(asApp(), installationClient, db());
 }
 
-export async function syncAll(): Promise<Record<string, string>> {
+/** How long the cron spends syncing before it leaves the rest to the next run (§8.3). */
+const CRON_BUDGET_MS = 40_000;
+
+/** Every active tenant's projects, the ones synced longest ago first, until the time budget is
+ * spent; webhooks keep active projects fresh in between. */
+export async function syncAll(budgetMs = CRON_BUDGET_MS): Promise<Record<string, string>> {
 	await syncProjectList();
+	const until = Date.now() + budgetMs;
 	const out: Record<string, string> = {};
 	for (const p of await db()<
-		{ id: string; repo: string }[]
-	>`select id, repo from project p where (to_jsonb(p)->>'uninstalled_at') is null order by repo`)
-		out[p.repo] = await syncNow(String(p.id));
+		{ id: string; owner: string; repo: string }[]
+	>`select p.id, p.owner, p.repo from project p join tenant t on t.id = p.tenant_id
+		where (to_jsonb(p)->>'uninstalled_at') is null and t.status = 'active'
+		order by p.last_sync_at asc nulls first, p.id`) {
+		if (Date.now() >= until) {
+			out[`${p.owner}/${p.repo}`] = 'deferred';
+			continue;
+		}
+		out[`${p.owner}/${p.repo}`] = await syncNow(String(p.id));
+	}
 	return out;
 }
 

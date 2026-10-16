@@ -74,6 +74,8 @@ export async function inferProject(projectId: string): Promise<number> {
 	const [row] = await db()<{ config_json: { inference?: boolean } | null }[]>`
 		select config_json from project where id = ${projectId}`;
 	if (row?.config_json?.inference === false) return 0;
+	const [{ tenant_id: tenantId }] = await db()<{ tenant_id: string }[]>`
+		select tenant_id from project where id = ${projectId}`;
 	const cached = new Map(
 		(
 			await db()<{ item_id: string; source: string }[]>`
@@ -84,7 +86,8 @@ export async function inferProject(projectId: string): Promise<number> {
 		.filter((i) => !i.meta && cached.get(i.id) !== i.source)
 		.map((i) => ({ id: i.id, title: i.titleText, body: i.body, source: i.source }));
 	if (!candidates.length) return 0;
-	const scope = `project:${projectId}`;
+	// Spend is counted per tenant (specs/tenants.md §7.2), for tenant-level limits.
+	const scope = `tenant:${tenantId}`;
 	return inferItems(candidates, {
 		complete: completer(model),
 		model: `${model.provider}:${model.model}`,
