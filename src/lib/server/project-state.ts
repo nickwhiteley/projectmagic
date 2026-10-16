@@ -56,7 +56,9 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 	const hit = cache.get(projectId);
 	if (hit?.key === key) return hit.state;
 
-	const config = p.config_json ?? parseConfig(null, { name: p.repo, defaultBranch: 'main' }).config;
+	const base = parseConfig(null, { name: p.repo, defaultBranch: 'main' }).config;
+	// A config stored before a key existed lacks it: the defaults fill in (PM28).
+	const config = p.config_json ? { ...base, ...p.config_json } : base;
 	type RefRow = {
 		name: string;
 		head_oid: string;

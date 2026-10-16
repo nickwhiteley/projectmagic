@@ -3,7 +3,7 @@
 // Parsing is keyed by blob oid. Then done detection walks main's new commits to the backlog.
 // No SvelteKit imports: the GitHub clients and the database are passed in.
 import { parseBacklog } from '#lib/core/backlog.ts';
-import { parseConfig, type Config } from '#lib/core/config.ts';
+import { defaults, parseConfig, type Config } from '#lib/core/config.ts';
 import {
 	advanceHistory,
 	emptyHistory,
@@ -19,7 +19,7 @@ import type { GitHubClient } from './github-client.ts';
 type Sql = postgres.Sql;
 
 /** Bump when a parser's output changes: every cached parse is redone on the next sync (§8). */
-export const PARSER_VERSION = 3;
+export const PARSER_VERSION = 2;
 
 const CONFIG_PATH = '.projectmagic.yml';
 
@@ -254,7 +254,8 @@ export async function syncProject(
 			const [row] = await sql<{ parsed_json: { config: Config } }[]>`
 				select parsed_json from blob_parse where oid = ${configOid} and kind = 'config'
 				and parser_version = ${PARSER_VERSION}`;
-			if (row) next = row.parsed_json.config;
+			// A config cached before a key existed lacks it: the defaults fill in (PM28).
+			if (row) next = { ...defaults({ name: repo, defaultBranch }), ...row.parsed_json.config };
 			else {
 				const text = (await fetchBlobs(gh, owner, repo, [configOid])).get(configOid) ?? null;
 				if (text !== null) await store(configOid, 'config', text, defaultBranch);
