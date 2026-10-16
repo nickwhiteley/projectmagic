@@ -139,6 +139,7 @@ export interface MetaFields {
 	plan?: string[];
 	waiting?: string;
 	for?: string;
+	epic?: string;
 }
 
 const FIELD_KEYS: [keyof MetaFields, string][] = [
@@ -148,7 +149,8 @@ const FIELD_KEYS: [keyof MetaFields, string][] = [
 	['branch', 'Branch'],
 	['plan', 'Plan'],
 	['waiting', 'Waiting'],
-	['for', 'For']
+	['for', 'For'],
+	['epic', 'Epic']
 ];
 
 /**

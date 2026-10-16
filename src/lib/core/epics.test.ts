@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseBlob } from '../server/sync.ts';
 import { parseConfig } from './config.ts';
-import { declaredEpic, epicId, rollUp } from './epics.ts';
+import { declaredEpic, epicId, parseEpicsFile, rollUp } from './epics.ts';
 import { assembleState, type StoredBacklog } from './state.ts';
 
 describe('epicId', () => {
@@ -120,9 +120,94 @@ describe('assembleState epics', () => {
 		expect(s.epics[0].counts).toEqual({ todo: 1, built: 1, done: 1 });
 		expect(s.epics[0].shipped).toEqual(['B0']);
 	});
+	it('takes the description and target from epics.md, and an epic only it declares (PM28)', () => {
+		const withFile = assembleState({
+			owner: 'o',
+			repo: 'x',
+			config,
+			configWarnings: [],
+			refs: [
+				{
+					name: 'main',
+					headOid: 'a',
+					committedAt: '2026-10-13T10:00:00Z',
+					ahead: 0,
+					behind: 0,
+					active: true,
+					message: 'm',
+					prs: [],
+					backlog: parseBlob('backlog', text, 'x', 'main') as StoredBacklog,
+					plan: null,
+					epics: parseEpicsFile(
+						'### EP3 Billing\n\nAll of billing.\n\n**Target:** Q4\n\n### EP7 Reports\n\nLater.\n'
+					)
+				}
+			],
+			done: [],
+			lastSyncAt: null,
+			lastError: null,
+			now: Date.parse('2026-10-14T12:00:00Z')
+		});
+		expect(withFile.epics.map((e) => [e.id, e.description, e.target, e.declared])).toEqual([
+			['EP3', 'All of billing.', 'Q4', true],
+			['EP5', '', null, true],
+			['EP7', 'Later.', null, true]
+		]);
+	});
 	it('puts the epic on the item, and flags a value that is not an id', () => {
 		expect(s.items.find((i) => i.id === 'B2')!.epic).toBe('EP3');
 		expect(s.items.find((i) => i.id === 'B3')!.epic).toBeNull();
 		expect(s.health.epics).toEqual(["B3: Epic billing isn't an epic id (EP and a number)"]);
+	});
+});
+
+describe('parseEpicsFile (PM28)', () => {
+	it('reads descriptions and targets from items and sections', () => {
+		const text = `# Epics
+
+## EP1 Billing
+
+The whole of billing, end to end.
+
+**Target:** Q4 2026
+
+### EP2 Onboarding
+
+**Status:** todo · **Target:** 2026-12-01
+
+New customers reach a first report in a day.
+
+More detail.
+
+### Notes on epics
+
+Not an epic.
+`;
+		expect(parseEpicsFile(text)).toEqual([
+			{
+				id: 'EP1',
+				title: 'Billing',
+				description: 'The whole of billing, end to end.',
+				target: 'Q4 2026'
+			},
+			{
+				id: 'EP2',
+				title: 'Onboarding',
+				description: 'New customers reach a first report in a day.\n\nMore detail.',
+				target: '2026-12-01'
+			}
+		]);
+	});
+
+	it('rolls a description and target onto the epic a heading in the backlog declared', () => {
+		const [e] = rollUp(
+			[
+				{ id: 'EP1', title: 'Billing' },
+				{ id: 'EP1', title: 'Other', description: 'Why.', target: 'Q4' }
+			],
+			[],
+			[]
+		);
+		expect(e).toMatchObject({ title: 'Billing', description: 'Why.', target: 'Q4' });
 	});
 });

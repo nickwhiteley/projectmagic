@@ -23,6 +23,8 @@
 			{e.title ?? ''}
 			{#if !e.declared}<span class="muted small">not declared</span>{/if}
 		</h2>
+		{#if e.target}<p class="muted small">Target: {e.target}</p>{/if}
+		{#if e.descriptionHtml}<div class="desc">{@html e.descriptionHtml}</div>{/if}
 		{#if e.total}
 			<div
 				class="bar"
@@ -66,7 +68,9 @@
 {:else}
 	<p class="muted">
 		No epics yet. Declare one as a <code>### EP1 Title</code> item or a <code>## EP1 Title</code>
-		section in <code>backlog.md</code>, and join it with <code>Epic: EP1</code>.
+		section in <code>backlog.md</code>, or in <code>epics.md</code> with a description and a
+		<code>**Target:**</code>
+		line, and join it with <code>Epic: EP1</code>.
 	</p>
 {/each}
 
@@ -77,6 +81,12 @@
 	h2 {
 		font: 20px var(--serif);
 		margin: 0 0 0.4rem;
+	}
+	.desc {
+		margin: 0 0 0.6rem;
+	}
+	.desc :global(p) {
+		margin: 0.2rem 0;
 	}
 	.small {
 		font-size: 12.5px;

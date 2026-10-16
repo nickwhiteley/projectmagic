@@ -188,6 +188,7 @@ of a push. Without a webhook, page loads, the *Refresh* button and the daily cro
    name: Orchard              # shown in Project Magic; default: the repository's name
    backlog: backlog.md        # default: backlog.md, then BACKLOG.md
    progress: PROGRESS.md      # the plan; null if there isn't one
+   epics: epics.md            # epics with descriptions and targets (optional)
    docs:                      # documents shown in the Docs tab
      - README.md
      - spec.md

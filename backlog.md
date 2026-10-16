@@ -182,16 +182,23 @@ are an epic roll-up across its items' statuses, and an epic filter on the Board 
 Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
 The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
 and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
-epic id is flagged in the health panel. **Left for PM28:** reading `epics.md`, and an Epic field
-on the item form (the key is kept when a form is saved, so it can be set in the file).
+epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
-**Status:** in progress · **Branch:** `feat/pm28-epics-file` · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
 description and an optional target, so the sync fetches and caches that file and the Epics tab
 shows the description and target. The add and edit forms get an *Epic* field that suggests the
 declared epics, so a person can set it without editing the file.
+
+Built: the `epics` key in `.projectmagic.yml` (default `epics.md`, `null` to not read one). Each
+`###` or `##` heading `EP3 Title` in it declares an epic, the text under it is the description (as
+markdown), and a `**Target:** …` line, or a `Target` key on a meta line, is the target. The sync
+reads it from `main` only, and the Epics tab shows both. An epic declared in both files takes its
+title from `backlog.md` and its description and target from `epics.md`; one declared only in
+`epics.md` still appears. The add and edit forms have an *Epic* field with the declared epics as
+suggestions; it accepts `EP` and a number, and clearing it removes the key.
 
 ### PM2 Bug items
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley

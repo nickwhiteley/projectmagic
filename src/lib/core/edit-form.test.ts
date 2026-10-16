@@ -45,6 +45,20 @@ Body.
 		expect(cleared).toBe(text);
 	});
 
+	it('sets an item’s epic from the form, and takes it off again (PM28)', () => {
+		const change = editChange(item, { ...formValues(item), epic: 'EP3' });
+		const out = splice(text, { op: 'edit', id: 'C1', change });
+		expect(out).toBe(text.replace('**Size:** M', '**Size:** M · **Epic:** EP3'));
+		const again = editable(parseBacklog(out).items[0]);
+		expect(formValues(again).epic).toBe('EP3');
+		const cleared = splice(out, {
+			op: 'edit',
+			id: 'C1',
+			change: editChange(again, { ...formValues(again), epic: '' })
+		});
+		expect(cleared).toBe(text);
+	});
+
 	it('rewrites only the meta line for a status change, keeping the heading as written', () => {
 		const out = splice(text, {
 			op: 'edit',

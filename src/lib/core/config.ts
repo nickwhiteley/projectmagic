@@ -8,6 +8,8 @@ export interface Config {
 	backlog: string[];
 	/** null disables the plan. */
 	progress: string | null;
+	/** The file declaring epics with descriptions and targets (PM28); null to not read one. */
+	epics: string | null;
 	docs: string[];
 	docsExclude: string[];
 	main: string;
@@ -45,6 +47,7 @@ export function defaults(repo: RepoFacts): Config {
 		name: repo.name,
 		backlog: ['backlog.md', 'BACKLOG.md'],
 		progress: 'PROGRESS.md',
+		epics: 'epics.md',
 		docs: DEFAULT_DOCS,
 		docsExclude: [],
 		main: repo.defaultBranch,
@@ -60,6 +63,7 @@ const KEYS = [
 	'name',
 	'backlog',
 	'progress',
+	'epics',
 	'docs',
 	'docs_exclude',
 	'main',
@@ -112,6 +116,11 @@ export function parseConfig(text: string | null, repo: RepoFacts): ConfigResult 
 		if (y.progress === null) config.progress = null;
 		else if (isString(y.progress)) config.progress = y.progress.trim();
 		else bad('progress', 'a path or null');
+	}
+	if ('epics' in y) {
+		if (y.epics === null) config.epics = null;
+		else if (isString(y.epics)) config.epics = y.epics.trim();
+		else bad('epics', 'a path or null');
 	}
 	if ('docs' in y) {
 		if (isStrings(y.docs)) config.docs = y.docs;

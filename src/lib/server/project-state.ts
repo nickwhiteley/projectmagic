@@ -1,6 +1,7 @@
 // Loads a project's state for the views: the refs and cached parses the sync stored, assembled by
 // the pure core. Kept in memory per instance until the project syncs again.
 import { parseConfig, type Config } from '#lib/core/config.ts';
+import type { EpicDeclaration } from '#lib/core/epics.ts';
 import type { Status } from '#lib/core/meta.ts';
 import {
 	assembleState,
@@ -114,6 +115,8 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		const backlogPath = config.backlog.find((path) => fileOf(r.name, path));
 		const backlogOid = backlogPath ? fileOf(r.name, backlogPath) : undefined;
 		const planOid = config.progress ? fileOf(r.name, config.progress) : undefined;
+		const epicsOid =
+			r.name === config.main && config.epics ? fileOf(r.name, config.epics) : undefined;
 		return {
 			name: r.name,
 			headOid: r.head_oid,
@@ -125,6 +128,10 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			prs: r.pr_json?.prs ?? [],
 			backlog: backlogOid
 				? ((parsed.get(`backlog:${backlogOid}`) as StoredBacklog | undefined) ?? null)
+				: null,
+			epics: epicsOid
+				? ((parsed.get(`epics:${epicsOid}`) as { epics: EpicDeclaration[] } | undefined)?.epics ??
+					null)
 				: null,
 			plan: planOid ? ((parsed.get(`progress:${planOid}`) as StoredPlan | undefined) ?? null) : null
 		};

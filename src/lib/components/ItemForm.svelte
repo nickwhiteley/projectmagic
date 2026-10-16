@@ -13,6 +13,7 @@
 		plan: string;
 		branch: string;
 		assignee: string;
+		epic: string;
 		body: string;
 	}
 	let {
@@ -20,6 +21,7 @@
 		jobs,
 		tasks,
 		assignees = ['person', 'agent'],
+		epics = [],
 		idHint = null,
 		idLocked = false
 	}: {
@@ -27,6 +29,7 @@
 		jobs: string[];
 		tasks: { number: string; title: string }[];
 		assignees?: string[];
+		epics?: { id: string; title: string | null }[];
 		idHint?: string | null;
 		idLocked?: boolean;
 	} = $props();
@@ -90,6 +93,20 @@
 			>{#each assignees as a (a)}<option value={a}></option>{/each}</datalist
 		>
 		<small class="muted">person.&lt;login&gt; or agent.claude… Empty is anyone’s.</small>
+	</label>
+	<label>
+		<span class="label">Epic</span>
+		<input
+			name="epic"
+			class="mono"
+			list="epics"
+			bind:value={v.epic}
+			placeholder="none"
+			autocomplete="off"
+		/>
+		<datalist id="epics"
+			>{#each epics as e (e.id)}<option value={e.id}>{e.title ?? ''}</option>{/each}</datalist
+		>
 	</label>
 	<label class="check">
 		<input type="checkbox" name="star" bind:checked={v.star} />
