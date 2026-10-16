@@ -1,5 +1,6 @@
 import { nameProblem, slugify, slugProblem } from '#lib/core/tenants.ts';
 import { getSignup } from '#lib/server/platform.ts';
+import { acceptInvitation, invitationsFor } from '#lib/server/members.ts';
 import { createTenant } from '#lib/server/tenants.ts';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -14,12 +15,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 		signup,
 		canCreate: canCreate(signup, admin),
 		waits: signup === 'approval' && !admin,
-		tenants: locals.tenants.map((t) => ({ name: t.name, status: t.status }))
+		tenants: locals.tenants.map((t) => ({ name: t.name, status: t.status })),
+		invitations: await invitationsFor(locals.user!.githubId)
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ locals, request }) => {
+	accept: async ({ locals, request }) => {
+		const r = await acceptInvitation(
+			{ id: locals.user!.id, githubId: locals.user!.githubId },
+			String((await request.formData()).get('invitation'))
+		);
+		if (!r.ok) return fail(400, { accept: r.reason });
+		redirect(303, '/');
+	},
+	create: async ({ locals, request }) => {
 		const signup = await getSignup();
 		const admin = locals.user!.platformRole === 'admin';
 		if (!canCreate(signup, admin))

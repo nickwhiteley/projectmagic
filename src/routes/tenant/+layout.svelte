@@ -10,8 +10,11 @@
 		label="Tenant"
 		items={[
 			{ href: '/tenant', label: 'Overview' },
+			{ href: '/tenant/members', label: 'Members' },
+			{ href: '/tenant/access', label: 'Access' },
 			{ href: '/tenant/installations', label: 'Installations' },
 			{ href: '/tenant/settings', label: 'Settings' },
+			{ href: '/tenant/audit', label: 'Audit' },
 			{ href: '/tenant/delete', label: 'Delete tenant' }
 		]}
 	/>

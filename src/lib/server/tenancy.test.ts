@@ -39,7 +39,7 @@ describe.skipIf(!sql)('tenancy', () => {
 		await sql!`insert into membership (user_id, project_id, role) values (2, 1, 'viewer')`;
 		await sql!`insert into inference_usage values ('project:1', current_date, 100), ('project:2', current_date, 50)`;
 		await migrate('008_tenants.sql', '007_uninstalled.sql');
-		await migrate('009_signup.sql', '008_tenants.sql');
+		await migrate('010_members.sql', '008_tenants.sql');
 	});
 	afterAll(() => sql?.end());
 
@@ -528,7 +528,9 @@ describe.skipIf(!sql)('tenancy', () => {
 				ok: false,
 				reason: 'not-invited'
 			});
+			await sql!`alter table app_user disable trigger app_user_keeps_platform_admin`;
 			await sql!`update app_user set platform_role = 'none'`;
+			await sql!`alter table app_user enable trigger app_user_keeps_platform_admin`;
 			expect(await users.signIn(gh(600, 'boss'), tokens, 'closed')).toMatchObject({
 				ok: true,
 				user: { platformRole: 'admin' }
@@ -537,6 +539,427 @@ describe.skipIf(!sql)('tenancy', () => {
 				await sql!`select count(*)::int as n from tenant_member where user_id = (select id from app_user where github_id = 600)`
 			).toEqual([{ n: 0 }]);
 			await sql!`update app_user set platform_role = 'admin' where github_id in (1, 600)`;
+		});
+	});
+
+	describe('members and roles (§3.3, §6.4)', () => {
+		let members: typeof import('./members.ts');
+		let team: string;
+		let teamWeb: string;
+		const user = async (gid: number, login: string) =>
+			String(
+				(
+					await sql!`insert into app_user (github_id, github_login) values (${gid}, ${login}) returning id`
+				)[0].id
+			);
+		let boss: string, dev: string, other: string;
+		beforeAll(async () => {
+			members = await import('./members.ts');
+			boss = await user(1100, 'boss1');
+			dev = await user(1101, 'dev1');
+			other = await user(1102, 'other1');
+			team = String(
+				(await sql!`insert into tenant (slug, name) values ('team', 'Team') returning id`)[0].id
+			);
+			await sql!`insert into tenant_setting (tenant_id, access) values (${team}, 'managed')`;
+			await sql!`insert into tenant_member (tenant_id, user_id, role) values (${team}, ${boss}, 'admin'), (${team}, ${dev}, 'member')`;
+			await sql!`insert into installation (id, tenant_id, account_login, account_type, account_id) values (200, ${team}, 'teamorg', 'Organization', 2000)`;
+			teamWeb = String(
+				(
+					await sql!`insert into project (github_repo_id, owner, repo, installation_id, tenant_id) values (300, 'teamorg', 'web', 200, ${team}) returning id`
+				)[0].id
+			);
+		});
+
+		it('keeps an active admin: the service says why, and the database refuses every other path', async () => {
+			expect(await members.setMemberRole(team, boss, boss, 'member')).toMatchObject({
+				ok: false,
+				reason: expect.stringContaining('at least one active admin')
+			});
+			expect(await members.removeMember(team, boss, boss)).toMatchObject({ ok: false });
+			await expect(
+				sql!`delete from tenant_member where tenant_id = ${team} and user_id = ${boss}`
+			).rejects.toMatchObject({ code: '23514' });
+			await expect(
+				sql!`update tenant_member set role = 'member' where tenant_id = ${team} and user_id = ${boss}`
+			).rejects.toMatchObject({ code: '23514' });
+			await expect(
+				sql!`update app_user set disabled_at = now() where id = ${boss}`
+			).rejects.toMatchObject({ code: '23514' });
+		});
+
+		it('allows swapping one admin for another in a transaction, and demoting one of two', async () => {
+			await sql!.begin(async (tx) => {
+				await tx`update tenant_member set role = 'admin' where tenant_id = ${team} and user_id = ${dev}`;
+				await tx`update tenant_member set role = 'member' where tenant_id = ${team} and user_id = ${boss}`;
+			});
+			expect(await members.setMemberRole(team, dev, boss, 'admin')).toEqual({ ok: true });
+			expect(await members.setMemberRole(team, dev, dev, 'member')).toEqual({ ok: true });
+			expect(
+				(await members.listMembers(team)).map((m) => [m.userId === boss ? 'boss' : 'dev', m.role])
+			).toEqual([
+				['boss', 'admin'],
+				['dev', 'member']
+			]);
+		});
+
+		it('does not count a disabled admin as one', async () => {
+			await sql!`update tenant_member set role = 'admin' where tenant_id = ${team} and user_id = ${dev}`;
+			await sql!`update app_user set disabled_at = now() where id = ${dev}`;
+			expect(await members.setMemberRole(team, boss, boss, 'member')).toMatchObject({ ok: false });
+			await sql!`update app_user set disabled_at = null where id = ${dev}`;
+			await sql!`update tenant_member set role = 'member' where tenant_id = ${team} and user_id = ${dev}`;
+		});
+
+		it('lets a tenant be deleted and purged although it has admins', async () => {
+			const t = String(
+				(await sql!`insert into tenant (slug, name) values ('doomed', 'Doomed') returning id`)[0].id
+			);
+			await sql!`insert into tenant_member (tenant_id, user_id, role) values (${t}, ${boss}, 'admin')`;
+			await sql!`update tenant set status = 'deleted' where id = ${t}`;
+			await sql!`delete from tenant where id = ${t}`;
+			expect(await sql!`select 1 from tenant_member where tenant_id = ${t}`).toEqual([]);
+		});
+
+		it('removes a member: roles go, pending edits pass to another author or are discarded with a note', async () => {
+			await sql!`insert into membership (user_id, project_id, role) values (${other}, ${teamWeb}, 'editor')`;
+			await sql!`insert into tenant_member (tenant_id, user_id, role) values (${team}, ${other}, 'member')`;
+			await sql!`insert into pending_edit (project_id, user_id, item_id, op) values (${teamWeb}, ${other}, 'A1', '{}'), (${teamWeb}, ${dev}, 'B1', '{}')`;
+			expect(await members.removeMember(team, boss, other)).toEqual({ ok: true });
+			expect(await sql!`select 1 from membership where user_id = ${other}`).toEqual([]);
+			expect(await sql!`select user_id::text from pending_edit where item_id = 'A1'`).toEqual([
+				{ user_id: dev }
+			]);
+			expect(
+				(
+					await sql!`select action from audit_log where tenant_id = ${team} order by id desc limit 1`
+				)[0].action
+			).toBe('member.removed');
+			// Alone in the batch, it is discarded with a note.
+			await sql!`delete from pending_edit`;
+			await sql!`insert into tenant_member (tenant_id, user_id, role) values (${team}, ${other}, 'member')`;
+			await sql!`insert into pending_edit (project_id, user_id, item_id, op) values (${teamWeb}, ${other}, 'A2', '{}')`;
+			expect(await members.removeMember(team, other, other)).toEqual({ ok: true });
+			expect(await sql!`select 1 from pending_edit`).toEqual([]);
+			expect(await sql!`select op, error from edit_log where item_id = 'A2'`).toEqual([
+				{ op: 'discarded', error: expect.stringContaining('left the tenant') }
+			]);
+		});
+
+		describe('invitations', () => {
+			it('are held against the numeric id, replace an earlier one, and are refused for a member', async () => {
+				expect(
+					await members.createInvitation(team, boss, { id: 1101, login: 'dev1' }, 'member')
+				).toMatchObject({ ok: false });
+				const a = await members.createInvitation(
+					team,
+					boss,
+					{ id: 1102, login: 'other1' },
+					'member'
+				);
+				const b = await members.createInvitation(
+					team,
+					boss,
+					{ id: 1102, login: 'Other1' },
+					'admin',
+					{ [teamWeb]: 'editor' }
+				);
+				expect(a.ok && b.ok).toBe(true);
+				expect((await members.tenantInvitations(team)).map((i) => [i.githubLogin, i.role])).toEqual(
+					[['Other1', 'admin']]
+				);
+				if (a.ok) expect(await members.invitationByToken(a.token)).toBeNull();
+				if (b.ok)
+					expect(await members.invitationByToken(b.token)).toMatchObject({
+						githubId: '1102',
+						tenantName: 'Team'
+					});
+			});
+
+			it('are accepted only by the account they name, once, and give the roles they carry', async () => {
+				const [inv] = await members.invitationsFor('1102');
+				expect(inv.tenantName).toBe('Team');
+				expect(await members.acceptInvitation({ id: dev, githubId: '1101' }, inv.id)).toMatchObject(
+					{ ok: false, reason: expect.stringContaining('different GitHub account') }
+				);
+				expect(
+					await members.acceptInvitation({ id: other, githubId: '1102' }, inv.id)
+				).toMatchObject({ ok: true, tenantId: team });
+				expect(
+					await sql!`select role, source from tenant_member where tenant_id = ${team} and user_id = ${other}`
+				).toEqual([{ role: 'admin', source: 'invited' }]);
+				expect(
+					await sql!`select role, source from membership where user_id = ${other} and project_id = ${teamWeb}`
+				).toEqual([{ role: 'editor', source: 'manual' }]);
+				expect(
+					await members.acceptInvitation({ id: other, githubId: '1102' }, inv.id)
+				).toMatchObject({ ok: false });
+				expect(await members.invitationsFor('1102')).toEqual([]);
+			});
+
+			it('can be withdrawn, and expire', async () => {
+				const r = await members.createInvitation(team, boss, { id: 1200, login: 'late' }, 'member');
+				const [inv] = await members.tenantInvitations(team);
+				expect(await members.revokeInvitation(ids.t1, boss, inv.id)).toBe(false);
+				expect(await members.revokeInvitation(team, boss, inv.id)).toBe(true);
+				expect(await members.invitationsFor('1200')).toEqual([]);
+				await members.createInvitation(team, boss, { id: 1200, login: 'late' }, 'member');
+				await sql!`update invitation set expires_at = now() - interval '1 minute' where github_id = 1200`;
+				expect(await members.invitationsFor('1200')).toEqual([]);
+				expect(r.ok).toBe(true);
+				await members.removeMember(team, boss, other);
+			});
+		});
+
+		describe('joining by GitHub access', () => {
+			const access = (ids: number[]) => ({
+				visibleInstallationIds: async () => ids,
+				orgRole: async () => null,
+				fetchInstallation: async () => null
+			});
+
+			it('admits a person who can see the tenant’s organisation, and says so in the audit log', async () => {
+				const stranger = await user(1300, 'stranger1');
+				expect(await members.admitsStranger('1300', access([200]))).toBe(true);
+				expect(await members.joinByGithub(stranger, access([200]))).toEqual([team]);
+				expect(
+					await sql!`select role, source from tenant_member where tenant_id = ${team} and user_id = ${stranger}`
+				).toEqual([{ role: 'member', source: 'github' }]);
+				expect(await members.joinByGithub(stranger, access([200]))).toEqual([]);
+				await members.removeMember(team, boss, stranger);
+			});
+
+			it('does not admit anyone for a personal account, an unrelated installation, or when switched off', async () => {
+				await sql!`insert into installation (id, tenant_id, account_login, account_type, account_id) values (201, ${team}, 'someone', 'User', 77)`;
+				expect(await members.admitsStranger('9999', access([201]))).toBe(false);
+				expect(await members.admitsStranger('9999', access([777]))).toBe(false);
+				await members.setJoinByGithub(team, boss, false);
+				expect(await members.admitsStranger('9999', access([200]))).toBe(false);
+				await members.setJoinByGithub(team, boss, true);
+				await sql!`update tenant set status = 'suspended' where id = ${team}`;
+				expect(await members.admitsStranger('9999', access([200]))).toBe(false);
+				await sql!`update tenant set status = 'active' where id = ${team}`;
+			});
+
+			it('admits a stranger who holds an invitation, whatever GitHub shows', async () => {
+				await members.createInvitation(team, boss, { id: 1400, login: 'invitee' }, 'member');
+				expect(await members.admitsStranger('1400', access([]))).toBe(true);
+			});
+		});
+
+		describe('project roles from GitHub (§6.1)', () => {
+			let roles: typeof import('./github-roles.ts');
+			let pa: typeof import('./project-access.ts');
+			let web2: string;
+			const gh = (repos: Record<string, object[]>) =>
+				({
+					rest: async (path: string) => {
+						const id = /installations\/(\d+)\//.exec(path)![1];
+						if (!(id in repos))
+							throw new (await import('./github-client.ts')).GitHubError(404, 'no');
+						return { body: { repositories: repos[id] }, next: null };
+					}
+				}) as unknown as import('./github-client.ts').GitHubClient;
+			beforeAll(async () => {
+				roles = await import('./github-roles.ts');
+				pa = await import('./project-access.ts');
+				web2 = String(
+					(
+						await sql!`insert into project (github_repo_id, owner, repo, installation_id, tenant_id) values (301, 'teamorg', 'api', 200, ${team}) returning id`
+					)[0].id
+				);
+			});
+
+			it('derives a role per repository from the person’s permission, and removes what GitHub no longer reports', async () => {
+				const n = await roles.refreshGithubRoles(
+					gh({
+						200: [
+							{ id: 300, permissions: { push: true, pull: true } },
+							{ id: 301, permissions: { pull: true } }
+						]
+					}),
+					dev,
+					team
+				);
+				expect(n).toBe(2);
+				expect(
+					await sql!`select project_id::text, role, source from membership where user_id = ${dev} order by project_id`
+				).toEqual([
+					{ project_id: teamWeb, role: 'editor', source: 'github' },
+					{ project_id: web2, role: 'viewer', source: 'github' }
+				]);
+				await roles.refreshGithubRoles(
+					gh({ 200: [{ id: 300, permissions: { admin: true } }] }),
+					dev,
+					team
+				);
+				expect(
+					await sql!`select project_id::text, role from membership where user_id = ${dev}`
+				).toEqual([{ project_id: teamWeb, role: 'maintainer' }]);
+				// An installation they can no longer reach gives nothing.
+				await roles.refreshGithubRoles(gh({}), dev, team);
+				expect(await sql!`select 1 from membership where user_id = ${dev}`).toEqual([]);
+				expect(
+					(
+						await sql!`select github_synced_at from tenant_member where user_id = ${dev} and tenant_id = ${team}`
+					)[0].github_synced_at
+				).not.toBeNull();
+			});
+
+			it('never overwrites or removes an admin’s manual override', async () => {
+				expect(await pa.setProjectRole(team, boss, teamWeb, dev, 'none')).toEqual({ ok: true });
+				await roles.refreshGithubRoles(
+					gh({
+						200: [
+							{ id: 300, permissions: { admin: true } },
+							{ id: 301, permissions: { push: true } }
+						]
+					}),
+					dev,
+					team
+				);
+				expect(
+					await sql!`select project_id::text, role, source from membership where user_id = ${dev} order by project_id`
+				).toEqual([
+					{ project_id: teamWeb, role: 'none', source: 'manual' },
+					{ project_id: web2, role: 'editor', source: 'github' }
+				]);
+				await roles.refreshGithubRoles(gh({}), dev, team);
+				expect(await sql!`select role from membership where user_id = ${dev}`).toEqual([
+					{ role: 'none' }
+				]);
+				expect(await pa.setProjectRole(team, boss, teamWeb, dev, 'inherit')).toEqual({ ok: true });
+				expect(await sql!`select 1 from membership where user_id = ${dev}`).toEqual([]);
+			});
+
+			it('claims a refresh once an hour', async () => {
+				await sql!`update tenant_member set github_synced_at = null where user_id = ${dev}`;
+				expect(await roles.claimGithubRefresh(dev, team)).toBe(true);
+				expect(await roles.claimGithubRefresh(dev, team)).toBe(false);
+				expect(roles.githubRolesDue(null)).toBe(true);
+				expect(roles.githubRolesDue(new Date().toISOString())).toBe(false);
+				expect(roles.githubRolesDue(new Date(Date.now() - 2 * 3_600_000).toISOString())).toBe(true);
+			});
+
+			it('shows who has what on a project, with where it comes from', async () => {
+				await pa.setProjectRole(team, boss, teamWeb, dev, 'viewer');
+				const rows = await pa.projectAccess(team, teamWeb, 'managed', 'editor');
+				expect(rows.map((r) => [r.login, r.role, r.source])).toEqual([
+					['boss1', 'maintainer', 'admin'],
+					['dev1', 'viewer', 'manual']
+				]);
+				expect((await pa.projectAccess(team, teamWeb, 'github', 'none')).length).toBe(2);
+				expect(await pa.setProjectRole(team, boss, teamWeb, '1', 'viewer')).toMatchObject({
+					ok: false
+				});
+				expect(await pa.setProjectRole(ids.t1, boss, teamWeb, dev, 'viewer')).toMatchObject({
+					ok: false
+				});
+			});
+
+			it('drops derived roles when a tenant moves to managed access, and makes them due when it moves back', async () => {
+				await sql!`insert into membership (user_id, project_id, role, source) values (${dev}, ${web2}, 'viewer', 'github')`;
+				await pa.setAccessMode(team, boss, 'managed', 'viewer');
+				expect(
+					await sql!`select source from membership where user_id = ${dev} and project_id = ${web2}`
+				).toEqual([]);
+				expect(
+					await sql!`select source from membership where user_id = ${dev} and project_id = ${teamWeb}`
+				).toEqual([{ source: 'manual' }]);
+				await pa.setAccessMode(team, boss, 'github', 'none');
+				expect(
+					(
+						await sql!`select github_synced_at from tenant_member where tenant_id = ${team} and user_id = ${dev}`
+					)[0].github_synced_at
+				).toBeNull();
+				expect(
+					await sql!`select access, default_project_role from tenant_setting where tenant_id = ${team}`
+				).toEqual([{ access: 'github', default_project_role: 'none' }]);
+				await pa.setAccessMode(team, boss, 'managed', 'none');
+			});
+		});
+
+		describe('support sessions (§6.3)', () => {
+			let support: typeof import('./support.ts');
+			beforeAll(async () => {
+				support = await import('./support.ts');
+			});
+
+			it('need a reason, last an hour, appear in the tenant’s audit log, and can be ended', async () => {
+				expect(await support.startSupport('1', team, ' ok ')).toMatchObject({ ok: false });
+				expect(await support.startSupport('1', team, 'Looking into a sync problem')).toEqual({
+					ok: true
+				});
+				const t = await tenants.supportTenant('1');
+				expect(t).toMatchObject({ slug: 'team', support: true, role: null });
+				expect(Date.parse(t!.until!) - Date.now()).toBeGreaterThan(55 * 60_000);
+				const audit = await (await import('./platform.ts')).auditLog(team, 5);
+				expect(audit.find((a) => a.action === 'support.opened')?.data).toMatchObject({
+					reason: 'Looking into a sync problem'
+				});
+				await support.endSupport('1');
+				expect(await tenants.supportTenant('1')).toBeNull();
+				expect(
+					(await (await import('./platform.ts')).auditLog(team, 5)).some(
+						(a) => a.action === 'support.ended'
+					)
+				).toBe(true);
+			});
+
+			it('lapse after an hour', async () => {
+				await support.startSupport('1', team, 'Another look');
+				await sql!`update support_session set expires_at = now() - interval '1 second' where ended_at is null`;
+				expect(await tenants.supportTenant('1')).toBeNull();
+			});
+		});
+
+		describe('users and accounts', () => {
+			let users: typeof import('./users.ts');
+			beforeAll(async () => {
+				users = await import('./users.ts');
+			});
+
+			it('lists users with their tenants, by search', async () => {
+				const found = await users.listUsers('boss1');
+				expect(found.map((u) => [u.login, u.tenants.map((t) => t.name)])).toEqual([
+					['boss1', ['Team']]
+				]);
+			});
+
+			it('will not disable the only admin of a tenant, and says which', async () => {
+				await sql!`update tenant_member set role = 'member' where tenant_id = ${team} and user_id = ${dev}`.catch(
+					() => {}
+				);
+				expect(await users.setUserDisabled(boss, '1', true)).toMatchObject({
+					ok: false,
+					reason: expect.stringContaining('Team')
+				});
+				expect(await users.lastAdminProblem(boss)).toContain('Team');
+			});
+
+			it('disables and enables someone who is not the last admin', async () => {
+				expect(await users.setUserDisabled(dev, '1', true)).toEqual({ ok: true });
+				expect((await users.listUsers('dev1'))[0].disabled).toBe(true);
+				expect(await users.setUserDisabled(dev, '1', false)).toEqual({ ok: true });
+			});
+
+			it('deletes an account that is not a last admin, and keeps what they edited', async () => {
+				await sql!`insert into edit_log (project_id, user_id, item_id, op) values (${teamWeb}, ${dev}, 'Z1', 'edit')`;
+				expect(await members.deleteAccount(dev, await users.lastAdminProblem(dev))).toEqual({
+					ok: true
+				});
+				expect(await sql!`select 1 from app_user where id = ${dev}`).toEqual([]);
+				expect(await sql!`select user_id from edit_log where item_id = 'Z1'`).toEqual([
+					{ user_id: null }
+				]);
+			});
+
+			it('refuses to delete the last admin', async () => {
+				expect(await members.deleteAccount(boss, await users.lastAdminProblem(boss))).toMatchObject(
+					{ ok: false }
+				);
+				expect(await sql!`select 1 from app_user where id = ${boss}`).toHaveLength(1);
+			});
 		});
 	});
 });

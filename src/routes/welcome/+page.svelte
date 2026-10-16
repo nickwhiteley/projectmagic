@@ -27,8 +27,22 @@
 		</p>
 	{/if}
 
+	{#if data.invitations.length}
+		<section class="panel">
+			<h2>You have been invited</h2>
+			{#if form?.accept}<p class="flash error" role="alert">{form.accept}</p>{/if}
+			{#each data.invitations as i (i.id)}
+				<form method="POST" action="?/accept" class="row">
+					<input type="hidden" name="invitation" value={i.id} />
+					<span><b>{i.tenantName}</b> <span class="muted small">as {i.role}</span></span>
+					<button class="button primary">Join</button>
+				</form>
+			{/each}
+		</section>
+	{/if}
+
 	{#if data.canCreate}
-		<form method="POST" class="panel form">
+		<form method="POST" action="?/create" class="panel form">
 			<h2>Create a tenant</h2>
 			{#if form?.reason}<p class="flash error" role="alert">{form.reason}</p>{/if}
 			<label>
@@ -64,3 +78,11 @@
 		</p>
 	{/if}
 </div>
+
+<style>
+	.row {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+	}
+</style>

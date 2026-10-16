@@ -6,7 +6,21 @@ import { can } from '#lib/core/access.ts';
 import { projectByRepo, tenantsWithRepo } from '#lib/server/projects.ts';
 import { ROUTES } from '#lib/server/routes.ts';
 import { clearSession, readSession, SESSION_COOKIE } from '#lib/server/session.ts';
-import { accessCtx, currentTenant, switchTenant, tenantsOf } from '#lib/server/tenants.ts';
+import {
+	claimGithubRefresh,
+	githubRolesDue,
+	refreshGithubRoles
+} from '#lib/server/github-roles.ts';
+import { db } from '#lib/server/db.ts';
+import {
+	accessCtx,
+	currentTenant,
+	supportTenant,
+	switchTenant,
+	tenantsOf
+} from '#lib/server/tenants.ts';
+import { userClient } from '#lib/server/user-token.ts';
+import { waitUntil } from '@vercel/functions';
 import { sessionUser } from '#lib/server/users.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
@@ -32,6 +46,29 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.memberships = found.memberships;
 			event.locals.tenants = await tenantsOf(found.user.id);
 			event.locals.tenant = currentTenant(event.locals.tenants);
+			// A platform admin in a support session sees that tenant, read-only (specs/tenants.md §6.3).
+			if (found.user.platformRole === 'admin')
+				event.locals.tenant = (await supportTenant(found.user.id)) ?? event.locals.tenant;
+			const t = event.locals.tenant;
+			if (t && !t.support) {
+				// Their GitHub permissions decide their roles, refreshed in the background when due (§6.1),
+				// and a note of when they were last here, at most every ten minutes.
+				const uid = found.user.id;
+				if (t.access === 'github' && t.status === 'active' && githubRolesDue(t.githubSyncedAt))
+					waitUntil(
+						claimGithubRefresh(uid, t.id)
+							.then(async (go) => {
+								if (go) await refreshGithubRoles(userClient(uid), uid, t.id);
+							})
+							.catch((e) => console.error('github roles:', e instanceof Error ? e.message : e))
+					);
+				waitUntil(
+					Promise.resolve(
+						db()`update tenant_member set last_seen_at = now() where tenant_id = ${t.id} and user_id = ${uid}
+							and (last_seen_at is null or last_seen_at < now() - interval '10 minutes')`
+					).catch(() => {})
+				);
+			}
 		} else if (userId) clearSession(event.cookies);
 	}
 	const user = event.locals.user;

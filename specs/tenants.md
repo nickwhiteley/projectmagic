@@ -563,6 +563,36 @@ Four phases, one PR each. Each leaves the deployment working, with Nick's tenant
 - **Not yet**: the *open a tenant as support* session (phase 3), and the pending-tenant notice only shows
   in the banner, not on a Welcome-style page of its own.
 
+**Phase 3 as built** (PR `feat/pm20-members-access`), where it differs from or settles the above:
+
+- **Migration 010** adds `invitation`, `support_session`, `tenant_member.github_synced_at` and `last_seen_at`, a
+  manual project role of `none` (an override downwards), and the last-admin triggers.
+- **The last admin** is enforced by deferred constraint triggers: a tenant keeps an active admin (a
+  disabled one does not count), and the service keeps an active platform admin. The service checks first
+  and says why (`members.ts`, `users.ts`), so the trigger is only for other paths. A deleted tenant, and
+  its purge, are exempt.
+- **Roles from GitHub** are read with the person's own token (`github-roles.ts`) at sign-in and, when more
+  than an hour old, in the background on a request (claimed once with `claimGithubRefresh`, so a burst
+  reads GitHub once). A manual row is never overwritten or removed. Moving a tenant to managed access
+  drops the derived rows; moving back makes every member's roles due.
+- **Joining by GitHub access** happens at sign-in only. A stranger is let in while sign-up is closed if
+  they hold an invitation or can see an organisation installation of a tenant that admits by GitHub.
+  A personal account's installation never admits anyone else.
+- **Invitations** are by login, checked against GitHub when sent, held against the numeric id, valid 14
+  days, and accepted from *Welcome* or the link (`/invite/{token}`) by the account they name. A new one
+  replaces an open one for the same person. Project roles ride along under managed access.
+- **Leaving, removing and deleting an account** share one path: project roles go, and pending batch edits
+  pass to another author of the project's batch or are discarded with a note in the edit log. Edit-log rows
+  stay with no user (the log does not store a login). Deleting an account is refused for a last admin.
+- **Support sessions** are read-only for an hour, need a reason, and appear on the tenant's Audit page.
+  While one is open the platform admin sees that tenant instead of their own, cannot edit, and Ask and the
+  background syncs and saves are off.
+- **Pages**: tenant *Members*, *Access* and *Audit*; platform *Users*; personal *Settings* (`/settings`:
+  your tenants with Leave, and delete account). A tenant's *Access* page lists a project's members with the
+  role each has and where it comes from.
+- **Not yet**: the member limit (phase 4), a prompt to choose between several of your tenants for a link
+  that several have, and per-tenant project roles for platform admins (by design, none).
+
 Sizes: phase 1 M, phase 2 M–L, phase 3 M, phase 4 M. The hosted service can take its first tenants at `signup:
 approval` after phase 3, each on a tier set by hand, before billing exists.
 

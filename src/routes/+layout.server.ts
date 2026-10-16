@@ -24,7 +24,9 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 			id: locals.tenant.id,
 			name: locals.tenant.name,
 			status: locals.tenant.status,
-			admin: locals.tenant.role === 'admin'
+			admin: locals.tenant.role === 'admin',
+			support: !!locals.tenant.support,
+			until: locals.tenant.until ?? null
 		},
 		tenants: locals.tenants.map((t) => ({ id: t.id, name: t.name })),
 		projects: projects.map((p) => ({

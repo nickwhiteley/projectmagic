@@ -1,9 +1,15 @@
 // GitHub sends the browser back here with a code: check the state, exchange the code, find the
-// user (or create the bootstrap administrator), and start a session.
+// user (or create them, if sign-up or an invitation allows it), join them to the tenants that admit
+// them by GitHub access, read their roles, and start a session.
 import { SESSION_SECRET } from '$app/env/private';
 import { currentUser, exchangeCode } from '#lib/server/github-app.ts';
+import { tokenClient } from '#lib/server/github-client.ts';
+import { githubAccessWith } from '#lib/server/github-access.ts';
+import { refreshGithubRoles } from '#lib/server/github-roles.ts';
+import { admitsStranger, joinByGithub } from '#lib/server/members.ts';
 import { getSignup } from '#lib/server/platform.ts';
 import { setSession } from '#lib/server/session.ts';
+import { tenantsOf } from '#lib/server/tenants.ts';
 import { signIn } from '#lib/server/users.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
@@ -19,8 +25,24 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		error(400, 'The sign-in link expired or was not started here. Try again.');
 
 	const tokens = await exchangeCode(code, `${url.origin}/auth/github/callback`);
-	const result = await signIn(await currentUser(tokens.accessToken), tokens, await getSignup());
+	const gh = await currentUser(tokens.accessToken);
+	const client = tokenClient(async () => tokens.accessToken);
+	const access = githubAccessWith(client);
+	const result = await signIn(gh, tokens, await getSignup(), () =>
+		admitsStranger(String(gh.id), access)
+	);
 	if (!result.ok) redirect(303, `/signin?error=${result.reason}`);
+
+	// Their GitHub access decides which tenants they join and what they can do in them. A failure
+	// here must not stop the sign-in: the next request tries again.
+	try {
+		await joinByGithub(result.user.id, access);
+		for (const t of await tenantsOf(result.user.id))
+			if (t.access === 'github' && t.status === 'active')
+				await refreshGithubRoles(client, result.user.id, t.id);
+	} catch (e) {
+		console.error('sign-in: github access:', e instanceof Error ? e.message : e);
+	}
 	setSession(cookies, result.user.id, SESSION_SECRET);
 	redirect(303, next);
 };
