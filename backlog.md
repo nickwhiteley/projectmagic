@@ -290,7 +290,7 @@ no item links to are listed under "not linked to an item". Project Magic's own e
 deployment branches are left out. A full commit history would need the sync to cache commits.
 
 ### PM6 Edit `PROGRESS.md` status cells and docs
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Branch:** `feat/pm6-plan-edit` · **Size:** M · **Type:** feature · **For:** agent
 
 ### PM7 More users: invitations, members and roles
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
