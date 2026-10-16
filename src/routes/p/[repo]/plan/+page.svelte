@@ -1,12 +1,23 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { page } from '$app/state';
+	import { PLAN_STATUSES } from '#lib/core/progress.ts';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const repo = $derived(page.params.repo!);
 </script>
 
 <svelte:head><title>Plan · {page.data.project.name}</title></svelte:head>
+
+{#if form?.message}
+	<p class="message" role="alert">
+		{form.message}
+		{#if form.reauth}<a href="/auth/github?next={encodeURIComponent(page.url.pathname)}"
+				>Sign in again</a
+			>{/if}
+	</p>
+{/if}
 
 <div class="layout">
 	<div>
@@ -37,6 +48,22 @@
 								{/if}
 							</div>
 							<span class="pill"><StatusPill status={t.status} /></span>
+							{#if page.data.project.canEdit}
+								<details class="edit">
+									<summary class="muted small">Edit</summary>
+									<form method="POST" action="?/status" use:enhance>
+										<input type="hidden" name="number" value={t.number} />
+										<input type="hidden" name="base" value={t.statusRaw} />
+										<select name="status" aria-label="Status of {t.number}">
+											{#each PLAN_STATUSES as st (st)}
+												<option value={st} selected={st === t.status}>{st}</option>
+											{/each}
+										</select>
+										<input name="note" value={t.note} aria-label="Note" placeholder="note" />
+										<button class="button">Save</button>
+									</form>
+								</details>
+							{/if}
 						</li>
 					{/each}
 				</ol>
@@ -134,6 +161,20 @@
 	}
 	li:target {
 		background: var(--warn-bg);
+	}
+	.edit {
+		grid-column: 2 / -1;
+	}
+	.edit form {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: 0.4rem;
+	}
+	.edit input[name='note'] {
+		flex: 1;
+	}
+	.message {
+		color: var(--danger);
 	}
 	li.next {
 		box-shadow: inset 3px 0 var(--st-progress);

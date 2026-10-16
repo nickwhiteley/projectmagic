@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 import { diffLines } from '#lib/core/diff.ts';
 import { parseMeta } from '#lib/core/meta.ts';
 import type { GitHubClient } from './github-client.ts';
-import { applyEdit, prBody, type WriteTarget } from './write.ts';
+import { setTaskStatus, taskStatusCell } from '#lib/core/progress.ts';
+import { applyChange, applyEdit, prBody, type WriteTarget } from './write.ts';
 
 const PATH = 'backlog.md';
 
@@ -344,6 +345,42 @@ describe('applyEdit', () => {
 		const res = await applyEdit(gh, { ...target, autoMerge: false }, setStatus('NW9', 'done'));
 		expect(res).toMatchObject({ kind: 'pending', reason: 'auto_merge is off' });
 		expect(gh.calls).not.toContain('PUT /pulls/41/merge');
+	});
+});
+
+describe('applyChange: another file (PM6)', () => {
+	const PLAN =
+		'| # | Task | Status |\n|---|------|--------|\n| 1 | First | todo |\n| 2 | Second | todo |\n';
+	const change = (number: string, status: 'done' | 'blocked') => ({
+		apply: (text: string) => setTaskStatus(text, number, status),
+		describe: () => `Plan: ${number} ${status}`,
+		current: (text: string) => taskStatusCell(text, number)
+	});
+
+	it('sets a plan task’s status as one commit, leaving the other rows alone', async () => {
+		const gh = new FakeRepo(PLAN);
+		const res = await applyChange(
+			gh,
+			{ ...target, path: 'backlog.md' },
+			change('1', 'done'),
+			'todo'
+		);
+		expect(res).toMatchObject({ kind: 'merged', message: 'Plan: 1 done' });
+		expect(gh.text('main')).toBe(PLAN.replace('| 1 | First | todo |', '| 1 | First | done |'));
+	});
+
+	it('is a conflict when that task’s cell changed since it was shown, but not when another row did', async () => {
+		const gh = new FakeRepo(PLAN);
+		gh.pushMain(PLAN.replace('| 2 | Second | todo |', '| 2 | Second | done |'));
+		expect(await applyChange(gh, target, change('1', 'done'), 'todo')).toMatchObject({
+			kind: 'merged'
+		});
+		const gh2 = new FakeRepo(PLAN);
+		gh2.pushMain(PLAN.replace('| 1 | First | todo |', '| 1 | First | blocked |'));
+		expect(await applyChange(gh2, target, change('1', 'done'), 'todo')).toMatchObject({
+			kind: 'conflict',
+			theirs: 'blocked'
+		});
 	});
 });
 

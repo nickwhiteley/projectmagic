@@ -15,6 +15,7 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/p/[repo]/branches": "project: view",
   "/p/[repo]/docs/[...path]": "project: view",
   "/p/[repo]/done": "project: view",
+  "/p/[repo]/edit-doc/[...path]": "project: edit",
   "/p/[repo]/edits/merge": "project: merge",
   "/p/[repo]/epics": "project: view",
   "/p/[repo]/i/[id]": "project: view",
