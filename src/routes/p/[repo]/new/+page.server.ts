@@ -13,7 +13,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const s = await projectState({ locals, params });
 	if (!s.hasBacklog) error(404, 'This project has no backlog');
 	// `?bug=1` starts a bug in the bugs file, with its own prefix (PM29).
-	const bugs = !!s.bugsFile && url.searchParams.get('bug') === '1';
+	// Without a bugs file the bug goes in the backlog, with `Type: bug`.
+	const bugs = url.searchParams.get('bug') === '1';
 	const suggested = suggestId(bugs ? s.bugPrefix : s.newIdPrefix, s.usedIds);
 	const values: ItemFormValues = {
 		id: suggested,
@@ -34,9 +35,10 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		suggested,
 		bugs,
 		hasBugsFile: !!s.bugsFile,
-		section: bugs
-			? (s.sections.find((x) => x.file)?.index ?? 0)
-			: Number(url.searchParams.get('section') ?? 0),
+		section:
+			bugs && s.bugsFile
+				? (s.sections.find((x) => x.file)?.index ?? 0)
+				: Number(url.searchParams.get('section') ?? 0),
 		sections: s.sections.map((x) => ({ index: x.index, title: x.titleText })),
 		assignees: assigneesInUse(s),
 		epics: epicsInUse(s),
@@ -54,6 +56,7 @@ export const actions: Actions = {
 		const section = Number(form.get('section'));
 		const at = form.get('at') === 'start' ? ('start' as const) : ('end' as const);
 		const s = await loadProjectState(locals.project!.id);
+		const bug = form.get('bug') === '1';
 		const bad = problems(v) ?? checkId(v.id, s.usedIds);
 		if (bad) return fail(400, { values: v, message: bad, reauth: false });
 		// The Bugs section is bugs.md, which has no place of its own for it: next to its bugs (PM29).
@@ -68,15 +71,19 @@ export const actions: Actions = {
 				title: v.title,
 				star: v.star,
 				job: v.job || null,
-				meta: updateMeta([], {
-					status: v.status,
-					size: v.size,
-					branch: v.branch,
-					plan: v.plan ? v.plan.split(',') : [],
-					waiting: v.waiting,
-					for: v.assignee,
-					epic: v.epic
-				}),
+				meta: [
+					...updateMeta([], {
+						status: v.status,
+						size: v.size,
+						branch: v.branch,
+						plan: v.plan ? v.plan.split(',') : [],
+						waiting: v.waiting,
+						for: v.assignee,
+						epic: v.epic
+					}),
+					// In the bugs file an item is a bug already; elsewhere it says so (PM2).
+					...(bug && !file ? [{ key: 'Type', value: 'bug' }] : [])
+				],
 				body: v.body
 			},
 			to

@@ -12,13 +12,15 @@
 <svelte:head><title>Add an item · {page.data.project.name}</title></svelte:head>
 
 <h2>{data.bugs ? 'Add a bug' : 'Add an item'}</h2>
-{#if data.hasBugsFile}
+{#if data.bugs}
 	<p class="muted small">
-		{#if data.bugs}
-			It goes in the bugs file. <a href="/p/{page.params.repo}/new">Add an item instead</a>.
-		{:else}
-			<a href="/p/{page.params.repo}/new?bug=1">Add a bug instead</a>, in the bugs file.
-		{/if}
+		{#if data.hasBugsFile}It goes in the bugs file.{:else}This project has no bugs file, so it goes
+			in the backlog with <code>Type: bug</code>.{/if}
+		<a href="/p/{page.params.repo}/new">Add an item instead</a>.
+	</p>
+{:else if data.hasBugsFile}
+	<p class="muted small">
+		<a href="/p/{page.params.repo}/new?bug=1">Add a bug instead</a>, in the bugs file.
 	</p>
 {/if}
 {#if form?.message}
@@ -41,6 +43,7 @@
 		};
 	}}
 >
+	{#if data.bugs}<input type="hidden" name="bug" value="1" />{/if}
 	{#key values}
 		<ItemForm
 			{values}
