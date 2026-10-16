@@ -116,6 +116,23 @@ main gets one commit for the batch.
 
 Note the decision to store changes in the database or local browser storage needs to be made at design time.
 
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
+
+### PM1 Epics
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+
+Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
+are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
+`spec.md` §13.
+
+Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
+The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
+and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
+epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
@@ -171,18 +188,6 @@ So going public is one of: delete the repository and push the rewritten history 
 the same name (losing the PR history; the GitHub App is reinstalled and Vercel reconnected, since
 the repository's id changes), or keep this one private as the full record and publish the
 rewritten history as a new repository under another name. Nick chooses when the time comes.
-
-### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
-
-Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
-are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
-`spec.md` §13.
-
-Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3 Title` section.
-The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
-and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
-epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
@@ -497,8 +502,3 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 **Status:** todo · **Size:** M–L
 
 Such as BitBucket
-
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
