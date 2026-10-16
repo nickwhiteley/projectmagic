@@ -104,8 +104,9 @@ describe('askPrompt', () => {
 describe('linkAnswer', () => {
 	const known = new Set(['orchard:B7', 'lantern:5.8']);
 	it('links a citation to an item that is in the digest', () => {
-		expect(linkAnswer('See [orchard:B7] and [lantern:5.8].', known)).toBe(
-			'See [B7](/p/orchard/i/B7) and [5.8](/p/lantern/i/5.8).'
+		const names = new Map([['orchard', 'Orchard']]);
+		expect(linkAnswer('See [orchard:B7] and [lantern:5.8].', known, names)).toBe(
+			'See [Orchard B7](/p/orchard/i/B7) and [lantern 5.8](/p/lantern/i/5.8).'
 		);
 	});
 	it('does not link an item the digest never named, so a made-up or injected link is dead', () => {

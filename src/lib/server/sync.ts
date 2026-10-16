@@ -3,7 +3,7 @@
 // Parsing is keyed by blob oid. Then done detection walks main's new commits to the backlog.
 // No SvelteKit imports: the GitHub clients and the database are passed in.
 import { parseBacklog } from '#lib/core/backlog.ts';
-import { parseConfig, type Config } from '#lib/core/config.ts';
+import { defaults, parseConfig, type Config } from '#lib/core/config.ts';
 import {
 	advanceHistory,
 	emptyHistory,
@@ -18,8 +18,13 @@ import type { GitHubClient } from './github-client.ts';
 
 type Sql = postgres.Sql;
 
-/** Bump when a parser's output changes: every cached parse is redone on the next sync (§8). */
-export const PARSER_VERSION = 3;
+/**
+ * Bump when a parser's output changes: every cached parse older than this is redone on the next
+ * sync (§8). A parse at this version or newer is used, so a build that is a version behind (a
+ * rollback, or a local run on another branch sharing the database) still reads what a newer one
+ * cached instead of fighting it.
+ */
+export const PARSER_VERSION = 2;
 
 const CONFIG_PATH = '.projectmagic.yml';
 
@@ -219,7 +224,7 @@ export async function syncProject(
 	const cached = async (oid: string, kind: string) =>
 		(
 			await sql`select 1 from blob_parse where oid = ${oid} and kind = ${kind}
-				and parser_version = ${PARSER_VERSION}`
+				and parser_version >= ${PARSER_VERSION}`
 		).length > 0;
 	let parsed = 0;
 	const store = async (
@@ -232,7 +237,7 @@ export async function syncProject(
 		await sql`insert into blob_parse (oid, kind, parsed_json, parser_version)
 			values (${oid}, ${kind}, ${sql.json(JSON.parse(JSON.stringify(json)))}, ${PARSER_VERSION})
 			on conflict (oid, kind) do update
-			set parsed_json = excluded.parsed_json, parser_version = excluded.parser_version`;
+			set parsed_json = excluded.parsed_json, parser_version = greatest(blob_parse.parser_version, excluded.parser_version)`;
 		parsed++;
 	};
 
@@ -253,8 +258,9 @@ export async function syncProject(
 		if (configOid) {
 			const [row] = await sql<{ parsed_json: { config: Config } }[]>`
 				select parsed_json from blob_parse where oid = ${configOid} and kind = 'config'
-				and parser_version = ${PARSER_VERSION}`;
-			if (row) next = row.parsed_json.config;
+				and parser_version >= ${PARSER_VERSION}`;
+			// A config cached before a key existed lacks it: the defaults fill in (PM28).
+			if (row) next = { ...defaults({ name: repo, defaultBranch }), ...row.parsed_json.config };
 			else {
 				const text = (await fetchBlobs(gh, owner, repo, [configOid])).get(configOid) ?? null;
 				if (text !== null) await store(configOid, 'config', text, defaultBranch);

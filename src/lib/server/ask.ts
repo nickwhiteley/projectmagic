@@ -54,7 +54,7 @@ export async function ask(
 	if (!text) return { ok: false, reason: 'The model sent back an empty answer. Try asking again.' };
 	return {
 		ok: true,
-		html: renderMarkdown(linkAnswer(text, d.known)),
+		html: renderMarkdown(linkAnswer(text, d.known, d.names)),
 		truncated: d.truncated,
 		projects: states.filter((s) => s.hasBacklog).length
 	};
