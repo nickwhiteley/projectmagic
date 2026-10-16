@@ -10,7 +10,7 @@ import {
 	type StoredBacklog,
 	type StoredPlan
 } from '#lib/core/state.ts';
-import { listPending, overlayBacklog, pendingKey } from './batch.ts';
+import { listPending, overlayBacklog } from './batch.ts';
 import { db } from './db.ts';
 import { PARSER_VERSION, type Pr } from './sync.ts';
 
@@ -25,6 +25,8 @@ interface ProjectRow {
 }
 
 const cache = new Map<string, { key: string; state: ProjectState }>();
+/** What the database holds for a project, read once per sync: pending edits change the state, not this. */
+const inputs = new Map<string, { key: string; reads: unknown; inferences: unknown }>();
 
 /**
  * The project's state for a project page's load, at most once per request (the layout and the page
@@ -47,6 +49,7 @@ export function projectState(event: {
 /** Drops the cached state, after something other than a sync changed what it shows (PM3). */
 export function forgetState(projectId: string): void {
 	cache.delete(projectId);
+	inputs.delete(projectId);
 }
 
 export async function loadProjectState(projectId: string): Promise<ProjectState> {
@@ -54,8 +57,10 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 	const [p] = await sql<ProjectRow[]>`
 		select id, owner, repo, installation_id, config_json, last_sync_at, last_error from project where id = ${projectId}`;
 	if (!p) throw new Error(`no project ${projectId}`);
+	const syncKey = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}`;
 	// Pending edits (PM25) change what the views show, so they are part of the key.
-	const key = `${p.last_sync_at?.toISOString() ?? ''}|${p.last_error ?? ''}|${await pendingKey(projectId)}`;
+	const pending = await listPending(projectId);
+	const key = `${syncKey}|${pending.map((e) => `${e.id}${e.conflict ? 'c' : ''}`).join(',')}`;
 	const hit = cache.get(projectId);
 	if (hit?.key === key) return hit.state;
 
@@ -82,15 +87,16 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		deleted_at: Date | null;
 	};
 	// Independent reads in parallel; parses only for active branches, the only ones the view uses.
-	const [refs, files, done, parses] = await Promise.all([
-		sql<RefRow[]>`select name, head_oid, committed_at, ahead, behind, active, pr_json
+	const readAll = () =>
+		Promise.all([
+			sql<RefRow[]>`select name, head_oid, committed_at, ahead, behind, active, pr_json
 			from ref where project_id = ${projectId}`,
-		sql<{ ref_name: string; path: string; oid: string }[]>`
+			sql<{ ref_name: string; path: string; oid: string }[]>`
 			select ref_name, path, oid from ref_file where project_id = ${projectId}`,
-		// An item is deleted, not shipped, when the last edit Project Magic made to it was a remove
-		// that landed with this removal (PM24): before it reached main, or within ten minutes after,
-		// allowing for clocks; and from the same PR, where the history knows the PR.
-		sql<DoneRow[]>`select d.item_id, d.title, d.last_body, d.removed_oid, d.removed_at,
+			// An item is deleted, not shipped, when the last edit Project Magic made to it was a remove
+			// that landed with this removal (PM24): before it reached main, or within ten minutes after,
+			// allowing for clocks; and from the same PR, where the history knows the PR.
+			sql<DoneRow[]>`select d.item_id, d.title, d.last_body, d.removed_oid, d.removed_at,
 				d.pr_number, e.login as deleted_by, e.at as deleted_at
 			from done_item d
 			left join lateral (
@@ -101,13 +107,29 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 			) e on e.op = 'remove' and e.at <= d.removed_at + interval '10 minutes'
 				and (d.pr_number is null or e.pr_number is null or e.pr_number = d.pr_number)
 			where d.project_id = ${projectId}`,
-		sql<{ oid: string; kind: string; parsed_json: unknown }[]>`
+			sql<{ oid: string; kind: string; parsed_json: unknown }[]>`
 			select distinct on (b.oid, b.kind) b.oid, b.kind, b.parsed_json
 			from ref_file f
 			join ref r on r.project_id = f.project_id and r.name = f.ref_name and r.active
 			join blob_parse b on b.oid = f.oid and b.parser_version >= ${PARSER_VERSION}
 			where f.project_id = ${projectId}`
-	]);
+		]);
+	const readInferences = () =>
+		sql<
+			{ item_id: string; source: string; status: Status; waiting: string | null; model: string }[]
+		>`select item_id, source, status, waiting, model from item_inference where project_id = ${projectId}`.catch(
+			(e: { code?: string }) => {
+				if (e?.code === '42P01') return [];
+				throw e;
+			}
+		);
+	let held = inputs.get(projectId);
+	if (held?.key !== syncKey) {
+		const [reads, inferences] = await Promise.all([readAll(), readInferences()]);
+		inputs.set(projectId, (held = { key: syncKey, reads, inferences }));
+	}
+	const [refs, files, done, parses] = held.reads as Awaited<ReturnType<typeof readAll>>;
+	const inferences = held.inferences as Awaited<ReturnType<typeof readInferences>>;
 	const parsed = new Map(parses.map((r) => [`${r.kind}:${r.oid}`, r.parsed_json]));
 	const fileOf = (ref: string, path: string) =>
 		files.find((f) => f.ref_name === ref && f.path === path)?.oid;
@@ -117,7 +139,6 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 	})();
 
 	// Pending edits (PM25), replayed on main's backlog and bugs file.
-	const pending = await listPending(projectId);
 	const installation = { owner: p.owner, repo: p.repo, installationId: Number(p.installation_id) };
 	const overlay = async (path: string | undefined, file: string | null) => {
 		const oid = path ? fileOf(config.main, path) : undefined;
@@ -169,15 +190,6 @@ export async function loadProjectState(projectId: string): Promise<ProjectState>
 		};
 	});
 
-	// PM3's table may not exist until the migration has run; no proposals is the right answer then.
-	const inferences = await sql<
-		{ item_id: string; source: string; status: Status; waiting: string | null; model: string }[]
-	>`select item_id, source, status, waiting, model from item_inference where project_id = ${projectId}`.catch(
-		(e: { code?: string }) => {
-			if (e?.code === '42P01') return [];
-			throw e;
-		}
-	);
 	const state = assembleState({
 		owner: p.owner,
 		repo: p.repo,

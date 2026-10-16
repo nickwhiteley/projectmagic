@@ -115,6 +115,9 @@ export function dragHandlers(
 			if (onColumn && col && into && into !== col) return onColumn(from, col, into);
 			if (!canReorder()) return;
 			const to = t.dataset.to ?? `before:${t.dataset.id}`;
+			// Show the item where it was dropped at once; the save and the reload follow.
+			const moving = document.querySelector<HTMLElement>(`[data-id="${CSS.escape(from)}"]`);
+			if (moving && t.dataset.id && t !== moving) t.parentNode?.insertBefore(moving, t);
 			await moveItem(repo, from, to, state);
 		}
 	};

@@ -74,10 +74,13 @@ export async function queue(
 	base: string | null,
 	file: string | null
 ): Promise<number> {
-	await db()`insert into pending_edit (project_id, user_id, file, item_id, op, base)
-		values (${projectId}, ${userId}, ${file}, ${opItem(op)}, ${db().json(JSON.parse(JSON.stringify(op)))}, ${base})`;
 	const [r] = await db()<{ n: number }[]>`
-		select count(*)::int as n from pending_edit where project_id = ${projectId}`;
+		with added as (
+			insert into pending_edit (project_id, user_id, file, item_id, op, base)
+			values (${projectId}, ${userId}, ${file}, ${opItem(op)}, ${db().json(JSON.parse(JSON.stringify(op)))}, ${base})
+			returning 1
+		)
+		select (select count(*) from pending_edit where project_id = ${projectId})::int + 1 as n`;
 	return r?.n ?? 1;
 }
 
@@ -143,6 +146,18 @@ export async function overlayBacklog(
 	if (!live.length) return null;
 	const text = await blobText(project.installationId, project.owner, project.repo, oid);
 	if (text === null) return null;
-	const out = applyBatch(text, live);
+	// Every splice parses the whole file, so a new edit is applied to the last result when the
+	// earlier edits are the same, not to the file again from the top.
+	const ids = live.map((p) => p.id);
+	const key = `${project.repo}:${oid}:${live[0].file ?? ''}`;
+	const memo = replayed.get(key);
+	const resume = memo && memo.ids.every((id, i) => ids[i] === id) && memo.ids.length <= ids.length;
+	const out = applyBatch(resume ? memo.text : text, resume ? live.slice(memo.ids.length) : live);
+	if (replayed.size > 20) replayed.clear();
+	// Edits skipped as conflicts are still "seen", so they aren't tried again from the top.
+	replayed.set(key, { ids, text: out.text });
 	return parseBlob('backlog', out.text, project.repo, main) as StoredBacklog;
 }
+
+/** The last replay for a file: the edits applied, and the text they made. */
+const replayed = new Map<string, { ids: number[]; text: string }>();

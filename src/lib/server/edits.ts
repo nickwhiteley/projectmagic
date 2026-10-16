@@ -27,12 +27,15 @@ function withDefaults(cached: Config | null, repo: string): Config {
 
 /** `file` is the item's file when it isn't the main backlog (PM29: `bugs.md`). */
 async function target(project: ProjectRow, file: string | null = null) {
-	const [row] = await db()<
-		{ config_json: Config | null }[]
-	>`select config_json from project where id = ${project.id}`;
+	// One round trip: the config, and the files on its main branch.
+	const [row] = await db()<{ config_json: Config | null; paths: string[] }[]>`
+		select p.config_json, coalesce((
+			select array_agg(f.path) from ref_file f
+			where f.project_id = p.id and f.ref_name = coalesce(p.config_json->>'main', 'main')
+		), '{}') as paths
+		from project p where p.id = ${project.id}`;
 	const config = withDefaults(row?.config_json ?? null, project.repo);
-	const files = await db()<{ path: string }[]>`
-		select path from ref_file where project_id = ${project.id} and ref_name = ${config.main}`;
+	const files = (row?.paths ?? []).map((path) => ({ path }));
 	const path = file
 		? files.some((f) => f.path === file)
 			? file
@@ -59,10 +62,10 @@ export async function edit(
 	base: string | null,
 	file: string | null = null
 ): Promise<EditResult> {
-	const t = await target(project, file);
+	const [t, batching] = await Promise.all([target(project, file), batchPref(user.id)]);
 	const itemId = op.op === 'add' ? op.item.id : op.id;
 	// Batch mode (PM25): the project allows it and this person chose it.
-	if (t.batchEdits && (await batchPref(user.id)))
+	if (t.batchEdits && batching)
 		return { kind: 'queued', count: await queue(project.id, user.id, op, base, file) };
 	return perform(user, project, t, (gh) => applyEdit(gh, t, op, base), { op: op.op, item: itemId });
 }
