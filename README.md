@@ -147,7 +147,7 @@ Then, on the App's page:
 | `TOKEN_ENCRYPTION_KEY` | encrypts users' refresh tokens (`openssl rand -base64 32`) |
 | `BOOTSTRAP_ADMIN_GITHUB_LOGIN` | your GitHub login: the first person to sign in with it becomes the administrator |
 | `CRON_SECRET` | protects the daily sync; Vercel sends it, so set the same value there |
-| `INFERENCE_PROVIDER`, `INFERENCE_MODEL`, `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`, `INFERENCE_DAILY_TOKEN_LIMIT` | optional: a model (`ollama`, `openai` or `anthropic`) that proposes a status for items with no meta line, shown as *inferred*. Ollama needs `INFERENCE_BASE_URL`; the others need `INFERENCE_API_KEY`. Unset, it is off. Each project may use 50 000 tokens a day unless you set a limit |
+| `INFERENCE_PROVIDER`, `INFERENCE_MODEL`, `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`, `INFERENCE_DAILY_TOKEN_LIMIT` | optional: a model (`ollama`, `openai` or `anthropic`) that proposes a status for items with no meta line, shown as *inferred*. Local Ollama needs `INFERENCE_BASE_URL`; Ollama cloud needs only `INFERENCE_API_KEY` (the address defaults to `https://ollama.com`); the others need `INFERENCE_API_KEY`. Unset, it is off. Each project may use 50 000 tokens a day unless you set a limit |
 
 ### 4. Create the tables and run it
 

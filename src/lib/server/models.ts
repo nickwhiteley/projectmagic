@@ -43,12 +43,14 @@ export function modelFromEnv(env: {
 	const provider = env.provider as Provider | undefined;
 	if (!provider) return null;
 	if (provider === 'ollama') {
-		if (!env.baseUrl) return null;
+		// Ollama's cloud is https://ollama.com and takes an API key; a local Ollama needs the address and no key.
+		const baseUrl = env.baseUrl ?? (env.apiKey ? 'https://ollama.com' : undefined);
+		if (!baseUrl) return null;
 		return {
 			provider,
 			model: env.model ?? DEFAULT_MODEL.ollama,
-			baseUrl: env.baseUrl,
-			apiKey: null
+			baseUrl,
+			apiKey: env.apiKey ?? null
 		};
 	}
 	if (!env.apiKey) return null;
@@ -88,7 +90,7 @@ export function completer(cfg: ModelConfig, f: typeof fetch = fetch): Complete {
 				eval_count?: number;
 			}>(
 				`${base}/api/chat`,
-				{},
+				cfg.apiKey ? { authorization: `Bearer ${cfg.apiKey}` } : {},
 				{
 					model: cfg.model,
 					stream: false,
