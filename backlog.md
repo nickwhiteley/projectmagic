@@ -117,7 +117,7 @@ main gets one commit for the batch.
 Note the decision to store changes in the database or local browser storage needs to be made at design time.
 
 ### PM22 Make the item form explain itself, and add Type
-**Status:** todo · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
 Raised by Nick on 2026-10-15: the add item screen has no **Type**, and **Job** and **Plan tasks**
 don't say what they are.
