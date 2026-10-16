@@ -81,7 +81,7 @@ the bottom of the Done tab. A `dropped` status, for deletes made outside Project
 until it is needed.
 
 ### PM25 Batch edits: save several changes as one commit
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Branch:** `feat/pm25-batch-edits` · **Size:** M · **Type:** feature · **For:** agent
 
 Asked for by Nick on 2026-10-15. Every edit is its own commit, PR and squash merge on GitHub
 (§10.2), which takes seconds and adds one commit to main per click. Several small changes in a
