@@ -116,11 +116,6 @@ main gets one commit for the batch.
 
 Note the decision to store changes in the database or local browser storage needs to be made at design time.
 
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
-
 ### PM1 Epics
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
@@ -216,6 +211,11 @@ Built: `Type:` (any value; `bug` gets a red tag), `Found:` and `Raised:` show on
 the List and the Board filter by Type when the project uses it. **Left for PM29:** the optional
 `bugs.md` second backlog file with a `BUG` prefix, and a separate bug lane on the Board (the Type
 filter covers showing only bugs).
+
+### PM31 New test item
+**Status:** todo
+
+See if batching works.  Foo, baa, moo
 
 ### PM29 Bugs: a `bugs.md` file and a bug lane on the Board
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
