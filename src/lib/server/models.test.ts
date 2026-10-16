@@ -19,6 +19,17 @@ describe('modelFromEnv', () => {
 			apiKey: null
 		});
 	});
+	it('takes Ollama cloud from its key alone, and sends the key', async () => {
+		const cfg = modelFromEnv({ provider: 'ollama', apiKey: 'k' })!;
+		expect(cfg).toMatchObject({ baseUrl: 'https://ollama.com', apiKey: 'k' });
+		let auth: string | null = null;
+		const f = (async (_u: string, init: RequestInit) => {
+			auth = new Headers(init.headers).get('authorization');
+			return new Response(JSON.stringify({ message: { content: 'x' } }));
+		}) as unknown as typeof fetch;
+		await completer(cfg, f)('s', 'u');
+		expect(auth).toBe('Bearer k');
+	});
 	it('takes OpenAI and Anthropic from their key', () => {
 		expect(modelFromEnv({ provider: 'openai', apiKey: 'k' })).toMatchObject({
 			baseUrl: 'https://api.openai.com',

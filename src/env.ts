@@ -43,7 +43,7 @@ export const variables = defineEnvVars({
 	},
 	INFERENCE_MODEL: { schema: optional },
 	INFERENCE_BASE_URL: { schema: optional, description: 'Ollama: http://host:11434' },
-	INFERENCE_API_KEY: { schema: optional, description: 'OpenAI or Anthropic' },
+	INFERENCE_API_KEY: { schema: optional, description: 'OpenAI, Anthropic or Ollama cloud' },
 	INFERENCE_DAILY_TOKEN_LIMIT: {
 		schema: (value) => {
 			const n = Number(optional(value) ?? 50_000);
