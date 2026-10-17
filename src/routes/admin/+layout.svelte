@@ -15,6 +15,7 @@
 			{ href: '/admin/users', label: 'Users' },
 			{ href: '/admin/installations', label: 'Installations' },
 			{ href: '/admin/settings', label: 'Settings' },
+			{ href: '/admin/feedback', label: 'Feedback' },
 			{ href: '/admin/audit', label: 'Audit' }
 		]}
 	/>
