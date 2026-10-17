@@ -518,3 +518,13 @@ Such as BitBucket
 **Status:** todo · **Size:** M · **For:** agent
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
+
+### PM33 Auto initialise a repo
+**Status:** todo
+
+Automatic creation of backlog.md, bug.md and project magic.yml when a new repo is added to the app.
+
+### PM34 Mobile view
+**Status:** todo
+
+Cluttered and body text box is too narrow
