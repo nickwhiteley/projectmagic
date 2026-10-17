@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
+	import { goto } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { STATUS_NOTICE } from '#lib/core/tenants.ts';
 	import type { LayoutProps } from './$types';
@@ -30,18 +31,36 @@
 				<span class="mark">M</span>
 				<span>Project Magic</span>
 			</a>
-			<nav aria-label="Views">
+			<nav aria-label="Views" class="views">
 				<a
 					href="/"
 					aria-current={path === '/' ? 'page' : undefined}
 					aria-busy={busy('/') && going === '/' ? true : undefined}>Overview</a
 				>
-				<a href="/activity" aria-current={path === '/activity' ? 'page' : undefined}>Activity</a>
+				<a
+					class="wide-only"
+					href="/activity"
+					aria-current={path === '/activity' ? 'page' : undefined}>Activity</a
+				>
 				<a href="/search" aria-current={path === '/search' ? 'page' : undefined}>Search</a>
 				{#if data.ai}<a href="/ask" aria-current={path === '/ask' ? 'page' : undefined}>Ask</a>{/if}
 			</nav>
 			<div class="label group">Projects</div>
-			<nav aria-label="Projects">
+			<select
+				class="project-select"
+				aria-label="Project"
+				onchange={(e) => void goto(e.currentTarget.value)}
+			>
+				<option value="/" selected={!path.startsWith('/p/')}>Projects…</option>
+				{#each data.projects as p (p.param)}
+					<option
+						value="/p/{p.param}"
+						selected={path === `/p/${p.param}` || path.startsWith(`/p/${p.param}/`)}
+						>{p.name}</option
+					>
+				{/each}
+			</select>
+			<nav aria-label="Projects" class="projects">
 				{#each data.projects as p (p.param)}
 					<a
 						href="/p/{p.param}"
@@ -162,6 +181,14 @@
 		background: var(--text);
 		color: var(--bg);
 		font: 700 18px var(--serif);
+	}
+	.project-select {
+		display: none;
+		width: 100%;
+		border: 1px solid var(--line-strong);
+		background: var(--card);
+		border-radius: var(--radius);
+		padding: 0.4rem 0.5rem;
 	}
 	nav {
 		display: flex;
@@ -326,16 +353,36 @@
 		.brand {
 			padding-bottom: 0.5rem;
 		}
-		aside nav {
-			flex-direction: row;
+		aside {
+			display: flex;
 			flex-wrap: wrap;
-			margin-bottom: 0.3rem;
+			align-items: center;
+			gap: 0.2rem 0.5rem;
 		}
-		.group {
+		.brand {
+			padding: 0 0.4rem 0;
+		}
+		aside nav.views {
+			flex-direction: row;
+			margin: 0;
+		}
+		.wide-only,
+		.projects,
+		.group,
+		header form[role='search'] {
 			display: none;
+		}
+		.project-select {
+			display: block;
+			flex-basis: 100%;
 		}
 		header {
 			flex-wrap: wrap;
+			position: static;
+		}
+		.who {
+			flex-wrap: wrap;
+			gap: 0.5rem;
 		}
 		header,
 		main {

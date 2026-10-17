@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
 	import EpicFilter from '#lib/components/EpicFilter.svelte';
+	import FilterBar from '#lib/components/FilterBar.svelte';
 	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago } from '#lib/format.ts';
@@ -80,22 +81,24 @@
 		Columns come from the files and branches, so cards move when the work does. Lanes are the
 		backlog’s sections, in order.
 	</p>
-	{#if data.types.length}
-		<label
-			>Type
-			<select value={type} onchange={(e) => setFilter('type', e.currentTarget.value)}>
-				<option value="">all</option>
-				{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
-			</select>
-		</label>
-	{/if}
-	<EpicFilter value={epic} epics={data.epics} onchange={(v) => setFilter('epic', v)} />
-	<AssigneeFilter
-		value={assignee}
-		assignees={data.assignees}
-		signedIn={!!page.data.user}
-		onchange={(v) => setFilter('for', v)}
-	/>
+	<FilterBar active={[type, epic, assignee].filter(Boolean).length}>
+		{#if data.types.length}
+			<label
+				>Type
+				<select value={type} onchange={(e) => setFilter('type', e.currentTarget.value)}>
+					<option value="">all</option>
+					{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
+				</select>
+			</label>
+		{/if}
+		<EpicFilter value={epic} epics={data.epics} onchange={(v) => setFilter('epic', v)} />
+		<AssigneeFilter
+			value={assignee}
+			assignees={data.assignees}
+			signedIn={!!page.data.user}
+			onchange={(v) => setFilter('for', v)}
+		/>
+	</FilterBar>
 </div>
 
 {#if ask}

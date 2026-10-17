@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { ago } from '#lib/format.ts';
 	import type { LayoutProps } from './$types';
@@ -90,7 +90,7 @@
 					<button class="button">Save now</button>
 				</form>
 			{/if}
-			<form method="POST" action="/settings/batch">
+			<form method="POST" action="/settings/batch" class="batch-toggle">
 				<input type="hidden" name="on" value={b.mine ? '0' : '1'} />
 				<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
 				<button
@@ -122,6 +122,17 @@
 		</ul>
 	{/if}
 {/if}
+
+<select
+	class="tabs-select"
+	aria-label="View"
+	value={tabs.find((t) => !t.hide && current(t.href))?.href ?? base}
+	onchange={(e) => void goto(e.currentTarget.value)}
+>
+	{#each tabs.filter((t) => !t.hide) as t (t.href)}
+		<option value={t.href}>{t.label}{t.count !== undefined ? ` (${t.count})` : ''}</option>
+	{/each}
+</select>
 
 <nav class="tabs" aria-label="Project">
 	{#each tabs.filter((t) => !t.hide) as t (t.href)}
@@ -236,6 +247,29 @@
 		color: var(--text);
 		border-bottom-color: var(--text);
 		font-weight: 500;
+	}
+	.tabs-select {
+		display: none;
+		width: 100%;
+		margin: 1rem 0 1.25rem;
+		border: 1px solid var(--line-strong);
+		background: var(--card);
+		border-radius: var(--radius);
+		padding: 0.45rem 0.6rem;
+	}
+	@media (max-width: 760px) {
+		.tabs {
+			display: none;
+		}
+		.tabs-select {
+			display: block;
+		}
+		.batch-toggle {
+			display: none;
+		}
+		.head h1 {
+			font-size: 28px;
+		}
 	}
 	.count {
 		font: 11px var(--mono);

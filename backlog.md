@@ -224,7 +224,7 @@ This feature will need a full admin screen implementation.
 Look at plinth for help
 
 ### PM34 Mobile view
-**Status:** in progress · **Size:** S · **For:** agent
+**Status:** built · **Size:** S · **For:** agent
 
 The Project Magic site is cluttered on a mobile/small screen. Can elements be consolidated into lists?  Available projects in a dropdown, hide Activity so Overview, search, ask all appear next to the logo. Hide batch edits botton. List, Board, Plan, Done, Delivery, Branches, Docs as a dropdown list. Filters as an expanding list.
 
