@@ -536,3 +536,8 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
 **Status:** todo · **Size:** M–L
 
 Such as BitBucket
+
+### PM36 Cross repo virtual backlog
+**Status:** todo
+
+Projects can affect multiple repos. Manage cross repo changes through a single board.
