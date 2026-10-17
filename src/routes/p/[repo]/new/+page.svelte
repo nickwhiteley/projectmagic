@@ -93,6 +93,7 @@
 		border-radius: 10px;
 		padding: 1rem 1.2rem;
 		max-width: 60rem;
+		align-items: stretch;
 	}
 	.where {
 		display: flex;

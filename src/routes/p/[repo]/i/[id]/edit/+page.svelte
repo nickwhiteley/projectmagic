@@ -1,13 +1,28 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import ItemForm from '#lib/components/ItemForm.svelte';
 
 	let { data, form } = $props();
 	const repo = $derived(page.params.repo!);
 	const id = $derived(page.params.id!);
-	const values = $derived(form?.values ?? data.values);
-	const base = $derived(form?.base ?? data.base);
+	// The form keeps what it opened with. A background reload (the batch timer, a sync) hands this page
+	// new data, and rebuilding the boxes from it would wipe what is being typed and swap the conflict
+	// base for a newer one. So it is taken again only for another item, or on reopening after a refusal.
+	// svelte-ignore state_referenced_locally
+	let opened = $state.raw({ id, values: data.values, base: data.base, hadForm: false });
+	$effect.pre(() => {
+		const hasForm = !!form;
+		const o = untrack(() => opened);
+		if (id !== o.id || (o.hadForm && !hasForm)) {
+			opened = { id, values: data.values, base: data.base, hadForm: false };
+		} else if (hasForm !== o.hadForm) {
+			opened = { ...o, hadForm: hasForm };
+		}
+	});
+	const values = $derived(form?.values ?? opened.values);
+	const base = $derived(form?.base ?? opened.base);
 	const conflict = $derived(form?.conflict ?? null);
 	const others = $derived(data.items.filter((i) => i.id !== id));
 	let removing = $state(false);
@@ -137,6 +152,7 @@
 		padding: 1rem 1.2rem;
 		margin-bottom: 1rem;
 		max-width: 60rem;
+		align-items: stretch;
 	}
 	.foot {
 		display: flex;
