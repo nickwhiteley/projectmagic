@@ -17,6 +17,7 @@ import { parseProgress } from '#lib/core/progress.ts';
 import type { PrInfo } from '#lib/core/state.ts';
 import type postgres from 'postgres';
 import type { GitHubClient } from './github-client.ts';
+import type { InitResult, NewRepo } from './init-repo.ts';
 import { applyProjectLimit } from './plan-queries.ts';
 
 type Sql = postgres.Sql;
@@ -548,6 +549,7 @@ interface InstalledRepo {
 	name: string;
 	owner: { login: string };
 	archived: boolean;
+	default_branch: string;
 }
 
 interface AppInstallation {
@@ -563,7 +565,9 @@ interface AppInstallation {
 export async function syncInstallations(
 	asApp: GitHubClient,
 	forInstallation: (id: number) => GitHubClient,
-	sql: Sql
+	sql: Sql,
+	/** Sets up a repository the first time it is seen (PM33); called with the installation's client. */
+	initialise?: (gh: GitHubClient, repo: NewRepo) => Promise<InitResult>
 ): Promise<number> {
 	const seen: number[] = [];
 	const listed: number[] = [];
@@ -601,11 +605,27 @@ export async function syncInstallations(
 				const page: { body: { repositories: InstalledRepo[] }; next: string | null } =
 					await gh.rest<{ repositories: InstalledRepo[] }>(url);
 				for (const r of page.body.repositories) {
-					await sql`insert into project (github_repo_id, owner, repo, installation_id, tenant_id)
+					const [row] = await sql<{ initialised_at: Date | null }[]>`
+						insert into project (github_repo_id, owner, repo, installation_id, tenant_id)
 						values (${r.id}, ${r.owner.login}, ${r.name}, ${inst.id}, ${tenantId})
 						on conflict (github_repo_id) do update set owner = excluded.owner, repo = excluded.repo,
-							installation_id = excluded.installation_id, tenant_id = excluded.tenant_id`;
+							installation_id = excluded.installation_id, tenant_id = excluded.tenant_id
+						returning initialised_at`;
 					seen.push(r.id);
+					// A repository not set up yet is, unless it is archived (nobody is working in it).
+					if (initialise && row && !row.initialised_at && !r.archived) {
+						try {
+							const state = await initialise(gh, {
+								owner: r.owner.login,
+								repo: r.name,
+								defaultBranch: r.default_branch
+							});
+							if (state === 'done')
+								await sql`update project set initialised_at = now() where github_repo_id = ${r.id}`;
+						} catch (e) {
+							console.error('set up repository', r.owner.login, r.name, e);
+						}
+					}
 				}
 				url = page.next;
 			}

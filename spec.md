@@ -356,6 +356,18 @@ Results are immutable per commit, so they are cached forever.
 all done but which is still on main is shown with a hint: "all plan tasks done; still in
 backlog".
 
+### 7.3a Setting up a new repository (PM33)
+
+The first time a sync sees a repository (`project.initialised_at` is null), and it is not archived,
+the App adds what is missing from its root: `backlog.md`, `bugs.md` and `.projectmagic.yml`. A repository with a backlog already (`backlog.md` or
+`BACKLOG.md`) gets only `.projectmagic.yml`; an existing file is never changed. They are committed
+to the `projectmagic` branch as the App, and a PR is opened and squash-merged at once, whatever the
+project's `auto_merge`, because selecting the repository in the App is the consent. A refused merge
+leaves the PR open and is not retried. An empty repository, or a `projectmagic` branch already in
+use, defers the work to the next sync. Projects that existed when migration 013 ran are marked as
+set up. The config is every key commented out at its default, with `new_id_prefix` set to the
+repository's initials (the first two letters if its name is one word).
+
 ### 7.4 Freshness
 
 - **Webhooks are the primary mechanism.** `push`, `pull_request`, `create` and `delete` mark a

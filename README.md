@@ -192,9 +192,17 @@ changes that for a hosted service (`specs/tenants.md`).
 
 1. **Install the GitHub App** on it (*Tenant → Installations → Connect GitHub*, or the App's page →
    *Configure* for an account already connected). It appears on the overview after the next sync.
+   **Choosing a repository in the App is consent for Project Magic to commit to it.** The first
+   time it sees a repository (not an archived one; forks are included) it opens a pull request
+   from the `projectmagic` branch and **merges it at once, with no review**. The PR adds whichever
+   of these are missing: `backlog.md`, `bugs.md` and `.projectmagic.yml` (every default commented
+   out, and `new_id_prefix` set to the repository's initials, such as `FM` for `furniture-magic`).
+   A repository that already has a backlog gets only `.projectmagic.yml`, and nothing that exists
+   is changed. If branch protection refuses the merge, the PR is left open for you to merge. An
+   empty repository is set up once it has a first commit.
 2. **Add the conventions** to its agent instructions and, if it has a backlog already, migrate it
    (`specs/conventions.md`).
-3. **Optionally, add `.projectmagic.yml`** at its root. Every key has a default:
+3. **Optionally, edit `.projectmagic.yml`** at its root (step 1 adds it). Every key has a default:
 
    ```yaml
    name: Orchard              # shown in Project Magic; default: the repository's name

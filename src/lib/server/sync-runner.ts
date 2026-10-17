@@ -7,6 +7,7 @@ import { settle } from './settle.ts';
 import { asApp, installationClient } from './github-app.ts';
 import { inferProject } from './inference.ts';
 import { forgetState } from './project-state.ts';
+import { initialiseRepo } from './init-repo.ts';
 import { syncInstallations, syncProject, type SyncSummary } from './sync.ts';
 
 /** A sync that has run this long is presumed dead, and another may start. */
@@ -119,7 +120,7 @@ export function syncInBackground(projectId: string): void {
 }
 
 export async function syncProjectList(): Promise<number> {
-	return syncInstallations(asApp(), installationClient, db());
+	return syncInstallations(asApp(), installationClient, db(), initialiseRepo);
 }
 
 /** After a claim: list the installation's repositories as projects, then sync each. */

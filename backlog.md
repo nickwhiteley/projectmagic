@@ -236,9 +236,16 @@ Body text box is too narrow (fixed by agent just now but not merged)
 Add feedback smiley face buttons and feedback box like in Bloomprint. Perhaps add to plinth as it is  going to be used by several projects.
 
 ### PM33 Auto initialise a repo
-**Status:** todo
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **For:** person.nickwhiteley
 
 Automatic creation of backlog.md, bug.md and project magic.yml when a new repo is added to the app.
+
+Decided with Nick on 2026-10-17: the files are `backlog.md`, `bugs.md` and `.projectmagic.yml`. They
+are added by a PR from `projectmagic` that is merged at once, and the install docs say so. Existing
+files are never touched; a repo with a backlog gets only `.projectmagic.yml`. Every repo selected in
+the App is set up, archived ones excepted and forks included. The templates are an empty backlog and
+bugs file, and a config of commented-out defaults with `new_id_prefix` set to the repo's initials.
+Needs migration 013. Spec §7.3a.
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
