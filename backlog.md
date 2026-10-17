@@ -231,7 +231,7 @@ The Project Magic site is cluttered on a mobile/small screen. Can elements be co
 Body text box is too narrow (fixed by agent just now but not merged)
 
 ### PM35 Feedback button
-**Status:** built
+**Status:** done
 
 Add feedback smiley face buttons and feedback box like in Bloomprint. Perhaps add to plinth as it is  going to be used by several projects.
 
