@@ -528,3 +528,8 @@ Automatic creation of backlog.md, bug.md and project magic.yml when a new repo i
 **Status:** todo
 
 Cluttered and body text box is too narrow
+
+### PM35 Feedback button
+**Status:** todo
+
+Feedback buttons and box like in Bloomprint. Perhaps add to plinth.
