@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import AssigneeFilter from '#lib/components/AssigneeFilter.svelte';
 	import EpicFilter from '#lib/components/EpicFilter.svelte';
+	import FilterBar from '#lib/components/FilterBar.svelte';
 	import ItemRow from '#lib/components/ItemRow.svelte';
 	import { assigneeFilter, assigneeMatches } from '#lib/core/assignee.ts';
 	import { dragHandlers, type MoveState } from '#lib/move.ts';
@@ -123,45 +124,49 @@
 {:else}
 	<div class="tools">
 		<p class="muted small">In the file’s order, which is its priority.</p>
-		<label
-			>Status
-			<select value={status} onchange={(e) => filter('status', e.currentTarget.value)}>
-				<option value="">all</option>
-				{#each STATUS_ORDER as s (s)}<option value={s}>{s}</option>{/each}
-			</select>
-		</label>
-		<label
-			>Job
-			<select value={job} onchange={(e) => filter('job', e.currentTarget.value)}>
-				<option value="">all</option>
-				{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
-			</select>
-		</label>
-		<label
-			><input
-				type="checkbox"
-				checked={showDone}
-				disabled={!!status}
-				onchange={(e) => toggleDone(e.currentTarget.checked)}
-			/>
-			Show done {#if data.doneCount}<span class="muted">({data.doneCount})</span>{/if}
-		</label>
-		{#if data.types.length}
+		<FilterBar
+			active={[status, job, epic, type, assignee].filter(Boolean).length + (showDone ? 1 : 0)}
+		>
 			<label
-				>Type
-				<select value={type} onchange={(e) => filter('type', e.currentTarget.value)}>
+				>Status
+				<select value={status} onchange={(e) => filter('status', e.currentTarget.value)}>
 					<option value="">all</option>
-					{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
+					{#each STATUS_ORDER as s (s)}<option value={s}>{s}</option>{/each}
 				</select>
 			</label>
-		{/if}
-		<EpicFilter value={epic} epics={data.epics} onchange={(v) => filter('epic', v)} />
-		<AssigneeFilter
-			value={assignee}
-			assignees={data.assignees}
-			signedIn={!!page.data.user}
-			onchange={(v) => filter('for', v)}
-		/>
+			<label
+				>Job
+				<select value={job} onchange={(e) => filter('job', e.currentTarget.value)}>
+					<option value="">all</option>
+					{#each data.jobs as j (j)}<option value={j}>{j}</option>{/each}
+				</select>
+			</label>
+			<label
+				><input
+					type="checkbox"
+					checked={showDone}
+					disabled={!!status}
+					onchange={(e) => toggleDone(e.currentTarget.checked)}
+				/>
+				Show done {#if data.doneCount}<span class="muted">({data.doneCount})</span>{/if}
+			</label>
+			{#if data.types.length}
+				<label
+					>Type
+					<select value={type} onchange={(e) => filter('type', e.currentTarget.value)}>
+						<option value="">all</option>
+						{#each data.types as t (t)}<option value={t}>{t}</option>{/each}
+					</select>
+				</label>
+			{/if}
+			<EpicFilter value={epic} epics={data.epics} onchange={(v) => filter('epic', v)} />
+			<AssigneeFilter
+				value={assignee}
+				assignees={data.assignees}
+				signedIn={!!page.data.user}
+				onchange={(v) => filter('for', v)}
+			/>
+		</FilterBar>
 		{#if page.data.project.canEdit}
 			<a class="button" href="/p/{repo}/new">Add item</a>
 			<a class="button" href="/p/{repo}/new?bug=1">Add bug</a>
