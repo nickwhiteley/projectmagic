@@ -226,7 +226,8 @@ Look at plinth for help
 ### PM34 Mobile view
 **Status:** todo
 
-Cluttered and body text box is too narrow
+Cluttered on a mobile/small screen in the list view, and probably others. Can elements be consolidated into lists?  
+Body text box is too narrow (fixed by agent just now but not merged)
 
 ### PM35 Feedback button
 **Status:** todo
