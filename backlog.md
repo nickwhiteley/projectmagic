@@ -128,6 +128,116 @@ The Epics tab lists each epic with a bar by status, its items and the ones that 
 and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
 epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
 
+### PM28 Epics: an `epics.md` file and an Epic field on the item form
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+
+What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
+description and an optional target, so the sync fetches and caches that file and the Epics tab
+shows the description and target. The add and edit forms get an *Epic* field that suggests the
+declared epics, so a person can set it without editing the file.
+
+Built: the `epics` key in `.projectmagic.yml` (default `epics.md`, `null` to not read one). Each
+`###` or `##` heading `EP3 Title` in it declares an epic, the text under it is the description (as
+markdown), and a `**Target:** …` line, or a `Target` key on a meta line, is the target. The sync
+reads it from `main` only, and the Epics tab shows both. An epic declared in both files takes its
+title from `backlog.md` and its description and target from `epics.md`; one declared only in
+`epics.md` still appears. The add and edit forms have an *Epic* field with the declared epics as
+suggestions; it accepts `EP` and a number, and clearing it removes the key.
+
+### PM6 Edit `PROGRESS.md` status cells and docs
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+
+The item was a title only; this is what I took it to mean (`spec.md` §13). Say if it should be less
+or more.
+
+Built:
+
+- **Plan status cells**: each task on the Plan page has an *Edit* (for editors) with the status
+  and a note. It rewrites only that cell in `PROGRESS.md`: a bold word stays bold, the note after
+  it stays unless changed, a pipe in a note is escaped, and a number repeated across tables edits
+  the current row. If the cell changed on main since the page was shown, it is a conflict.
+- **Documents**: a document on main has an *Edit* (`/p/<repo>/edit-doc/<path>`) with its text in a
+  box, saved whole, as one commit. Only the project's `docs` files, at most 1 MB; files with
+  Windows line endings keep them. A change on main since it was opened is a conflict, offering
+  your text over the new version.
+- Both go through the same path as backlog edits (the `projectmagic` branch, merged at once, the
+  edit log, the pending-PR rules).
+- **Not built**: a document editor with a preview, and creating or deleting documents or plan
+  tasks.
+
+### PM8 Mermaid in rendered docs
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+
+Built: a ```mermaid fence is drawn in the browser by Mermaid 11.17.2 with its strict security
+level, loaded only on a page that has a diagram. A diagram with an error keeps its source and
+says what is wrong. `npm audit` reports two low-severity advisories for Mermaid's KaTeX
+dependency; the fix is Mermaid 12.2.0, released on 2026-10-13, which is worth taking once it has
+aged.
+
+### PM20 Tenants: one Project Magic for many teams
+**Status:** built · **Waiting:** Nick's check · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
+
+**Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
+scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
+its questions on 2026-10-16 (its §15).
+
+**Phase 1 (the tenant model and scoping) is merged** (#61); phase 2 (sign-up, installation claims and the admin screens) is merged (#62); phase 3 (members and access, with PM7) is merged (#63); phase 4 (tiers, quotas and billing) is built on `feat/pm20-tiers-billing`, so all four phases are in. See `specs/tenants.md` §14
+for what each phase settled. 
+
+**PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
+disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or
+Project Magic, and whether plinth helps: fixed roles, not RBAC (§6.4); project roles from GitHub
+permissions by default, managed in Project Magic as an option (§6.1, §6.2); plinth's designs, not its
+code (§10).
+
+Anyone could set up Project Magic for their own organisation and invite their colleagues,
+without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
+credentials are environment variables, and every installation's repositories belong to it.
+
+There are two ways to do it, and the choice decides most of the work:
+
+- **One public GitHub App that any organisation installs.** Each installation becomes an
+  organisation in Project Magic. Projects are already keyed by `installation_id`, so this mostly
+  adds an `organisation` table, ties memberships and projects to it, and scopes every query and
+  `can()` check to the signed-in user's organisations. No secrets are stored per organisation.
+- **Each organisation registers its own GitHub App** and its id, private key and webhook secret
+  are stored in the database, encrypted. More isolation, but every organisation does the App
+  set-up from the README, and the app has to route webhooks and sign tokens per organisation.
+
+The first draft put PM7's invitations before it. The spec reverses that: tenants come first, and
+invitations are its phase 3.
+
+**Questions for Nick:**
+
+- **Hosted or self-hosted?** Is this a service you run for other people, or a self-hosted copy
+  that serves several organisations? A hosted service brings billing, terms, privacy and support,
+  and changes what the README promises ("it runs on your own accounts"). - Both options.  Primary is hosted with the Github login telling us what they have access to. The repo is still open source.
+- **One App or one per organisation?** The first is much less work; is there a reason to need
+  the second? - One app
+- **Can a person belong to more than one organisation?** And who creates one: anyone who signs
+  in, or only people you approve? - This would probably work but is not the intended approach.
+- **Does single-owner self-hosting stay supported** as it is today? - Yes
+
+Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment as a stub, particularly for tiers with AI model access and large numbers of users.
+
+This feature will need a full admin screen implementation.
+Look at plinth for help
+
+### PM34 Mobile view
+**Status:** todo
+
+Cluttered and body text box is too narrow
+
+### PM35 Feedback button
+**Status:** todo
+
+Feedback buttons and box like in Bloomprint. Perhaps add to plinth.
+
+### PM33 Auto initialise a repo
+**Status:** todo
+
+Automatic creation of backlog.md, bug.md and project magic.yml when a new repo is added to the app.
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
@@ -183,22 +293,6 @@ So going public is one of: delete the repository and push the rewritten history 
 the same name (losing the PR history; the GitHub App is reinstalled and Vercel reconnected, since
 the repository's id changes), or keep this one private as the full record and publish the
 rewritten history as a new repository under another name. Nick chooses when the time comes.
-
-### PM28 Epics: an `epics.md` file and an Epic field on the item form
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
-
-What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
-description and an optional target, so the sync fetches and caches that file and the Epics tab
-shows the description and target. The add and edit forms get an *Epic* field that suggests the
-declared epics, so a person can set it without editing the file.
-
-Built: the `epics` key in `.projectmagic.yml` (default `epics.md`, `null` to not read one). Each
-`###` or `##` heading `EP3 Title` in it declares an epic, the text under it is the description (as
-markdown), and a `**Target:** …` line, or a `Target` key on a meta line, is the target. The sync
-reads it from `main` only, and the Epics tab shows both. An epic declared in both files takes its
-title from `backlog.md` and its description and target from `epics.md`; one declared only in
-`epics.md` still appears. The add and edit forms have an *Epic* field with the declared epics as
-suggestions; it accepts `EP` and a number, and clearing it removes the key.
 
 ### PM2 Bug items
 **Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
@@ -292,41 +386,6 @@ sync caches only a branch's head, and an item that shipped shows once, with its 
 no item links to are listed under "not linked to an item". Project Magic's own edits and
 deployment branches are left out. A full commit history would need the sync to cache commits.
 
-### PM6 Edit `PROGRESS.md` status cells and docs
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
-
-The item was a title only; this is what I took it to mean (`spec.md` §13). Say if it should be less
-or more.
-
-Built:
-
-- **Plan status cells**: each task on the Plan page has an *Edit* (for editors) with the status
-  and a note. It rewrites only that cell in `PROGRESS.md`: a bold word stays bold, the note after
-  it stays unless changed, a pipe in a note is escaped, and a number repeated across tables edits
-  the current row. If the cell changed on main since the page was shown, it is a conflict.
-- **Documents**: a document on main has an *Edit* (`/p/<repo>/edit-doc/<path>`) with its text in a
-  box, saved whole, as one commit. Only the project's `docs` files, at most 1 MB; files with
-  Windows line endings keep them. A change on main since it was opened is a conflict, offering
-  your text over the new version.
-- Both go through the same path as backlog edits (the `projectmagic` branch, merged at once, the
-  edit log, the pending-PR rules).
-- **Not built**: a document editor with a preview, and creating or deleting documents or plan
-  tasks.
-
-### PM31 New test item
-**Status:** todo
-
-See if batching works.  Foo, baa, moo
-
-### PM8 Mermaid in rendered docs
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
-
-Built: a ```mermaid fence is drawn in the browser by Mermaid 11.17.2 with its strict security
-level, loaded only on a page that has a diagram. A diagram with an error keeps its source and
-says what is wrong. `npm audit` reports two low-severity advisories for Mermaid's KaTeX
-dependency; the fix is Mermaid 12.2.0, released on 2026-10-13, which is worth taking once it has
-aged.
-
 ### PM21 Images in rendered docs
 **Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
@@ -417,55 +476,6 @@ than only hiding it: a project page reads the cached state from Postgres and sho
 GitHub on the way, so measure the load on Vercel (cold starts, Neon's connection, building the
 project's state) and fix what dominates.
 
-### PM20 Tenants: one Project Magic for many teams
-**Status:** built · **Waiting:** Nick's check · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
-
-**Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
-scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
-its questions on 2026-10-16 (its §15).
-
-**Phase 1 (the tenant model and scoping) is merged** (#61); phase 2 (sign-up, installation claims and the admin screens) is merged (#62); phase 3 (members and access, with PM7) is merged (#63); phase 4 (tiers, quotas and billing) is built on `feat/pm20-tiers-billing`, so all four phases are in. See `specs/tenants.md` §14
-for what each phase settled. 
-
-**PM7 is folded in** as phase 3: invitations, the member list per project, changing a role and
-disabling a user. PM7 asked whether full RBAC should come first, whether roles come from GitHub or
-Project Magic, and whether plinth helps: fixed roles, not RBAC (§6.4); project roles from GitHub
-permissions by default, managed in Project Magic as an option (§6.1, §6.2); plinth's designs, not its
-code (§10).
-
-Anyone could set up Project Magic for their own organisation and invite their colleagues,
-without deploying their own copy. Today each deployment belongs to one person: the GitHub App's
-credentials are environment variables, and every installation's repositories belong to it.
-
-There are two ways to do it, and the choice decides most of the work:
-
-- **One public GitHub App that any organisation installs.** Each installation becomes an
-  organisation in Project Magic. Projects are already keyed by `installation_id`, so this mostly
-  adds an `organisation` table, ties memberships and projects to it, and scopes every query and
-  `can()` check to the signed-in user's organisations. No secrets are stored per organisation.
-- **Each organisation registers its own GitHub App** and its id, private key and webhook secret
-  are stored in the database, encrypted. More isolation, but every organisation does the App
-  set-up from the README, and the app has to route webhooks and sign tokens per organisation.
-
-The first draft put PM7's invitations before it. The spec reverses that: tenants come first, and
-invitations are its phase 3.
-
-**Questions for Nick:**
-
-- **Hosted or self-hosted?** Is this a service you run for other people, or a self-hosted copy
-  that serves several organisations? A hosted service brings billing, terms, privacy and support,
-  and changes what the README promises ("it runs on your own accounts"). - Both options.  Primary is hosted with the Github login telling us what they have access to. The repo is still open source.
-- **One App or one per organisation?** The first is much less work; is there a reason to need
-  the second? - One app
-- **Can a person belong to more than one organisation?** And who creates one: anyone who signs
-  in, or only people you approve? - This would probably work but is not the intended approach.
-- **Does single-owner self-hosting stay supported** as it is today? - Yes
-
-Note that Organisation is a Github term so could be confusing particularly as one person could have access to multiple linked Github organisations.  Project Magic should call them tenants. Settings are at tenant level and there are tenant admins as well as Project Magic platform admins (me!).  Tenant signup must support payment as a stub, particularly for tiers with AI model access and large numbers of users.
-
-This feature will need a full admin screen implementation.
-Look at plinth for help
-
 ### PM16 Assign items to a person or an agent, and filter by it
 **Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
@@ -518,18 +528,3 @@ Such as BitBucket
 **Status:** todo · **Size:** M · **For:** agent
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
-
-### PM33 Auto initialise a repo
-**Status:** todo
-
-Automatic creation of backlog.md, bug.md and project magic.yml when a new repo is added to the app.
-
-### PM34 Mobile view
-**Status:** todo
-
-Cluttered and body text box is too narrow
-
-### PM35 Feedback button
-**Status:** todo
-
-Feedback buttons and box like in Bloomprint. Perhaps add to plinth.
