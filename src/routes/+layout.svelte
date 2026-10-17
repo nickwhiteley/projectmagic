@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
+	import FeedbackButton from '#lib/components/FeedbackButton.svelte';
 	import { goto } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { STATUS_NOTICE } from '#lib/core/tenants.ts';
@@ -86,6 +87,7 @@
 					/>
 				</form>
 				<div class="who">
+					<FeedbackButton />
 					{#if data.ai}
 						<form method="POST" action="/settings/ai">
 							<input type="hidden" name="optOut" value={data.ai.optedOut ? '0' : '1'} />
