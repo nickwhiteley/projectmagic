@@ -43,7 +43,7 @@ describe.skipIf(!sql)('tenancy', () => {
 		await sql!`insert into membership (user_id, project_id, role) values (2, 1, 'viewer')`;
 		await sql!`insert into inference_usage values ('project:1', current_date, 100), ('project:2', current_date, 50)`;
 		await migrate('008_tenants.sql', '007_uninstalled.sql');
-		await migrate('011_tiers.sql', '008_tenants.sql');
+		await migrate('013_project_initialised.sql', '008_tenants.sql');
 	});
 	afterAll(() => sql?.end());
 
@@ -174,7 +174,8 @@ describe.skipIf(!sql)('tenancy', () => {
 			id,
 			name,
 			owner: { login: owner },
-			archived: false
+			archived: false,
+			default_branch: 'main'
 		});
 		const app = (installs: object[]): GitHubClient =>
 			({ rest: async () => ({ body: installs, next: null }) }) as unknown as GitHubClient;
@@ -210,6 +211,33 @@ describe.skipIf(!sql)('tenancy', () => {
 			expect(await sql!`select tenant_id::text from project where github_repo_id = 21`).toEqual([
 				{ tenant_id: ids.t2 }
 			]);
+		});
+
+		it('sets up a new repository once, skips an archived one, and retries a deferred one (PM33)', async () => {
+			const calls: string[] = [];
+			let answer: 'done' | 'deferred' = 'deferred';
+			const initialise = async (_gh: GitHubClient, r: { repo: string }) => {
+				calls.push(r.repo);
+				return answer;
+			};
+			const list = [
+				repo(20, 'acme', 'web'),
+				repo(23, 'acme-labs', 'web'),
+				repo(24, 'acme', 'fresh'),
+				{ ...repo(25, 'acme', 'old'), archived: true }
+			];
+			const run = () =>
+				sync.syncInstallations(app([inst(1, 'acme')]), forInstall({ 1: list }), sql!, initialise);
+			// Projects that already existed were marked by the migration; the archived one is left alone.
+			await sql!`update project set initialised_at = now()`;
+			await run();
+			expect(calls).toEqual(['fresh']);
+			await run();
+			expect(calls).toEqual(['fresh', 'fresh']);
+			answer = 'done';
+			await run();
+			await run();
+			expect(calls).toEqual(['fresh', 'fresh', 'fresh']);
 		});
 
 		it('marks an installation GitHub no longer lists as removed, and its projects uninstalled', async () => {
