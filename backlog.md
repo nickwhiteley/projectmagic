@@ -233,7 +233,7 @@ Body text box is too narrow (fixed by agent just now but not merged)
 ### PM35 Feedback button
 **Status:** todo
 
-Feedback buttons and box like in Bloomprint. Perhaps add to plinth.
+Add feedback smiley face buttons and feedback box like in Bloomprint. Perhaps add to plinth as it is  going to be used by several projects.
 
 ### PM33 Auto initialise a repo
 **Status:** todo
