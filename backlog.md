@@ -234,6 +234,8 @@ Body text box is too narrow (fixed by agent just now but not merged)
 
 2026-10-18: This is still a problem, the issues are only visible towards the bottom of a mobile page as there is too much standard stuff at the top of the page.
 
+I can also not see an easy way to go back to the issue list from an item's detail view
+
 ### PM35 Feedback button
 **Status:** done
 
