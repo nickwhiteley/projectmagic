@@ -230,6 +230,10 @@ The Project Magic site is cluttered on a mobile/small screen. Can elements be co
 
 Body text box is too narrow (fixed by agent just now but not merged)
 
+---
+
+2026-10-18: This is still a problem, the issues are only visible towards the bottom of a mobile page as there is too much standard stuff at the top of the page.
+
 ### PM35 Feedback button
 **Status:** done
 
