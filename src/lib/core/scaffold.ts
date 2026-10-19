@@ -28,6 +28,10 @@ The full version is [specs/conventions.md](${DOCS}/specs/conventions.md); the se
 - **\`**For:**\` says who an item is for**: \`person\`, \`person.<github-login>\`, \`agent\` or
   \`agent.<maker>.<family>\` (Claude Opus is \`agent.claude.opus\`). Work only on items for you, for a
   path above you, or for no one.
+- **\`<repo>:<id>\` points at another repository's item** in the same Project Magic tenant (the repo
+  as in \`/p/<repo>\`): \`Epic: person-service:EP1\` joins that repository's epic, \`Waiting: plinth:PL4\`
+  waits on that item (shown blocked until it is done), and \`Backlog: plinth:PL4\` in a PR body names
+  it.
 - **Project Magic edits \`backlog.md\` and \`bugs.md\` on the main branch**, as people use it, so your
   branch's copy goes stale. Before you read the backlog to pick an item, or change any item
   (status, meta line, new item), run \`git fetch\` and merge \`origin/main\` into your branch, and do

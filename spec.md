@@ -220,7 +220,7 @@ The prose, exactly as today …
   | `Type`     | `feature` (default) · `bug` · any other word                   | tag and filter (§13) |
   | `Found`    | for a bug: `production` · `preview` · `development`            | shown; §16.4        |
   | `Raised`   | for a bug: when it was first noticed                           | shown; time to restore (§16) |
-  | `Epic`     | an epic id, `EP` and a number                                  | roll-up and filter (§13) |
+  | `Epic`     | an epic id, `EP` and a number, or `<repo>:EPn` for another repository's (PM36) | roll-up and filter (§13) |
   | `For`      | who it is for: `person…` or `agent…`, below                    | shown, filterable   |
 
   A `Status` value is normalised by lower-casing, collapsing spaces and dropping a trailing `*` or
@@ -312,8 +312,10 @@ item's `Branch` key or a PR body. A name whose first part isn't one of the types
 (`**Backlog:**`), is case-insensitive, and must start its line (after spaces or tabs); the first such
 line counts. `Bug:` is its value's first word, lower-cased. **A PR that fixes a bug says where the bug
 was found**, `Bug: production`, `Bug: preview` or `Bug: development`, and, for production,
-`Raised: <date and time>` when it was first noticed, if known (§16.4). **A PR title** that starts
-with an id and a colon (`NW9: DXF export`) links too.
+`Raised: <date and time>` when it was first noticed, if known (§16.4). A part written `<repo>:<id>`
+(PM36) names an item in that repository: this one's links like a bare id, and another's is shown on
+that item's page (§13). **A PR title** that starts with an id and a colon (`NW9: DXF export`) links
+too.
 
 Existing branches keep their names. They link through `Branch:` on the item, or not at all.
 
@@ -1481,6 +1483,28 @@ Each one is also an item in this repository's `backlog.md`.
   epic id is flagged in the health panel ("<id>: Epic <value> isn't an epic id (EP and a number)").
   The add and edit forms have an *Epic* field that suggests the declared epics, and a name typed
   there that no epic has starts a new one, declared in the epics file (§10.1).
+- **Across repositories** (built, PM36). A reference `<repo>:<id>` names an item in another project
+  of the same tenant, the repo being its address (`/p/{repo}`: the name, or `owner--repo`), compared
+  in lower case; one naming its own project is the bare id. **Epics**: an item joins another
+  repository's epic with `Epic: <repo>:EPn`, so a change that spans repositories is an epic declared
+  in the repository that owns it. The owner's *Epics* tab lists, under each epic, the other
+  repositories' items in it as `<repo>:<id>` with their status and title (or "in a repository you
+  can’t open", for one the person can't view, whose link is then refused), shipped ones included;
+  "Across <n> repositories."; the counts and bar include them; and **the epic's status**, worked out
+  from all its items: all done is done, any blocked is blocked, all built or done is built, any other
+  start is in progress, else todo. Each declared epic says "Add an item to EPn in <project>, …",
+  linking to the add page of this project and each other one the person can edit, with the Epic field
+  set (`?epic=EPn`, or `?epic=<repo>:EPn` elsewhere). An epic only other repositories name is listed,
+  not declared. A project's own roll-up leaves out its items in other repositories' epics; its *Epics*
+  tab lists them under "In other repositories’ epics", and the tab shows while there are any. The Epic
+  field suggests the other projects' declared epics as `<repo>:EPn`, and the List and Board filter by
+  them. **Waiting**: an item whose `Waiting:` names `<repo>:<id>` (any number) is blocked, with the
+  hint "Waits on <repo>:<id>, which is <status>.", until each is done (shipped, or done on main); one
+  not found doesn't block. The item page lists each with a link, its status and title, or "not
+  found". **PRs**: an item's page lists, under Linked, the other projects' PRs whose `Backlog:` names
+  it (`<repo> PR #n`, title, state) and their items whose `Waiting:` names it ("waits on this"). These
+  read the other projects' cached states, the ones the person can view, in the same request; nothing
+  crosses tenants. Not built: a PR in another repository changing an item's status.
 - **Bugs** (built, PM2 and PM29). `Type: bug` with `Found:` and `Raised:`, a red *bug* tag, and a Type
   filter on the List and Board when any item has a type. Bugs can also live in their own `bugs.md`
   (the `bugs` key), a second backlog in the same format with a `BUG` prefix (`BUG12`, the `bug_prefix`
@@ -1565,7 +1589,7 @@ Each one is also an item in this repository's `backlog.md`.
 - **Feedback** (built, PM35): §19.
 - **Later**: an Edit button in the expanded List row (PM19); the item form explaining itself, with
   Type and Job renamed Area (PM22); a way for a person's comment to reach the working agent (PM32);
-  other Git hosts (PM30); a cross-repository virtual backlog (PM36); hiding a project from the UI
+  other Git hosts (PM30); hiding a project from the UI
   (§21).
 
 ## 14. Decisions on the first draft's questions (Nick, 2026-10-14)
@@ -2320,6 +2344,10 @@ The full version is [specs/conventions.md](DOCS/specs/conventions.md); the setti
 - **`**For:**` says who an item is for**: `person`, `person.<github-login>`, `agent` or
   `agent.<maker>.<family>` (Claude Opus is `agent.claude.opus`). Work only on items for you, for a
   path above you, or for no one.
+- **`<repo>:<id>` points at another repository's item** in the same Project Magic tenant (the repo
+  as in `/p/<repo>`): `Epic: person-service:EP1` joins that repository's epic, `Waiting: plinth:PL4`
+  waits on that item (shown blocked until it is done), and `Backlog: plinth:PL4` in a PR body names
+  it.
 - **Project Magic edits `backlog.md` and `bugs.md` on the main branch**, as people use it, so your
   branch's copy goes stale. Before you read the backlog to pick an item, or change any item
   (status, meta line, new item), run `git fetch` and merge `origin/main` into your branch, and do

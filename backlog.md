@@ -310,7 +310,7 @@ Decided with Nick on 2026-10-19:
   `Comment:` and `Reply:` mean and what an agent does with them.
 
 ### PM36 Cross repo virtual backlog
-**Status:** in progress · **Size:** L · **Branch:** `feat/pm36-cross-repo-epics` · **For:** agent
+**Status:** built · **Size:** L · **Waiting:** Nick's check · **For:** person.nickwhiteley
 
 Projects can affect multiple repos. Manage cross repo changes through a single board.
 
@@ -335,6 +335,26 @@ Decided with Nick on 2026-10-19:
   `Backlog:` lines. An item that waits on another repository's item shows as blocked until that
   item is done.
 - **Only within one tenant.**
+
+Built on 2026-10-19:
+
+- **`<repo>:<id>`** is read in `Epic:`, `Waiting:` and a PR body's `Backlog:` line. The repo is the
+  project's address in Project Magic (`/p/<repo>`), and one naming its own repository is the bare id.
+- **The owner's Epics tab** lists the other repositories' items in each epic, with their status and
+  title, and shipped ones. The counts, the bar and a status worked out from all the items include
+  them. An item in a repository the person can't open shows as `<repo>:<id>` with its status but no
+  title, and its link is refused. Each epic links "Add an item to EPn in …" to the add page of each
+  project the person can edit, with the Epic field filled in.
+- **A taking-part repository's Epics tab** lists its items under "In other repositories’ epics". The
+  Epic field suggests other repositories' epics, and the List and Board filter by them.
+- **`Waiting: plinth:PL4`** shows the item as blocked, with a hint, until PL4 is done. The item page
+  links each item it waits on, with its status.
+- **An item's page** lists other repositories' PRs whose `Backlog:` names it, and their items that
+  wait on it.
+- Tried with `projectmagic-testing` PT2 set to `Epic: projectmagic:EP1 · Waiting: projectmagic:PM36`.
+  It shows on Project Magic's Epics tab and on PM36's page, and PT2 shows as blocked.
+- **Not built**: a PR in another repository doesn't change an item's status; it is only listed. The
+  Board is still one repository's. The epic's view across repositories is the board for now.
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
