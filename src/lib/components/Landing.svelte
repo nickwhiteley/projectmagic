@@ -142,12 +142,38 @@
 			set up for Vercel). Setting it up takes under an hour:
 		</p>
 		<ol class="steps">
-			<li>Paste the conventions into each repository’s agent instructions.</li>
-			<li>Register a GitHub App and install it on those repositories.</li>
+			<li>Register a GitHub App.</li>
 			<li>Create the database and deploy the app with its environment.</li>
-			<li>Sign in with GitHub.</li>
+			<li>Sign in with GitHub and install the App on your repositories.</li>
 		</ol>
 		<p><a class="button primary" href="{REPO}#setting-up">Read the setup guide</a></p>
+	</section>
+
+	<section class="setup" id="add">
+		<h2>Add a repository</h2>
+		<p>Once Project Magic is running, adding a repository takes a minute:</p>
+		<ol class="steps">
+			<li>
+				In Project Magic, open <strong>Tenant → Installations → Connect GitHub</strong> and choose
+				the repositories to follow, or use the App’s page on GitHub → <em>Configure</em> to add more to
+				an account already connected.
+			</li>
+			<li>
+				On the next sync Project Magic opens a pull request and merges it at once, adding
+				<code>backlog.md</code>, <code>bugs.md</code>, <code>.projectmagic.yml</code>,
+				<code>AGENTS.md</code> and <code>CLAUDE.md</code>. Nothing that exists is changed; the last
+				two gain a section that tells agents how to use Project Magic. An empty repository gets the
+				same files committed to its default branch.
+			</li>
+			<li>
+				Add items with <strong>Add</strong>, or ask your agents to. They follow the conventions
+				written into <code>AGENTS.md</code>.
+			</li>
+		</ol>
+		<p>
+			Choosing a repository in the App is consent for Project Magic to commit to it.
+			<a href="{REPO}#adding-a-repository">Details and settings</a>.
+		</p>
 	</section>
 
 	<footer class="muted">
