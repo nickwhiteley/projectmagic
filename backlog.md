@@ -310,7 +310,7 @@ Decided with Nick on 2026-10-19:
   `Comment:` and `Reply:` mean and what an agent does with them.
 
 ### PM36 Cross repo virtual backlog
-**Status:** todo · **Size:** L · **For:** agent
+**Status:** in progress · **Size:** L · **Branch:** `feat/pm36-cross-repo-epics` · **For:** agent
 
 Projects can affect multiple repos. Manage cross repo changes through a single board.
 

@@ -2,6 +2,7 @@
 // never stored in the files beyond §5. Sources 1–5 are here; source 6, inferred links for older
 // branches, is plan task 4.8.
 import { EDIT_BRANCH, parseBranchName, parsePrText } from './branchref.ts';
+import { isHere } from './crossref.ts';
 import type { Item } from './backlog.ts';
 
 /** 1 a task-number id · 2 a branch's ref · 3 a PR body · 4 an item's Branch:/Plan: keys · 5 a PR
@@ -56,6 +57,8 @@ export interface LinkInput {
 	prs: PrInput[];
 	/** Every copy of the backlog, for source 4. */
 	copies: ItemCopy[];
+	/** This repository, so a PR's `Backlog: <repo>:<id>` naming it links like a bare id (PM36). */
+	here?: { owner: string; repo: string };
 }
 
 export interface Links {
@@ -126,6 +129,9 @@ export function link(input: LinkInput): Links {
 		const t = parsePrText(pr.title, pr.body);
 		const to = { kind: 'pr', number: pr.number } as const;
 		for (const id of t.backlog) resolve(id, to, 3, `PR #${pr.number}'s Backlog:`);
+		for (const r of t.refs)
+			if (input.here && isHere(r.repo, input.here))
+				resolve(r.id, to, 3, `PR #${pr.number}'s Backlog:`);
 		for (const n of t.plan) resolve(n, to, 3, `PR #${pr.number}'s Plan:`, true);
 		if (t.titleId) resolve(t.titleId, to, 5, `PR #${pr.number}'s title`);
 	}

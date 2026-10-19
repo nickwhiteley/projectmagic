@@ -16,11 +16,33 @@ describe('epicId', () => {
 		expect(epicId('')).toBeNull();
 		expect(epicId(undefined)).toBeNull();
 	});
+	it('reads another repository’s epic as <repo>:EPn, and its own repo’s as the bare id (PM36)', () => {
+		expect(epicId('person-service:ep1')).toBe('person-service:EP1');
+		expect(epicId('`Person-Service:EP1` the person service')).toBe('person-service:EP1');
+		const here = { owner: 'nickwhiteley', repo: 'person-service' };
+		expect(epicId('person-service:EP1', here)).toBe('EP1');
+		expect(epicId('nickwhiteley--person-service:EP1', here)).toBe('EP1');
+		expect(epicId('bloomprint:BP4', here)).toBeNull();
+	});
 	it('declaredEpic reads an item or section id', () => {
 		expect(declaredEpic('EP3')).toBe('EP3');
 		expect(declaredEpic('ep3')).toBe('EP3');
 		expect(declaredEpic('PM3')).toBeNull();
 		expect(declaredEpic('EP3a')).toBeNull();
+	});
+});
+
+describe('rollUp: another repository’s epic (PM36)', () => {
+	it('leaves items in another repository’s epic out of this one’s roll-up', () => {
+		const out = rollUp(
+			[{ id: 'EP1', title: 'Here' }],
+			[
+				{ id: 'A1', epic: 'EP1', status: 'todo' },
+				{ id: 'A2', epic: 'person-service:EP1', status: 'todo' }
+			],
+			[{ id: 'A3', epic: 'person-service:EP1' }]
+		);
+		expect(out.map((e) => [e.id, e.items, e.shipped])).toEqual([['EP1', ['A1'], []]]);
 	});
 });
 

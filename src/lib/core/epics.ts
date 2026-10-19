@@ -3,14 +3,34 @@
 // status, shipped ones included.
 import { parseBacklog } from './backlog.ts';
 import type { Status } from './meta.ts';
+import { isHere, parseRef, refString } from './crossref.ts';
 
 const EPIC_ID = /^EP\d+$/;
 
-/** An item's `Epic:` value as an epic id: the first word, without markdown, in upper case. */
-export function epicId(raw: string | null | undefined): string | null {
-	const word = (raw ?? '').replace(/[`*_]/g, '').trim().split(/\s+/)[0]?.toUpperCase();
-	return word && EPIC_ID.test(word) ? word : null;
+/**
+ * An item's `Epic:` value as an epic: the first word, without markdown, in upper case (`EP3`), or
+ * another repository's epic as `<repo>:EP3` (PM36), its repo in lower case. An epic of `here`,
+ * written with its own repo, is the bare id.
+ */
+export function epicId(
+	raw: string | null | undefined,
+	here?: { owner: string; repo: string }
+): string | null {
+	const word = ((raw ?? '').replace(/[`*]/g, '').trim().split(/\s+/)[0] ?? '').replace(
+		/^_+|_+$/g,
+		''
+	);
+	const ref = parseRef(word);
+	if (ref) {
+		if (!EPIC_ID.test(ref.id)) return null;
+		return here && isHere(ref.repo, here) ? ref.id : refString(ref);
+	}
+	const id = word.toUpperCase();
+	return id && EPIC_ID.test(id) ? id : null;
 }
+
+/** Whether an epic id is another repository's (`bloomprint:EP3`). */
+export const isCrossEpic = (epic: string | null | undefined): boolean => !!epic?.includes(':');
 
 /** An epic's declaration: an item `### EP3 Title` or a section `## EP3 Title`. */
 export function declaredEpic(id: string): string | null {
@@ -71,15 +91,16 @@ export function rollUp(
 		if (d.description && !e.description) e.description = d.description;
 		if (d.target && !e.target) e.target = d.target;
 	}
+	// An item in another repository's epic (PM36) is counted there, not here.
 	for (const c of children) {
-		if (!c.epic) continue;
+		if (!c.epic || isCrossEpic(c.epic)) continue;
 		const e = get(c.epic);
 		e.counts[c.status] = (e.counts[c.status] ?? 0) + 1;
 		e.total++;
 		e.items.push(c.id);
 	}
 	for (const s of shipped) {
-		if (!s.epic) continue;
+		if (!s.epic || isCrossEpic(s.epic)) continue;
 		const e = get(s.epic);
 		e.counts.done = (e.counts.done ?? 0) + 1;
 		e.total++;
