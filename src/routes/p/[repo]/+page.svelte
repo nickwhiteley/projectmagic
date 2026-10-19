@@ -326,12 +326,16 @@
 		margin: 0.5rem 0 0;
 		padding-left: 1.2rem;
 	}
-	.preamble,
 	.note {
 		background: var(--surface-1);
 		border-radius: var(--radius);
 		padding: 0.6rem 0.9rem;
-		margin: 0.75rem 0;
+		margin: 0.5rem 0 0.25rem;
+	}
+	/* The preamble is only a fold-out line above the list, so it takes no room of its own. */
+	.preamble {
+		margin: 0;
+		padding: 0.1rem 0;
 	}
 	.preamble summary,
 	.note summary {
@@ -345,7 +349,7 @@
 		font-size: 15px;
 	}
 	section {
-		margin-top: 2rem;
+		margin-top: 0.6rem;
 	}
 	.drag[draggable='true'] {
 		cursor: grab;
@@ -374,8 +378,10 @@
 		color: var(--danger);
 	}
 	h2 {
-		font-size: 26px;
-		padding-bottom: 0.2rem;
+		font-size: 20px;
+		line-height: 1.25;
+		margin: 0;
+		padding-bottom: 0.1rem;
 	}
 	.intro {
 		font: italic 15px var(--serif);
