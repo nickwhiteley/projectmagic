@@ -10,7 +10,10 @@
 	let error = $state('');
 	let sent = $state(false);
 
-	function open() {
+	// `trigger` false: no button of its own, for a menu item that calls `open()` (PM34).
+	let { trigger = true }: { trigger?: boolean } = $props();
+
+	export function open() {
 		score = null;
 		comment = '';
 		error = '';
@@ -47,7 +50,7 @@
 	}
 </script>
 
-<button type="button" class="button launch" onclick={open}>Feedback</button>
+{#if trigger}<button type="button" class="button launch" onclick={open}>Feedback</button>{/if}
 
 <!-- A <dialog>, so focus trapping and Escape-to-close come from the element. -->
 <dialog bind:this={dialog} class="sheet">

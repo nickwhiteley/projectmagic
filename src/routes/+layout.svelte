@@ -9,6 +9,13 @@
 
 	let { children, data }: LayoutProps = $props();
 	const path = $derived(page.url.pathname);
+	// The user menu (PM34): the name opens it. It closes on a click elsewhere, Escape or a new page.
+	let menuOpen = $state(false);
+	let feedback = $state<ReturnType<typeof FeedbackButton> | null>(null);
+	$effect(() => {
+		void page.url.pathname;
+		menuOpen = false;
+	});
 	// Where a navigation in progress is going, so the clicked link can say so at once (PM13).
 	// The URL changes as soon as a navigation starts, so compare with where it came from.
 	const going = $derived(navigating.to?.url.pathname ?? null);
@@ -20,6 +27,15 @@
 <svelte:head>
 	<link rel="icon" href={favicon} />
 </svelte:head>
+
+<svelte:window
+	onclick={(e) => {
+		if (menuOpen && !(e.target as Element).closest('.usermenu')) menuOpen = false;
+	}}
+	onkeydown={(e) => {
+		if (e.key === 'Escape') menuOpen = false;
+	}}
+/>
 
 {#if navigating.to}
 	<div class="nav-progress" role="progressbar" aria-label="Loading"></div>
@@ -87,42 +103,76 @@
 					/>
 				</form>
 				<div class="who">
-					<FeedbackButton />
-					{#if data.ai}
-						<form method="POST" action="/settings/ai">
-							<input type="hidden" name="optOut" value={data.ai.optedOut ? '0' : '1'} />
-							<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
-							<button
-								class="button"
-								title="Statuses proposed by a model for items with no meta line"
-								>Inferred statuses: {data.ai.optedOut ? 'hidden' : 'shown'}</button
-							>
-						</form>
-					{/if}
-					{#if data.tenants.length > 1}
-						<form method="POST" action="/tenant/switch" class="tenant">
-							<select name="tenant" aria-label="Tenant">
-								{#each data.tenants as t (t.id)}
-									<option value={t.id} selected={t.id === data.tenant?.id}>{t.name}</option>
-								{/each}
-							</select>
-							<button class="button">Switch</button>
-						</form>
-					{:else if data.tenant}
-						<span class="tenant-name" title="Tenant">{data.tenant.name}</span>
-					{/if}
-					{#if data.tenant?.admin && data.tenant.status === 'active'}
-						<a href="/tenant" aria-current={path.startsWith('/tenant') ? 'page' : undefined}
-							>Tenant</a
+					<FeedbackButton bind:this={feedback} trigger={false} />
+					<div class="usermenu">
+						<button
+							type="button"
+							class="button who-btn"
+							aria-haspopup="menu"
+							aria-expanded={menuOpen}
+							onclick={() => (menuOpen = !menuOpen)}
 						>
-					{/if}
-					{#if data.user.admin}
-						<a href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}>Admin</a>
-					{/if}
-					<a href="/settings" aria-current={path === '/settings' ? 'page' : undefined}
-						>{data.user.name ?? data.user.login}</a
-					>
-					<form method="POST" action="/auth/signout"><button class="button">Sign out</button></form>
+							{data.user.name ?? data.user.login} <span aria-hidden="true">▾</span>
+						</button>
+						{#if menuOpen}
+							<div class="panel" role="menu">
+								<a
+									role="menuitem"
+									href="/settings"
+									aria-current={path === '/settings' ? 'page' : undefined}
+									>Settings <span class="muted small">@{data.user.login}</span></a
+								>
+								<button
+									type="button"
+									role="menuitem"
+									onclick={() => {
+										menuOpen = false;
+										feedback?.open();
+									}}>Feedback</button
+								>
+								{#if data.ai}
+									<form method="POST" action="/settings/ai">
+										<input type="hidden" name="optOut" value={data.ai.optedOut ? '0' : '1'} />
+										<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
+										<button
+											role="menuitem"
+											title="Statuses proposed by a model for items with no meta line"
+											>Inferred statuses: {data.ai.optedOut ? 'hidden' : 'shown'}</button
+										>
+									</form>
+								{/if}
+								{#if data.tenants.length > 1}
+									<form method="POST" action="/tenant/switch" class="tenant">
+										<select name="tenant" aria-label="Tenant">
+											{#each data.tenants as t (t.id)}
+												<option value={t.id} selected={t.id === data.tenant?.id}>{t.name}</option>
+											{/each}
+										</select>
+										<button class="button">Switch</button>
+									</form>
+								{:else if data.tenant}
+									<span class="tenant-name" title="Tenant">{data.tenant.name}</span>
+								{/if}
+								{#if data.tenant?.admin && data.tenant.status === 'active'}
+									<a
+										role="menuitem"
+										href="/tenant"
+										aria-current={path.startsWith('/tenant') ? 'page' : undefined}>Tenant</a
+									>
+								{/if}
+								{#if data.user.admin}
+									<a
+										role="menuitem"
+										href="/admin"
+										aria-current={path.startsWith('/admin') ? 'page' : undefined}>Admin</a
+									>
+								{/if}
+								<form method="POST" action="/auth/signout">
+									<button role="menuitem">Sign out</button>
+								</form>
+							</div>
+						{/if}
+					</div>
 				</div>
 			</header>
 			{#if data.tenant?.support}
@@ -338,6 +388,57 @@
 		align-items: center;
 		gap: 0.75rem;
 		color: var(--text-2);
+		margin-left: auto;
+	}
+	.usermenu {
+		position: relative;
+	}
+	.panel {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 0.3rem);
+		z-index: 20;
+		min-width: 15rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1px;
+		padding: 0.35rem;
+		background: var(--card);
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius);
+		box-shadow: 0 6px 20px rgb(0 0 0 / 0.12);
+	}
+	.panel > a,
+	.panel button[role='menuitem'],
+	.panel form button[role='menuitem'] {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.75rem;
+		width: 100%;
+		padding: 0.4rem 0.6rem;
+		border: 0;
+		background: none;
+		border-radius: var(--radius);
+		color: var(--text);
+		text-align: left;
+		text-decoration: none;
+		font: inherit;
+		cursor: pointer;
+	}
+	.panel > a:hover,
+	.panel button[role='menuitem']:hover {
+		background: var(--surface-2);
+	}
+	.panel > a[aria-current='page'] {
+		background: var(--surface-3);
+	}
+	.panel .tenant,
+	.panel .tenant-name {
+		padding: 0.4rem 0.6rem;
+	}
+	.panel .tenant select {
+		flex: 1;
+		min-width: 0;
 	}
 	main {
 		padding: 1.5rem 2rem 4rem;
@@ -383,7 +484,6 @@
 			position: static;
 		}
 		.who {
-			flex-wrap: wrap;
 			gap: 0.5rem;
 		}
 		header,
