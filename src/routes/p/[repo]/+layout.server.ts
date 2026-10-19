@@ -53,7 +53,9 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 			},
 			counts: {
 				items: s.items.length,
-				epics: s.epics.length,
+				// Its own epics, and other repositories' that its items join (PM36).
+				epics:
+					s.epics.length + new Set(s.items.map((i) => i.epic).filter((e) => e?.includes(':'))).size,
 				done: s.done.length,
 				branches: s.branches.filter((b) => b.active).length
 			}

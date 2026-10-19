@@ -167,7 +167,8 @@ export type EpicChoice =
 	| { kind: 'bad'; message: string };
 
 /**
- * Reads what a person typed in the Epic field. `EP3` names that epic, as before. Anything else is
+ * Reads what a person typed in the Epic field. `EP3` names that epic, as before, and
+ * `<repo>:EP3` another repository's (PM36). Anything else is
  * a name: if an epic already has that title (ignoring case) it is that epic, and otherwise it is a
  * new epic, numbered after the highest in use.
  */
@@ -175,6 +176,9 @@ export function chooseEpic(raw: string, known: { id: string; title: string | nul
 	const typed = raw.replace(/\s+/g, ' ').trim();
 	if (!typed) return { kind: 'none' };
 	if (EPIC_ID.test(typed.toUpperCase())) return { kind: 'id', id: typed.toUpperCase() };
+	// Another repository's epic (PM36): `person-service:EP1`.
+	const ref = parseRef(typed);
+	if (ref && EPIC_ID.test(ref.id)) return { kind: 'id', id: refString(ref) };
 	if (typed.length > EPIC_NAME_MAX)
 		return { kind: 'bad', message: `An epic's name is at most ${EPIC_NAME_MAX} characters.` };
 	if (/^#|[`\n]/.test(typed))
@@ -189,4 +193,18 @@ export function chooseEpic(raw: string, known: { id: string; title: string | nul
 export function declareEpic(text: string, id: string, title: string): string {
 	const body = text.trimEnd();
 	return `${body ? `${body}\n\n` : '# Epics\n\n'}### ${id} ${title}\n`;
+}
+
+/**
+ * An epic's status, worked out from its items' (PM36), shipped ones as done: all done is done, any
+ * blocked is blocked, any started (in progress, in review, built, or some done) is in progress, all
+ * built or done is built, and otherwise todo. Null with no items.
+ */
+export function epicStatus(statuses: Status[]): Status | null {
+	if (!statuses.length) return null;
+	if (statuses.every((s) => s === 'done')) return 'done';
+	if (statuses.includes('blocked')) return 'blocked';
+	if (statuses.every((s) => s === 'built' || s === 'done')) return 'built';
+	if (statuses.some((s) => s !== 'todo')) return 'in progress';
+	return 'todo';
 }

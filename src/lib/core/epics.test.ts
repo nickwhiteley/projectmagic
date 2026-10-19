@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseBlob } from '../server/sync.ts';
 import { parseConfig } from './config.ts';
-import { chooseEpic, declareEpic, declaredEpic, epicId, parseEpicsFile, rollUp } from './epics.ts';
+import {
+	chooseEpic,
+	declareEpic,
+	declaredEpic,
+	epicId,
+	epicStatus,
+	parseEpicsFile,
+	rollUp
+} from './epics.ts';
 import { assembleState, type StoredBacklog } from './state.ts';
 
 describe('epicId', () => {
@@ -235,6 +243,9 @@ Not an epic.
 });
 
 describe('chooseEpic (PM1)', () => {
+	it('takes another repository’s epic as an id (PM36)', () => {
+		expect(chooseEpic('Person-Service:ep1', [])).toEqual({ kind: 'id', id: 'person-service:EP1' });
+	});
 	const known = [
 		{ id: 'EP1', title: 'Billing' },
 		{ id: 'EP4', title: null }
@@ -268,5 +279,17 @@ describe('declareEpic', () => {
 			['EP1', 'Billing'],
 			['EP2', 'Onboarding']
 		]);
+	});
+});
+
+describe('epicStatus (PM36)', () => {
+	it('works the status out from the items', () => {
+		expect(epicStatus([])).toBeNull();
+		expect(epicStatus(['done', 'done'])).toBe('done');
+		expect(epicStatus(['in progress', 'blocked', 'done'])).toBe('blocked');
+		expect(epicStatus(['built', 'done'])).toBe('built');
+		expect(epicStatus(['todo', 'in review'])).toBe('in progress');
+		expect(epicStatus(['todo', 'done'])).toBe('in progress');
+		expect(epicStatus(['todo', 'todo'])).toBe('todo');
 	});
 });

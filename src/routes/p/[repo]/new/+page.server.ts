@@ -6,7 +6,8 @@ import { edits } from '#lib/server/edits.ts';
 import { settleEpic } from '#lib/server/epic-field.ts';
 import { problems, readItemForm, type ItemFormValues } from '#lib/server/item-form.ts';
 import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
-import { loadProjectState, projectState } from '#lib/server/project-state.ts';
+import { epicChoices } from '#lib/server/cross.ts';
+import { loadProjectState, neighbours, projectState } from '#lib/server/project-state.ts';
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -28,7 +29,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		plan: '',
 		branch: '',
 		assignee: '',
-		epic: '',
+		// From an epic's "Add an item to EP3 in …" (PM36): that epic, maybe another repository's.
+		epic: (url.searchParams.get('epic') ?? '').replace(/\s+/g, ' ').trim().slice(0, 80),
 		body: ''
 	};
 	// A backlog with no `##` sections has none to pick, and the merged Bugs section would be the
@@ -46,7 +48,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 				: Number(url.searchParams.get('section') ?? (hasSection ? 0 : -1)),
 		sections: hasSection ? listed : [{ index: -1, title: 'Backlog' }, ...listed],
 		assignees: assigneesInUse(s),
-		epics: epicsInUse(s),
+		epics: epicChoices(epicsInUse(s), await neighbours(locals)),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		tasks: (s.plan?.tasks ?? [])
 			.filter((t) => !t.superseded && !s.items.some((i) => i.id === t.number))

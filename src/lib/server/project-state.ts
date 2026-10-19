@@ -10,7 +10,11 @@ import {
 	type StoredBacklog,
 	type StoredPlan
 } from '#lib/core/state.ts';
+import { can } from '#lib/core/access.ts';
 import { listPending, overlayBacklog } from './batch.ts';
+import { hasCrossWaits, withCrossWaits, type Neighbour } from './cross.ts';
+import { projectsFor } from './projects.ts';
+import { accessCtx } from './tenants.ts';
 import { db } from './db.ts';
 import { PARSER_VERSION, type Pr } from './sync.ts';
 import { aiAllowedCached } from './plans.ts';
@@ -42,10 +46,42 @@ export function projectState(event: {
 }): Promise<ProjectState> {
 	const { locals, params } = event;
 	if (!params.repo || !locals.project) throw new Error('projectState is for project routes');
-	const id = locals.project.id;
-	let p = locals.states.get(id);
-	if (!p) locals.states.set(id, (p = loadProjectState(id)));
+	const project = locals.project;
+	let p = locals.states.get(project.id);
+	if (!p) {
+		// An item waiting on another repository's item shows as blocked until it is done (PM36).
+		p = loadProjectState(project.id).then(async (s) =>
+			hasCrossWaits(s) ? withCrossWaits(s, await neighbours(locals), project) : s
+		);
+		locals.states.set(project.id, p);
+	}
 	return p;
+}
+
+/**
+ * The tenant's other projects with their states (PM36), once per request, each marked with whether
+ * this person may open it. One they can't is named on the page, without titles, and refuses them.
+ */
+export function neighbours(locals: App.Locals): Promise<Neighbour[]> {
+	const memo = locals as App.Locals & { neighbours?: Promise<Neighbour[]> };
+	return (memo.neighbours ??= (async () => {
+		const here = locals.project?.id;
+		const ctx = accessCtx(locals);
+		const others = (await projectsFor(locals)).filter((p) => p.id !== here);
+		const states = await Promise.all(
+			others.map((p) => {
+				let s = locals.states.get(p.id);
+				if (!s) locals.states.set(p.id, (s = loadProjectState(p.id)));
+				return s.catch(() => null);
+			})
+		);
+		return others.flatMap((project, i) => {
+			const state = states[i];
+			return state
+				? [{ project, state, visible: can(locals.user, 'view', { ...ctx, project }) }]
+				: [];
+		});
+	})());
 }
 
 /** Drops the cached state, after something other than a sync changed what it shows (PM3). */

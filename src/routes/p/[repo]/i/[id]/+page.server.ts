@@ -1,6 +1,8 @@
 import { diffLines } from '#lib/core/diff.ts';
 import { edits } from '#lib/server/edits.ts';
-import { projectState } from '#lib/server/project-state.ts';
+import { findRefs, parseRef } from '#lib/core/crossref.ts';
+import { itemLinks, resolve } from '#lib/server/cross.ts';
+import { neighbours, projectState } from '#lib/server/project-state.ts';
 import { sourceText } from '#lib/server/item-view.ts';
 import { inline, md } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
@@ -49,6 +51,12 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			repoUrl: `https://github.com/${s.owner}/${s.repo}`
 		};
 	}
+	// Across the tenant's repositories (PM36): what its Waiting: names, and who names it.
+	const ns = await neighbours(locals);
+	const here = locals.project!;
+	const elsewhere = itemLinks(ns, here, it.id);
+	const waits = it.waiting ? findRefs(it.waiting).map((r) => resolve(ns, s, here, r)) : [];
+	const epicRef = it.epic ? parseRef(it.epic) : null;
 	const linked = new Set(it.branches.map((b) => b.name));
 	const deploy = new Set(s.branches.filter((b) => b.isDeploy).map((b) => b.name));
 	return {
@@ -64,6 +72,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			size: it.size,
 			assignee: it.assignee,
 			epic: it.epic,
+			epicHref: epicRef
+				? `/p/${ns.find((n) => n.project.param.toLowerCase() === epicRef.repo)?.project.param ?? epicRef.repo}/epics#${epicRef.id}`
+				: it.epic
+					? `/p/${here.param}/epics#${it.epic}`
+					: null,
+			waits,
+			elsewhere,
 			type: it.type,
 			inferred: it.inferred,
 			found: it.found,
