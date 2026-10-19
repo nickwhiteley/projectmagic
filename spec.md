@@ -731,6 +731,8 @@ repository's `backlog.md`.
   health panel. An optional `epics.md` (the `epics` key) declares epics too, each as a `###` or `##` heading
   `EP3 Title` with its description underneath and a `**Target:** …` line; the Epics tab shows both.
   The add and edit forms have an *Epic* field that suggests the declared epics (PM28).
+  A name typed in that field that no epic has starts a new one: it is declared in the epics file
+  as `### EPn Name`, numbered after the highest in use, and the item names it (PM1).
 - **Bugs** (built, PM2 and PM29). `Type: bug` with `Found:` and `Raised:`, and a Type filter.
   Bugs can also live in their own `bugs.md` (the `bugs` key), a second backlog in the same format
   with a `BUG` prefix (`BUG12`, the `bug_prefix` key), because Orchard already uses `B1`–`B14`. The

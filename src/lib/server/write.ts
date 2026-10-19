@@ -78,6 +78,8 @@ export interface FileChange {
 	describe(text: string): string;
 	/** The part of the file the user based the change on, now; compared with `base`. */
 	current?(text: string): string | null;
+	/** Set when the file may not exist yet: the text to start from, and the file is then made. */
+	create?: string;
 }
 
 /** An edit to the backlog as a change to its file. */
@@ -203,9 +205,13 @@ export async function applyChange(
 			'GET',
 			`${repo}/contents/${t.path.split('/').map(enc).join('/')}?ref=${EDIT_BRANCH}`
 		);
-		if (!ok(file.status)) return cleanup(refusal(file.status, file.body, `read ${t.path}`));
-		const text = Buffer.from(file.body.content, 'base64').toString('utf8');
-		baseOid = file.body.sha;
+		const missing = file.status === 404 && change.create !== undefined;
+		if (!ok(file.status) && !missing)
+			return cleanup(refusal(file.status, file.body, `read ${t.path}`));
+		const text = missing
+			? change.create!
+			: Buffer.from(file.body.content, 'base64').toString('utf8');
+		baseOid = missing ? '' : file.body.sha;
 
 		if (base !== null && change.current) {
 			const now = change.current(text);
@@ -230,7 +236,7 @@ export async function applyChange(
 			{
 				message,
 				content: Buffer.from(next, 'utf8').toString('base64'),
-				sha: file.body.sha,
+				...(missing ? {} : { sha: file.body.sha }),
 				branch: EDIT_BRANCH
 			}
 		);

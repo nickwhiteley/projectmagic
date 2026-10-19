@@ -255,6 +255,8 @@ export interface ProjectState {
 	/** The plan's file when main has one (PM6). */
 	progressPath: string | null;
 	bugPrefix: string;
+	/** The file a new epic is declared in (PM1): the `epics` key; null when none is read. */
+	epicsPath: string | null;
 }
 
 const prLink = (p: PrInfo): PrLink => ({
@@ -563,6 +565,7 @@ export function assembleState(raw: StateInput): ProjectState {
 		progressPath: main?.plan && config.progress ? config.progress : null,
 		bugsFile: main?.bugs && config.bugs ? config.bugs : null,
 		bugPrefix: config.bugPrefix,
+		epicsPath: config.epics,
 		usedIds: [
 			...new Set([
 				...active.flatMap((r) => r.backlog?.items.map((i) => i.id) ?? []),

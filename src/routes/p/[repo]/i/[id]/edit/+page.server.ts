@@ -1,4 +1,5 @@
 import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
+import { settleEpic } from '#lib/server/epic-field.ts';
 import { bugsPosition } from '#lib/core/bugs.ts';
 import { checkId, splice, type Op, type Position } from '#lib/core/splice.ts';
 import { editChange, formValues, statusChange } from '#lib/core/edit-form.ts';
@@ -49,6 +50,13 @@ export const actions: Actions = {
 		const { s, it } = await context(locals, params.id);
 		const bad = problems(v) ?? (v.id !== it.id ? checkId(v.id, s.usedIds) : null);
 		if (bad) return fail(400, { values: v, base, message: bad, reauth: false });
+
+		// A name in the Epic field starts a new epic (PM1): declare it, then use its id.
+		const epic = await settleEpic(locals.user!, locals.project!, s, v.epic).catch((e) => e);
+		if (epic instanceof Error) return asMessage(epic, { values: v, base });
+		if ('message' in epic)
+			return fail(400, { values: v, base, message: epic.message, reauth: false });
+		v.epic = epic.epic;
 
 		const op: Op = { op: 'edit', id: it.id, change: editChange(it, v) };
 		try {

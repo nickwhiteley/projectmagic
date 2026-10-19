@@ -135,3 +135,37 @@ export function parseEpicsFile(text: string): EpicDeclaration[] {
 	}
 	return out;
 }
+
+const EPIC_NAME_MAX = 80;
+
+/** What an Epic field means (PM1): an id, the name of an epic that exists, or a new epic's name. */
+export type EpicChoice =
+	| { kind: 'none' }
+	| { kind: 'id'; id: string }
+	| { kind: 'new'; id: string; title: string }
+	| { kind: 'bad'; message: string };
+
+/**
+ * Reads what a person typed in the Epic field. `EP3` names that epic, as before. Anything else is
+ * a name: if an epic already has that title (ignoring case) it is that epic, and otherwise it is a
+ * new epic, numbered after the highest in use.
+ */
+export function chooseEpic(raw: string, known: { id: string; title: string | null }[]): EpicChoice {
+	const typed = raw.replace(/\s+/g, ' ').trim();
+	if (!typed) return { kind: 'none' };
+	if (EPIC_ID.test(typed.toUpperCase())) return { kind: 'id', id: typed.toUpperCase() };
+	if (typed.length > EPIC_NAME_MAX)
+		return { kind: 'bad', message: `An epic's name is at most ${EPIC_NAME_MAX} characters.` };
+	if (/^#|[`\n]/.test(typed))
+		return { kind: 'bad', message: 'An epic is an id such as EP3, or a name in plain text.' };
+	const hit = known.find((e) => e.title?.trim().toLowerCase() === typed.toLowerCase());
+	if (hit) return { kind: 'id', id: hit.id };
+	const highest = Math.max(0, ...known.map((e) => Number(e.id.slice(2)) || 0));
+	return { kind: 'new', id: `EP${highest + 1}`, title: typed };
+}
+
+/** `epics.md` with a new epic declared at its end. */
+export function declareEpic(text: string, id: string, title: string): string {
+	const body = text.trimEnd();
+	return `${body ? `${body}\n\n` : '# Epics\n\n'}### ${id} ${title}\n`;
+}

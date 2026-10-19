@@ -112,7 +112,7 @@
 							aria-expanded={menuOpen}
 							onclick={() => (menuOpen = !menuOpen)}
 						>
-							{data.user.name ?? data.user.login} <span aria-hidden="true">▾</span>
+							{data.user.name ?? 'Account'} <span aria-hidden="true">▾</span>
 						</button>
 						{#if menuOpen}
 							<div class="panel" role="menu">

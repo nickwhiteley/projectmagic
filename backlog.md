@@ -117,7 +117,7 @@ author, so the PR body, deleted detection and just-added checks see them. A page
 batch in the background instead of waiting for it. A pending edit can't be discarded while a save holds it.
 
 ### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
@@ -129,6 +129,14 @@ and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value 
 epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
 
 **Added by Nick on 2026-10-19**  As a user I do not know what the epic  ID should be so when I enter a name for the epic this should be taken as an implication that a new epic is being created.
+
+Built on 2026-10-19: the Epic field on the add and edit forms takes an id (`EP3`) or a name. A name
+that matches an existing epic's title (ignoring case) is that epic; any other name is a new epic,
+numbered after the highest in use, declared as `### EP5 Name` in the epics file (made if it isn't
+there; the `epics` key must not be `null`) and then written on the item as `Epic: EP5`. That is two
+commits, the declaration first. With `auto_merge: false` the declaration waits in the edits PR, and
+a second new epic made before it merges would get the same number. The admin screen for editing
+an epic's description and target is not built.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
