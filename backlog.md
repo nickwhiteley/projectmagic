@@ -135,7 +135,9 @@ that matches an existing epic's title (ignoring case) is that epic; any other na
 numbered after the highest in use, declared as `### EP5 Name` in the epics file (made if it isn't
 there; the `epics` key must not be `null`) and then written on the item as `Epic: EP5`. That is two
 commits, the declaration first. With `auto_merge: false` the declaration waits in the edits PR, and
-a second new epic made before it merges would get the same number. The admin screen for editing
+a second new epic made before it merges would get the same number.
+Needs migration 014: `blob_parse`'s kind check never allowed `epics` (PM28), so any sync that found an
+`epics.md` failed, which also made saves slow while the page waited for the sync. The admin screen for editing
 an epic's description and target is not built.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
