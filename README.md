@@ -61,8 +61,10 @@ team; the roles and permissions exist, but inviting people is not built yet
 
 ## The conventions
 
-Paste the block in [`specs/conventions.md`](specs/conventions.md) into each repository's
-`CLAUDE.md` or `AGENTS.md`. In short:
+A repository connected to Project Magic gets a short form of these in its `AGENTS.md` and
+`CLAUDE.md` (see [Adding a repository](#adding-a-repository)). The full block is in
+[`specs/conventions.md`](specs/conventions.md), to paste into a repository set up before that.
+In short:
 
 ```markdown
 ### OR12 Invoices as PDF — MONEY
@@ -195,13 +197,18 @@ changes that for a hosted service (`specs/tenants.md`).
    **Choosing a repository in the App is consent for Project Magic to commit to it.** The first
    time it sees a repository (not an archived one; forks are included) it opens a pull request
    from the `projectmagic` branch and **merges it at once, with no review**. The PR adds whichever
-   of these are missing: `backlog.md`, `bugs.md` and `.projectmagic.yml` (every default commented
-   out, and `new_id_prefix` set to the repository's initials, such as `FM` for `furniture-magic`).
-   A repository that already has a backlog gets only `.projectmagic.yml`, and nothing that exists
-   is changed. If branch protection refuses the merge, the PR is left open for you to merge. An
-   empty repository is set up once it has a first commit.
-2. **Add the conventions** to its agent instructions and, if it has a backlog already, migrate it
-   (`specs/conventions.md`).
+   of these are missing: `backlog.md`, `bugs.md`, `.projectmagic.yml` (every default commented
+   out, `new_id_prefix` set to the repository's initials, such as `FM` for `furniture-magic`, and
+   links to this documentation), and `AGENTS.md` and `CLAUDE.md`, which tell agents how to use
+   Project Magic. A repository that already has a backlog gets no backlog or bugs file. Nothing
+   that exists is changed, except that a "Project Magic" section is added to the end of an
+   existing `AGENTS.md` or `CLAUDE.md` that lacks one. If branch protection refuses the merge,
+   the PR is left open for you to merge. A completely empty repository has no commit to open a
+   PR against, so the same files are committed straight to its default branch.
+2. **Check the agent instructions.** Step 1 added the conventions in short form; the full version
+   is in `specs/conventions.md`. If the repository has a backlog already, migrate it
+   (`specs/conventions.md` has a checklist). Then add items with **Add** in Project Magic, or by
+   hand as `###` headings.
 3. **Optionally, edit `.projectmagic.yml`** at its root (step 1 adds it). Every key has a default:
 
    ```yaml

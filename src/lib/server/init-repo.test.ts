@@ -9,7 +9,9 @@ function fake(routes: Record<string, { status: number; body?: unknown }>) {
 		send: async (method: string, path: string, body?: unknown) => {
 			const key = `${method} ${path.split('?')[0]}`;
 			sent.push({ key, body });
-			const hit = Object.entries(routes).find(([k]) => key.startsWith(k));
+			const hit = Object.entries(routes)
+				.filter(([k]) => key.startsWith(k))
+				.sort((a, b) => b[0].length - a[0].length)[0];
 			return hit?.[1] ?? { status: 404, body: {} };
 		}
 	} as unknown as GitHubClient;
@@ -41,6 +43,8 @@ describe('initialiseRepo', () => {
 			'PUT /repos/acme/furniture-magic/contents/backlog.md',
 			'PUT /repos/acme/furniture-magic/contents/bugs.md',
 			'PUT /repos/acme/furniture-magic/contents/.projectmagic.yml',
+			'PUT /repos/acme/furniture-magic/contents/AGENTS.md',
+			'PUT /repos/acme/furniture-magic/contents/CLAUDE.md',
 			'POST /repos/acme/furniture-magic/pulls',
 			'PUT /repos/acme/furniture-magic/pulls/7/merge',
 			'DELETE /repos/acme/furniture-magic/git/refs/heads/projectmagic'
@@ -54,12 +58,18 @@ describe('initialiseRepo', () => {
 				status: 200,
 				body: [
 					{ name: 'backlog.md', type: 'file' },
-					{ name: '.projectmagic.yml', type: 'file' }
+					{ name: '.projectmagic.yml', type: 'file' },
+					{ name: 'AGENTS.md', type: 'file' },
+					{ name: 'CLAUDE.md', type: 'file' }
 				]
+			},
+			'GET /repos/acme/furniture-magic/contents/': {
+				status: 200,
+				body: { sha: 's', content: Buffer.from('# Mine\n\n## Project Magic\n').toString('base64') }
 			}
 		});
 		expect(await initialiseRepo(g.gh, repo)).toBe('done');
-		expect(g.keys()).toHaveLength(1);
+		expect(g.keys().filter((k) => k.startsWith('PUT') || k.startsWith('POST'))).toEqual([]);
 	});
 	it('adds only the config where a backlog exists', async () => {
 		const g = fake({
@@ -71,13 +81,67 @@ describe('initialiseRepo', () => {
 		});
 		await initialiseRepo(g.gh, repo);
 		expect(g.keys().filter((k) => k.startsWith('PUT') && k.includes('/contents/'))).toEqual([
-			'PUT /repos/acme/furniture-magic/contents/.projectmagic.yml'
+			'PUT /repos/acme/furniture-magic/contents/.projectmagic.yml',
+			'PUT /repos/acme/furniture-magic/contents/AGENTS.md',
+			'PUT /repos/acme/furniture-magic/contents/CLAUDE.md'
 		]);
 	});
-	it('defers an empty repository, and a projectmagic branch already in use', async () => {
+	it('adds the section to the end of an existing CLAUDE.md, keeping its text and sha', async () => {
+		const g = fake({
+			...base,
+			'GET /repos/acme/furniture-magic/contents': {
+				status: 200,
+				body: [
+					{ name: 'backlog.md', type: 'file' },
+					{ name: '.projectmagic.yml', type: 'file' },
+					{ name: 'CLAUDE.md', type: 'file' }
+				]
+			},
+			'GET /repos/acme/furniture-magic/contents/CLAUDE.md': {
+				status: 200,
+				body: { sha: 'old', content: Buffer.from('# Mine\n').toString('base64') }
+			}
+		});
+		expect(await initialiseRepo(g.gh, repo)).toBe('done');
+		const put = g.sent.find(
+			(x) => x.key.endsWith('/contents/CLAUDE.md') && x.key.startsWith('PUT')
+		);
+		const b = put!.body as { sha: string; content: string };
+		const text = Buffer.from(b.content, 'base64').toString('utf8');
+		expect(b.sha).toBe('old');
+		expect(text.startsWith('# Mine\n\n## Project Magic')).toBe(true);
+	});
+	it('commits straight to the default branch of an empty repository, the first file making it', async () => {
+		const g = fake({
+			...base,
+			'GET /repos/acme/furniture-magic/contents': {
+				status: 404,
+				body: { message: 'This repository is empty.' }
+			}
+		});
+		expect(await initialiseRepo(g.gh, repo)).toBe('done');
+		const puts = g.sent.filter((x) => x.key.startsWith('PUT'));
+		expect(puts.map((x) => x.key.split('/contents/')[1])).toEqual([
+			'backlog.md',
+			'bugs.md',
+			'.projectmagic.yml',
+			'AGENTS.md',
+			'CLAUDE.md'
+		]);
+		expect(puts[0].body).not.toHaveProperty('branch');
+		expect(puts[1].body).toMatchObject({ branch: 'main' });
+		expect(g.keys().some((k) => k.includes('/pulls'))).toBe(false);
+	});
+	it('defers when the repository cannot be read for another reason, and a projectmagic branch already in use', async () => {
 		expect(
 			await initialiseRepo(
-				fake({ ...base, 'GET /repos/acme/furniture-magic/contents': { status: 404 } }).gh,
+				fake({
+					...base,
+					'GET /repos/acme/furniture-magic/contents': {
+						status: 404,
+						body: { message: 'Not Found' }
+					}
+				}).gh,
 				repo
 			)
 		).toBe('deferred');

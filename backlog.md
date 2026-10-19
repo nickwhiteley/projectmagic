@@ -257,6 +257,10 @@ Needs migration 013. Spec §7.3a.
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
+Added on 2026-10-19 at Nick's request, so that agents know how to use Project Magic: the config
+links to the documentation, and a "Project Magic" section is added to `AGENTS.md` and `CLAUDE.md`
+(created if missing).
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
