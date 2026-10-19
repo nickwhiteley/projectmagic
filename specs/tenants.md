@@ -1,8 +1,8 @@
 # Tenants: one Project Magic for many teams (PM20)
 
-**Built (all four phases), 2026-10-16**, with Nick's answers (§15). Backlog item PM20. `spec.md` §3, §4, §8, §11,
-§13 and §17 are updated to match, and this file is the record of how tenancy works. Where a
-phase differs from the text above, §14's "as built" notes say so.
+**Built (all four phases), 2026-10-16**, with Nick's answers (§15). Backlog item PM20. This file is
+the design and its reasoning; **`spec.md` §17 is the record of what was built**, and wins where the
+two differ. Where a phase differs from the text above, §14's "as built" notes say so.
 
 ## 1. What changes
 
