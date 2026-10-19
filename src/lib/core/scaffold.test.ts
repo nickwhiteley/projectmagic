@@ -54,6 +54,7 @@ describe('scaffold', () => {
 		expect(configTemplate('x', 'main')).toContain('specs/conventions.md');
 		expect(agentSection('OR')).toContain('### OR12');
 		expect(agentSection('OR')).toContain('specs/conventions.md');
+		expect(agentSection('OR')).toContain('merge `origin/main`');
 	});
 	it('writes a config that parses cleanly, with the prefix the only live key', () => {
 		const { config, warnings } = parseConfig(configTemplate('furniture-magic', 'trunk'), {

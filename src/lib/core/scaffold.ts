@@ -28,6 +28,10 @@ The full version is [specs/conventions.md](${DOCS}/specs/conventions.md); the se
 - **\`**For:**\` says who an item is for**: \`person\`, \`person.<github-login>\`, \`agent\` or
   \`agent.<maker>.<family>\` (Claude Opus is \`agent.claude.opus\`). Work only on items for you, for a
   path above you, or for no one.
+- **Project Magic edits \`backlog.md\` and \`bugs.md\` on the main branch**, as people use it, so your
+  branch's copy goes stale. Before you read the backlog to pick an item, or change any item
+  (status, meta line, new item), run \`git fetch\` and merge \`origin/main\` into your branch, and do
+  it again before you push or open a PR. Change only the items you work on, so the merge is clean.
 - **To start an item**, set \`Status: in progress\` and \`**Branch:**\` in your first commit, and push
   the branch straight away. Name branches \`<type>/<id>-<slug>\` (\`feat\`, \`fix\`, \`spike\`, \`spec\`,
   \`chore\` or \`docs\`), such as \`feat/${prefix.toLowerCase()}12-invoices-pdf\`.

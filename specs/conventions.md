@@ -42,6 +42,10 @@ Keep to these conventions so it reads them correctly:
   item (`### EP3 Billing`) or a section (`## EP3 Billing`) whose id is `EP` and a number. Project
   Magic shows each epic's items by status, shipped ones included, so an item you remove when it
   ships still counts for its epic.
+- **Project Magic edits `backlog.md` and `bugs.md` on the main branch**, as people use it, so
+  your branch's copy goes stale. Before you read the backlog to pick an item, or change any item
+  (status, meta line, new item), run `git fetch` and merge `origin/main` into your branch, and do
+  it again before you push or open a PR. Change only the items you work on, so the merge is clean.
 - **When you start an item**, set `Status: in progress` and `Branch:` on your branch's copy
   of `backlog.md` in your first commit, and **push the branch straight away**. A branch that
   exists only on this machine is invisible to Project Magic.
