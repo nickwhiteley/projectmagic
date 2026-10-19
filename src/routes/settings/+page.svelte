@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from '$app/state';
+
 	let { data, form } = $props();
 </script>
 
@@ -8,6 +10,26 @@
 	<h1>Your settings</h1>
 	{#if form?.done}<p class="flash" role="status">{form.done}</p>{/if}
 	{#if form?.reason}<p class="flash error" role="alert">{form.reason}</p>{/if}
+
+	<section>
+		<h2>Your account</h2>
+		<p>Signed in with GitHub as <code>@{data.login}</code>.</p>
+	</section>
+
+	{#if page.data.ai}
+		<section>
+			<h2>Inferred statuses</h2>
+			<p class="muted">
+				For an item with no meta line, a model can propose a status. They are
+				<b>{page.data.ai.optedOut ? 'hidden' : 'shown'}</b> in your views. This is your choice alone.
+			</p>
+			<form method="POST" action="/settings/ai">
+				<input type="hidden" name="optOut" value={page.data.ai.optedOut ? '0' : '1'} />
+				<input type="hidden" name="back" value="/settings" />
+				<button class="button">{page.data.ai.optedOut ? 'Show' : 'Hide'} inferred statuses</button>
+			</form>
+		</section>
+	{/if}
 
 	<section>
 		<h2>Your tenants</h2>

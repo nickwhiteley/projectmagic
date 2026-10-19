@@ -123,30 +123,32 @@
 	{/if}
 {/if}
 
-<select
-	class="tabs-select"
-	aria-label="View"
-	value={tabs.find((t) => !t.hide && current(t.href))?.href ?? base}
-	onchange={(e) => void goto(e.currentTarget.value)}
->
-	{#each tabs.filter((t) => !t.hide) as t (t.href)}
-		<option value={t.href}>{t.label}{t.count !== undefined ? ` (${t.count})` : ''}</option>
-	{/each}
-</select>
+<div class="view">
+	<select
+		class="tabs-select"
+		aria-label="View"
+		value={tabs.find((t) => !t.hide && current(t.href))?.href ?? base}
+		onchange={(e) => void goto(e.currentTarget.value)}
+	>
+		{#each tabs.filter((t) => !t.hide) as t (t.href)}
+			<option value={t.href}>{t.label}{t.count !== undefined ? ` (${t.count})` : ''}</option>
+		{/each}
+	</select>
 
-<nav class="tabs" aria-label="Project">
-	{#each tabs.filter((t) => !t.hide) as t (t.href)}
-		<a
-			href={t.href}
-			aria-current={current(t.href) ? 'page' : undefined}
-			aria-busy={busy(t.href) || undefined}
-		>
-			{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}
-		</a>
-	{/each}
-</nav>
+	<nav class="tabs" aria-label="Project">
+		{#each tabs.filter((t) => !t.hide) as t (t.href)}
+			<a
+				href={t.href}
+				aria-current={current(t.href) ? 'page' : undefined}
+				aria-busy={busy(t.href) || undefined}
+			>
+				{t.label}{#if t.count !== undefined}<span class="count">{t.count}</span>{/if}
+			</a>
+		{/each}
+	</nav>
 
-{@render children()}
+	{@render children()}
+</div>
 
 <style>
 	.head {
@@ -285,7 +287,24 @@
 			gap: 0.5rem;
 			font-size: 12px;
 		}
+		/* The view menu shares a row with the list's Filters and Add buttons, so it is narrow. */
+		.view {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0 0.5rem;
+		}
+		.view > :global(*) {
+			flex: 1 1 100%;
+		}
+		.view > :global(.tools) {
+			flex: 1 1 0;
+			min-width: 0;
+		}
 		.tabs-select {
+			flex: 0 0 auto;
+			width: auto;
+			max-width: 8rem;
 			margin: 0.6rem 0 0.8rem;
 		}
 	}

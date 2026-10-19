@@ -168,8 +168,12 @@
 			/>
 		</FilterBar>
 		{#if page.data.project.canEdit}
-			<a class="button" href="/p/{repo}/new">Add item</a>
-			<a class="button" href="/p/{repo}/new?bug=1">Add bug</a>
+			<a class="button" href="/p/{repo}/new"
+				><span class="wide">Add </span><span class="narrow">+ </span>item</a
+			>
+			<a class="button" href="/p/{repo}/new?bug=1"
+				><span class="wide">Add </span><span class="narrow">+ </span>bug</a
+			>
 		{/if}
 	</div>
 
@@ -274,7 +278,19 @@
 			gap: 0.5rem;
 			margin-bottom: 0.5rem;
 		}
-		.tools p {
+		.tools p,
+		.hint {
+			display: none;
+		}
+		.tools .button {
+			padding-inline: 0.5rem;
+		}
+		.wide {
+			display: none;
+		}
+	}
+	@media (min-width: 761px) {
+		.narrow {
 			display: none;
 		}
 	}
