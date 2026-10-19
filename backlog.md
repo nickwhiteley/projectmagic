@@ -289,10 +289,52 @@ links to the documentation, and a "Project Magic" section is added to `AGENTS.md
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
+Decided with Nick on 2026-10-19:
+
+- **The comment goes in the item's body**, as a dated paragraph signed with the person's login
+  under a `#### Comments` heading, written like any other edit: a commit on the `projectmagic`
+  branch whose PR is merged.
+- **The flag is a meta key**, `**Comment:** <date>`, added with the comment. An agent working on
+  the item reads the comments, acts on them and removes the key.
+- **A comment on a `built` or `done` item sets it back to `todo`**, so it is active again.
+- **`For:` is left as it is.** The person can change it on the form if they want to.
+- **A comment on an item with an open PR is also posted on that PR**, so an agent working on the
+  branch sees it without waiting to merge main.
+- **Agents reply in the same place**, under `#### Comments`, and set `**Reply:** <date>`. An item
+  with `Reply:` shows as *Waiting on you* on the overview until the person has read it, which
+  removes the key.
+- **The item page gets a *Comment* box**, separate from *Edit*, that adds the comment, the flag and
+  any status change as one edit. It goes through batch edits like any other edit.
+- **Bugs work the same way.** Plan tasks don't, for now.
+- **`specs/conventions.md`, the `AGENTS.md` section (spec Appendix C) and spec.md** say what
+  `Comment:` and `Reply:` mean and what an agent does with them.
+
 ### PM36 Cross repo virtual backlog
-**Status:** todo
+**Status:** todo · **Size:** L · **For:** agent
 
 Projects can affect multiple repos. Manage cross repo changes through a single board.
+
+Decided with Nick on 2026-10-19:
+
+- **The example**: a new person service, in a repository of its own, that changes Bloomprint,
+  plinth and Furniture Magic, and perhaps data-api and the data warehouse. Each of them needs
+  backlog items.
+- **An epic is the container.** It is declared in the epics file of the repository that owns the
+  change (here, the person service's). If they want, an admin can keep such epics in a repository
+  of their own. Items in other repositories join it with `**Epic:** <repo>:EP<n>`.
+- **Anyone can set it up**, an agent or a project manager, by writing the epic and the `Epic:`
+  keys. Nothing is configured in Project Magic. A person sees links to items in repositories they
+  can't open, and is refused if they follow one.
+- **The epic's view shows every item linked to it, from every repository**, as the epic view does
+  today, with the repository on each.
+- **The epic's status is worked out from its items**: all done is done, any in progress is in
+  progress, any blocked is blocked.
+- **Adding from the epic adds the item to the chosen repository**, through that repository's edit
+  path. If a repository refuses the edit, it says so; the others are not rolled back.
+- **`<repo>:<id>` points at another repository's item**, in `Epic:`, `Waiting:` and PR bodies'
+  `Backlog:` lines. An item that waits on another repository's item shows as blocked until that
+  item is done.
+- **Only within one tenant.**
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
