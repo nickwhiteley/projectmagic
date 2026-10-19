@@ -222,6 +222,8 @@ The prose, exactly as today …
   | `Raised`   | for a bug: when it was first noticed                           | shown; time to restore (§16) |
   | `Epic`     | an epic id, `EP` and a number                                  | roll-up and filter (§13) |
   | `For`      | who it is for: `person…` or `agent…`, below                    | shown, filterable   |
+  | `Comment`  | the date of a person's comment the agents haven't read (PM32)  | shown; §10.1        |
+  | `Reply`    | the date of an agent's reply the person hasn't read (PM32)     | *Waiting on you* (§9) |
 
   A `Status` value is normalised by lower-casing, collapsing spaces and dropping a trailing `*` or
   `\*`; anything else is not a status, and the item is flagged `bad-status` (`<id>: "<raw>" is not a
@@ -336,6 +338,9 @@ The `CLAUDE.md` addition (`specs/conventions.md`), kept short so agents actually
 5. Put `Backlog:` / `Plan:` lines in every PR body, and `Bug:` (and `Raised:`) on a bug fix.
 6. Begin every plan status cell with a canonical word.
 7. Never reuse an id. Keep removing shipped items as you do now.
+8. An item with `Comment:` has a person's comment under `#### Comments` (PM32): read it before going
+   on, act on it, and remove `Comment:`. Reply under the same heading, signed
+   `**agent.<maker>.<family>, <date>:**`, and set `Reply:`.
 
 ## 6. Linking
 
@@ -788,8 +793,9 @@ each linking to its project). Each card shows:
   where it isn't zero, each a pill and the number linking to the List filtered by it
   (`?status=`), then the done pill with "<n> in 14 days" (items shipped in the last 14 days);
 - the delivery line (§16.5), when there is anything to show;
-- **Waiting on you · <n>**: the built and blocked items that have a waiting reason, the first three
-  with their id, title, status pill and reason. A built one has an **Accept** button for editors
+- **Waiting on you · <n>**: the items with `Reply:` (PM32), then the built and blocked items that
+  have a waiting reason, the first three with their id, title, status pill and reason ("An agent
+  replied to a comment on <date>." for a reply). A built one has an **Accept** button for editors
   (PM10), which sets it done (§10.1) and returns to `/`;
 - **In flight · <n>**: each active branch other than main, the edits branch and deployment branches,
   with its linked items (`→ <id> <title>`, or its inferred item, marked *(inferred)*, or `→ plan
@@ -907,10 +913,15 @@ Branches (active branches, main included). Board, Plan, Delivery and Docs have n
 
 **An item (`/p/{repo}/i/{id}`)** shows "← All items"; the id, ★, job, size, `for …`, *bug*, the epic
 (linking to the Epics tab) and *pending edit*; the title and, for editors, *Edit*; where a bug was
-found and when it was raised; the rendered body. A side panel: the status pill (and a small blocked
+found and when it was raised; with `Reply:`, "An agent replied to a comment on <date>. Its reply is
+under Comments." and, for editors, *Mark read* (§10.1); the rendered body; and for editors the
+**Comment for the agents** box (§10.1), which says what a comment does: "It is added to the item
+under Comments, signed and dated, with `Comment:` set so the agents read it", ", and <id> goes back to
+todo" for a built or done item, and "It is also posted on PR #n." for each open PR. A side panel: the status pill (and a small blocked
 pill when blocked but shown otherwise), the source line, "From <the rule in words>." (Appendix D;
 for rules 2 and 3 followed by the detail in brackets, "(PR #7 open)"), "Waiting on <reason>", the
-inferred status (§13), and for a built item an **Accept** button for editors (PM10); disagreements,
+inferred status (§13), "A comment of <date> is waiting for an agent to read it." with `Comment:`,
+and for a built item an **Accept** button for editors (PM10); disagreements,
 hints ("Hint: …"), and "This item has no meta line, so its status is inferred."; the meta line's keys
 and values; **Linked** branches (ahead, age, stale), inferred branches ("inferred from the branch’s
 name; not used for status"), PRs (number, title, state, draft) and plan tasks (status, title), or
@@ -1020,6 +1031,21 @@ project and the item, linking to both. With nothing: "Nothing in the last 14 day
   can’t move into the bugs file: change its Type instead."); first or last in the Bugs section is
   before the first or after the last other bug. A move returns to the List. *Moving…* shows until the
   response.
+- **Comment on an item** (PM32), from the item page (`?/comment` on the edit page's actions): the
+  text, trimmed, at most 4 000 characters ("Write a comment first.", "Keep it under 4000
+  characters."). It is an operation of its own, applied to the item as it is when written, so it
+  never conflicts and goes through batch edits like any other edit. It appends to the item's body,
+  under a `#### Comments` heading added at the end if the body has none, a paragraph
+  `**@<login>, <YYYY-MM-DD>:** <text>`. Markdown that could leave the item is escaped with a `\`: a
+  line that is a heading, a rule or setext underline, or starts `<`; a code fence left open is
+  closed, and one that opens the text starts on the line below the signature. The meta line gets
+  `Comment: <date>` (an item without one gets `Status: todo` first) and loses `Reply:`, and a built
+  or done item goes back to `todo` without its *Waiting*; `For:` is left alone. The commit is
+  `Backlog: comment <ID> <title>`. Unless the edit is refused, the comment is also posted, as the
+  person, on each open PR linked to the item (not the edits PR), ending "— @<login> on [<id>](<item
+  page>) in Project Magic. It is also in the backlog, with `Comment:` set."; a PR that can't take
+  it is skipped. *Commenting…* shows until the response; a refusal shows its message under the box.
+  **Mark read** (`?/read`) removes `Reply:`, as an edit of the meta line, and returns to the item.
 - **Remove an item** (*Remove <id>…* opens it), with a tick-box confirmation ("I mean it"; without it,
   "Tick the box to confirm."): **Mark it done; the agents prune it later** (the default) sets
   `Status: done` on the meta line and leaves the item in place (it shows under "Done, still in the
@@ -1563,9 +1589,11 @@ Each one is also an item in this repository's `backlog.md`.
   creating or deleting documents or plan tasks.
 - **Tenants, members, tiers and billing** (built, PM20, which folded in PM7): §17.
 - **Feedback** (built, PM35): §19.
+- **Comments for the agents** (built, PM32): a person's comment goes in the item's body with
+  `Comment:`, reaches the item's open PRs, and an agent's reply sets `Reply:`, shown under *Waiting on
+  you*: §5.1, §5.4, §9, §10.1.
 - **Later**: an Edit button in the expanded List row (PM19); the item form explaining itself, with
-  Type and Job renamed Area (PM22); a way for a person's comment to reach the working agent (PM32);
-  other Git hosts (PM30); a cross-repository virtual backlog (PM36); hiding a project from the UI
+  Type and Job renamed Area (PM22); other Git hosts (PM30); a cross-repository virtual backlog (PM36); hiding a project from the UI
   (§21).
 
 ## 14. Decisions on the first draft's questions (Nick, 2026-10-14)
@@ -2329,6 +2357,11 @@ The full version is [specs/conventions.md](DOCS/specs/conventions.md); the setti
   `chore` or `docs`), such as `feat/<p>12-invoices-pdf`.
 - **Every PR body includes `Backlog: <ids>`.** A PR that fixes a bug also says `Bug: production`,
   `Bug: preview` or `Bug: development`.
+- **A person's comment for you is in the item**, under `#### Comments`, and the item has
+  `**Comment:** <date>` (it is also posted on the item's open PR). Read the comments before you go
+  on with the item, act on them, then remove `Comment:`. To reply, add a paragraph under
+  `#### Comments` starting `**agent.<maker>.<family>, <date>:**` and set `**Reply:** <date>`; the
+  person removes `Reply:` once they have read it.
 - **Remove an item from the backlog when it ships.** Its completion is read from git history.
 - **Never use the branch name `projectmagic`.** It is reserved for Project Magic's own edits.
 ```

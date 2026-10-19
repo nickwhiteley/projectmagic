@@ -2,7 +2,7 @@
 // the text it is given, never in a cache, and changes only that item's range, so a concurrent
 // change to another item survives and git can merge an agent's branch around it (spike 0.2).
 import { parseBacklog, type Backlog, type Item } from './backlog.ts';
-import { formatMeta, LETTER_ID, TASK_ID, type MetaEntry } from './meta.ts';
+import { formatMeta, LETTER_ID, TASK_ID, updateMeta, type MetaEntry } from './meta.ts';
 
 export type Position =
 	| { before: string }
@@ -36,7 +36,9 @@ export type Op =
 	| { op: 'edit'; id: string; change: ItemChange }
 	| { op: 'add'; item: NewItem; to: Position }
 	| { op: 'move'; id: string; to: Position }
-	| { op: 'remove'; id: string };
+	| { op: 'remove'; id: string }
+	/** A person's comment (PM32): appended under `#### Comments`, flagged for the agents. */
+	| { op: 'comment'; id: string; by: string; date: string; text: string };
 
 export class SpliceError extends Error {}
 
@@ -87,6 +89,54 @@ function editItem(text: string, it: Item, c: ItemChange): string {
 	// The gap between the heading and the meta line, if any, is kept as written.
 	const between = src.slice(headingEnd, metaStart);
 	return text.slice(0, it.start) + heading + between + meta + rest + text.slice(it.end);
+}
+
+export const COMMENTS_HEADING = '#### Comments';
+
+/**
+ * A comment as markdown: `**@login, date:**` and the text. Markdown that could reach past the
+ * comment is made harmless, so a comment stays in its item: a heading would start another item
+ * or section, a rule or setext underline would end it or make a heading, an HTML block can run
+ * on, and an unclosed code fence would swallow the rest of the file. Code inside a fence is kept.
+ */
+export function commentBlock(by: string, date: string, text: string): string {
+	const out: string[] = [];
+	let fence: { char: string; len: number } | null = null;
+	for (const l of text.replace(/\r\n?/g, '\n').trim().split('\n')) {
+		const f = l.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+		if (fence) {
+			if (f && f[1][0] === fence.char && f[1].length >= fence.len && !f[2].trim()) fence = null;
+			out.push(l);
+		} else if (f && !(f[1][0] === '`' && f[2].includes('`'))) {
+			fence = { char: f[1][0], len: f[1].length };
+			out.push(l);
+		} else if (/^ {0,3}(#{1,6}(\s|$)|[-=]+ *$|([-*_])( *\3){2,} *$|<)/.test(l)) {
+			out.push(`\\${l.trimStart()}`);
+		} else out.push(l);
+	}
+	if (fence) out.push(fence.char.repeat(fence.len));
+	// A fence can't open on the signature's line, so one that starts the text goes below it.
+	const sep = /^ {0,3}(`{3,}|~{3,})/.test(out[0]) ? '\n' : ' ';
+	return `**@${by}, ${date}:**${sep}${out.join('\n')}`;
+}
+
+/**
+ * Adds a comment to an item (PM32): under its `#### Comments` heading, made if missing, with
+ * `Comment:` set so the agents know to read it and `Reply:` cleared, since the person has seen the
+ * agent's answer. A built or done item goes back to todo, without its waiting reason.
+ */
+function commentItem(text: string, it: Item, op: { by: string; date: string; text: string }) {
+	const entries = it.meta?.entries ?? [{ key: 'Status', value: 'todo' }];
+	const reopen = it.meta?.status === 'built' || it.meta?.status === 'done';
+	const meta = updateMeta(entries, {
+		comment: op.date,
+		reply: '',
+		...(reopen ? { status: 'todo' as const, waiting: '' } : {})
+	});
+	const has = new RegExp(`^${COMMENTS_HEADING}\\s*$`, 'm').test(it.body);
+	const block = commentBlock(op.by, op.date, op.text);
+	const body = [it.body, has ? '' : COMMENTS_HEADING, block].filter(Boolean).join('\n\n');
+	return editItem(text, it, { meta, body });
 }
 
 /** Where to insert a block: an offset, and whether it goes after the content before it. */
@@ -173,6 +223,8 @@ export function splice(text: string, op: Op, parsed?: Backlog): string {
 			const [cs, ce] = cutRange(text, find(b, op.id));
 			return text.slice(0, cs) + text.slice(ce);
 		}
+		case 'comment':
+			return commentItem(text, find(b, op.id), op);
 	}
 }
 
