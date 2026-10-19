@@ -285,14 +285,74 @@ links to the documentation, and a "Project Magic" section is added to `AGENTS.md
 (created if missing).
 
 ### PM32 Information for agents
-**Status:** todo · **Size:** M · **For:** agent
+**Status:** blocked · **Size:** M · **Waiting:** Nick's answers to the questions below · **For:** person.nickwhiteley
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
+#### Questions (2026-10-19)
+
+PM34 shows the case: Nick added "2026-10-18: This is still a problem…" to a `built` item, and
+nothing told an agent to look. To answer before it is built:
+
+1. **Where does the comment live?** (a) In the item's body in `backlog.md`, as a dated, signed
+   paragraph under a `#### Comments` heading, so it is versioned and an agent reads it with the
+   item; (b) on the item's open PR, or a GitHub issue; (c) only in Project Magic's database, which
+   agents can't see. Suggest (a), plus (b) when the item has an open PR (question 5).
+2. **What is the flag?** Suggest a meta key, such as `**Comment:** 2026-10-19`, added with the
+   comment. The agent removes it once it has read and acted on the comment. Or is a new comment
+   enough on its own, with no flag?
+3. **Does a comment hand the item back?** For an item that is `built` or `done` and `For:` a
+   person, should commenting also set it to `todo` and `For:` back to the agent that built it (in
+   effect, "not accepted, see comment")? Or should that be a choice on the comment box (*Comment*
+   or *Send back with comment*)?
+4. **Which agent?** `For:` names a path such as `agent` or `agent.claude.opus`, not a running
+   session. Is it enough that whichever agent next picks up the item sees the flag, or should the
+   comment name an agent?
+5. **Is "next time the agent reads the backlog" soon enough?** An agent already working on the
+   item is on its branch and only sees main's backlog when it merges main. Should a comment also be
+   posted on the item's open PR, where an agent watching the PR would see it at once?
+6. **Do agents reply?** If an agent answers in the same place, should the item show as *Waiting on
+   you* until the person has read it, so the overview lists it?
+7. **The UI**: a *Comment* box on the item page, separate from *Edit*, that adds to the body and
+   the flag in one edit? Does it go through batch edits like any other edit, or save at once?
+8. **Bugs too?** Presumably `bugs.md` items work the same way. Plan tasks in `PROGRESS.md` too, or
+   not?
+
 ### PM36 Cross repo virtual backlog
-**Status:** todo
+**Status:** blocked · **Waiting:** Nick's answers to the questions below · **For:** person.nickwhiteley
 
 Projects can affect multiple repos. Manage cross repo changes through a single board.
+
+#### Questions (2026-10-19)
+
+Today a project is one repository (spec §4), and ids, epics and the Board are each per repository.
+To answer before it is sized:
+
+1. **What is a real example?** For instance a change to plinth that Bloomprint, Furniture Magic
+   and Project Magic then take up. One or two would decide most of the questions below.
+2. **Where does a cross-repo item live?** (a) In one repository's backlog, as a parent item that
+   names its parts in the others, such as `**Parts:** plinth:PL4, bloomprint:BP40`; (b) in a
+   repository of its own, holding only cross-repo items; (c) only in Project Magic's database,
+   which goes against the repository being the record (spec §2). Suggest (a).
+3. **Is this cross-repo epics?** Epics already group items and show their progress, but only
+   within one repository. Would an epic whose items are in several repositories do the job, rather
+   than a new kind of item?
+4. **What groups the repositories?** A named group, such as "Magic" = projectmagic, plinth,
+   bloomprint and furnituremagic: set up in Project Magic by a tenant admin, or declared in a
+   `.projectmagic.yml`? Can a repository be in more than one group? Who sees a group whose
+   repositories they can only partly see?
+5. **What does the single board show?** (a) Every item of every repository in the group, with a
+   repository chip on each card; or (b) only the cross-repo items, each with its parts' status.
+   With (a), what order does a column take, given that order is priority within one file and
+   items can't be dragged between repositories?
+6. **What is a cross-repo item's status?** Worked out from its parts (all done is done, any in
+   progress is in progress, any blocked is blocked), or set by hand?
+7. **Adding from the board**: should adding a cross-repo item add its parts to each repository at
+   the same time (one PR per repository)? What happens if one repository refuses the edit?
+8. **References and dependencies**: is `repo:ID` (as Ask cites items) the syntax for pointing at
+   another repository's item, in `Waiting:`, `Parts:` and PR bodies? Should "BP40 waits on
+   plinth:PL4 being released" show as blocked until PL4 is done?
+9. **Limits**: within one tenant only? Same GitHub account or organisation only?
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
