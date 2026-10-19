@@ -1,10 +1,11 @@
 # Project Magic: specification
 
-**Draft 3, 2026-10-19.** This is authoritative, and it is the whole record of the application: an
-agent given only this file should be able to build the same application. Draft 2 (2026-10-14)
-settled the first draft's questions (§14). Draft 3 brings in everything built since, including
-tenants (§17, which replaces `specs/tenants.md` as the record of what was built), and the exact
-rules, limits, texts and prompts the build uses (§18–§21 and the appendices). `specs/tenants.md`
+**Draft 3, 2026-10-19, checked line by line against the code the same day.** This is
+authoritative, and it is the whole record of the application: an agent given only this file should
+be able to build the same application. Draft 2 (2026-10-14) settled the first draft's questions
+(§14). Draft 3 brings in everything built since, including tenants (§17, which replaces
+`specs/tenants.md` as the record of what was built), and the exact rules, limits, texts and prompts
+the build uses (§18–§21 and the appendices). `specs/tenants.md`
 stays as the design and its reasoning; `specs/conventions.md` is §5 in the form an agent pastes
 into a repository. Where either disagrees with this file, this file wins.
 
@@ -159,8 +160,9 @@ before a key existed lacks it: wherever a stored config is read, the defaults fi
 
 **Globs** in `docs`, `docs_exclude`: `**/` matches zero or more directories, a trailing `**` the rest,
 `*` any run within a segment, `?` one character within a segment, anything else literally, matched
-against the whole path. **Environment patterns** in `production_environments` support only `*`
-(any run of characters), matched against the whole name.
+against the whole path. Only files ending `.md` (any case) are documents, whatever the globs say; the
+list is sorted by depth (fewer `/` first), then by path. **Environment patterns** in
+`production_environments` support only `*` (any run of characters), matched against the whole name.
 
 The file lives in the repository, where it is versioned and the agents can see it. The tool
 stores only access settings per project: whether it is hidden, pinned (§17.6), and who its members
@@ -201,7 +203,8 @@ The prose, exactly as today …
   on the cut line (it is removed from the title). Both are existing Orchard idioms, kept as they are.
 - **The meta line** is the first line of the first paragraph after the heading, and it **begins with
   `**Status:**`** (case-insensitive). It is a run of `**Key:** value` pairs separated by ` · ` (a
-  middle dot with whitespace each side). A part that has no `**Key:**` of its own continues the
+  middle dot with whitespace each side). A key is a letter then letters and spaces
+  (`^\*\*([A-Za-z][A-Za-z ]*?):\*\*\s*(.*)$`). A part that has no `**Key:**` of its own continues the
   previous value, so a `Waiting:` reason may itself contain ` · `. Keys are case-insensitive and keep
   the spelling they were written with. A paragraph that opens with any other bold key, such as
   `**Specced:**`, `**Open:**` or `**Decided:**`, is prose (spike 0.2). Known keys:
@@ -305,8 +308,9 @@ item's `Branch` key or a PR body. A name whose first part isn't one of the types
 
 **A pull request body names what it works on** with a line `Backlog: NW9` and/or
 `Plan: 5.7`. Several ids are separated by commas, and only the first word of each part counts
-(`Backlog: NW9, A1a (part)` is NW9 and A1a). The key may be bold (`**Backlog:**`), is
-case-insensitive, and must start its line. **A PR that fixes a bug says where the bug
+(`Backlog: NW9, A1a (part)` is NW9 and A1a; backticks are dropped). The key may be bold
+(`**Backlog:**`), is case-insensitive, and must start its line (after spaces or tabs); the first such
+line counts. `Bug:` is its value's first word, lower-cased. **A PR that fixes a bug says where the bug
 was found**, `Bug: production`, `Bug: preview` or `Bug: development`, and, for production,
 `Raised: <date and time>` when it was first noticed, if known (§16.4). **A PR title** that starts
 with an id and a colon (`NW9: DXF export`) links too.
@@ -360,7 +364,10 @@ sources make the same edge, the lower-numbered (more confident) one is kept. The
    A slug of `main`, or an empty one, infers nothing. Inferred links are drawn dashed, labelled
    *inferred*, never move an item's status and never make it *in review*.
 
-A ref that resolves to both an item and a task (Lantern's `5.8`) links both.
+A ref that resolves to both an item and a task (Lantern's `5.8`) links both. **The tasks that
+exist** are main's current tasks plus any current task an active branch's plan adds that main lacks
+(main's row wins where both have the number). The edges to an item come from main's items only; a
+`Plan:` key on any copy naming a task that doesn't exist is dangling (`NW9's Plan: on <branch>`).
 
 **The `projectmagic` branch, and PRs from it, are excluded from linking** (§10.3): they hold pending
 edits, not work. **Deployment branches** (a branch that main has an open or closed PR *into*, such as
@@ -526,14 +533,19 @@ written:
 They are committed **as the App** (an installation token) to a new `projectmagic` branch from the
 default branch's head, one commit per file (`Add <path>` or `Update <path>`), and a PR titled
 **Set up Project Magic** (body: ``Project Magic added or updated `a`, `b` to this repository.``) is
-opened and squash-merged at once (`Set up Project Magic (#n)`), whatever the project's
-`auto_merge`, because selecting the repository in the App is the consent. Then the branch is deleted.
-A refused merge leaves the PR open for a person and is not retried. **An empty repository** (the
-contents API says 404 "…empty") has no commit to branch from, so its files are committed straight to
-the default branch, the first one creating it. **A `projectmagic` branch already in use** (creating
-it fails), or any other failure, defers the work to the next sync; a failure after creating the
-branch deletes it. When nothing is needed, or the work is done, `initialised_at` is set. Projects
-that existed when migration 013 ran are marked as set up.
+opened and squash-merged at once (`Set up Project Magic (#n)`, empty message), whatever the
+project's `auto_merge`, because selecting the repository in the App is the consent. Then the branch
+is deleted. A refused merge leaves the PR open for a person and is not retried (the repository
+still counts as set up). The root is read with `GET /contents?ref=<default>` (files only), and an
+existing agent file's text and sha with `GET /contents/<path>`; an appended file is committed with
+its sha. **An empty repository** (the contents API says 404 with "empty" in its message) has no
+commit to branch from, so every file is committed straight to the default branch, the first PUT
+naming no branch (GitHub creates the default) and the rest naming it; a failed PUT defers. **A
+`projectmagic` branch already in use** (creating it fails), or any other failure, defers the work to
+the next sync; a failed file commit after creating the branch deletes it (a failure to open the PR
+does not, §21). An error thrown during set-up is logged and defers too. When nothing is needed, or
+the work is done, `initialised_at` is set. Projects that existed when migration 013 ran are marked as
+set up. `scripts/sync.ts` (§12) never sets up repositories.
 
 ### 7.4 Freshness
 
@@ -542,12 +554,17 @@ that existed when migration 013 ran are marked as set up.
   `GITHUB_WEBHOOK_SECRET`, compared in constant time) is verified, else 401. The payload is only a
   trigger and is never trusted as data. Deliveries are deduplicated by `X-GitHub-Delivery`
   (`webhook_delivery`; a duplicate answers `{ok: true, duplicate: true}`).
-  - `installation` and `installation_repositories` record the installation (§17.3) and re-list the
-    projects in the background (`syncInstallations`, below), answering 202. If the background work
-    fails, the delivery row is deleted, so GitHub's *Redeliver* runs it again.
+  The delivery row records the project when the payload's `repository.id` is a known one.
+  - `installation` records the installation (§17.3), before anything else, so a claim can find it;
+    then it and `installation_repositories` re-list the projects in the background
+    (`syncInstallations`, below, which records every installation it lists), answering 202
+    `{ok: true, sync: 'projects'}`. If the background work fails, the delivery row is deleted, so
+    GitHub's *Redeliver* runs it again.
   - `push`, `pull_request`, `create` and `delete` for a known project that isn't over its plan, in an
     active tenant, set `last_webhook_at` and start a sync in the background, and save the project's
-    pending batch if it is due (§10.5), answering 202. Any other delivery is acknowledged and ignored.
+    pending batch if it is due (§10.5), answering 202 `{ok: true, sync: <repo>}`. A project whose
+    tenant isn't active answers `{ok: true, ignored: 'tenant is not active'}`. Any other delivery is
+    acknowledged and ignored (`{ok: true, ignored: <event>}`).
 - **A burst collapses.** A sync claims the project by setting `sync_started_at`; a request while one
   runs sets `sync_again`, and the running sync goes once more when it finishes. A claim older than
   five minutes is presumed dead and may be taken.
@@ -561,16 +578,20 @@ that existed when migration 013 ran are marked as set up.
   longest since last synced first, until 40 s have been spent, the rest reported `deferred`; save
   every due batch (§10.5); delete `blob_text` older than 14 days; reconcile billing (§17.7); purge
   tenants deleted more than 30 days ago (§17.8); delete `webhook_delivery` rows older than 14 days.
+  It answers `{ok: true, result: {"<owner>/<repo>": "ran" | "queued" | "deferred"}}`. Each later step
+  catches its own failure, so one doesn't stop the rest.
 - **A Refresh button** on every project page (`POST /p/{repo}/sync`) syncs now and returns to the
   page it was pressed on (the `Referer`'s path, if it is this site), else `/`.
 
 **The project list sync** (`syncInstallations`) lists the App's installations (`GET
-/app/installations`, as the App's JWT) and records each (§17.3). For each one claimed by an active
-tenant, it lists its repositories (`GET /installation/repositories`) and upserts a project per
-repository by GitHub's repository id, with the installation's tenant, setting up new repositories
-(§7.3a). An installation GitHub no longer lists gets `removed_at`. After a complete, non-empty
-listing, projects not seen are marked `uninstalled_at` (and unmarked if they come back). Each touched
-tenant's project limit is then applied (§17.6).
+/app/installations`, as the App's JWT) and records each (§17.3; listing it clears `removed_at`). For
+each one claimed by an active tenant, it lists its repositories (`GET /installation/repositories`,
+with an installation token) and upserts a project per repository by GitHub's repository id (owner,
+name, installation and tenant updated), setting up new repositories (§7.3a). An installation claimed
+by a tenant that isn't active is not listed, and its existing projects count as seen, so they are
+neither synced nor marked uninstalled. An installation GitHub no longer lists gets `removed_at`.
+After a complete, non-empty listing, projects not seen are marked `uninstalled_at` (and unmarked if
+they come back). Each touched tenant's project limit is then applied (§17.6).
 
 A sync is a few GraphQL calls and a few parses, so it fits comfortably in a function invocation.
 
@@ -654,8 +675,22 @@ stub_subscription ref pk, status, period_end, cancel_at_period_end, interval
 ```
 
 Foreign keys cascade from project, tenant and user rows to what hangs off them, except that
-`edit_log.user_id`, `granted_by`, `invited_by`, `created_by`, `claimed_by` and `audit_log`'s ids are
-set null when the referenced row goes, so history stays.
+`edit_log.user_id`, `granted_by`, `invited_by`, `created_by`, `claimed_by`, `updated_by`, `set_by`,
+`audit_log`'s ids, `installation.tenant_id`, `user_pref.current_tenant_id`, `feedback.tenant_id`,
+`flag.min_tier_id` and `subscription.price_id` are set null when the referenced row goes, so history
+stays. Four have no action, so the referenced row can't go while they point at it:
+`project.tenant_id` (the purge deletes a tenant's projects first, §17.8), `pending_edit.user_id`
+(leaving or deleting an account hands pending edits on first, §17.5), `subscription.tier_id`, and
+`tenant.tier_id` / `tier_override_id` (tiers are never deleted).
+
+Constraints beyond the listing above: `tenant.status` defaults to `active`; `tier_quota.value`,
+`tenant_quota_override.value` and `billing_price.amount_minor` are at least 0; `stub_subscription`
+defaults to `incomplete`. Indexes beyond the primary keys and the ones listed: `webhook_delivery
+(received_at)`, `tenant_member (user_id)`, `installation (tenant_id)`, `audit_log (tenant_id, at
+desc)`, `project (tenant_id)`, `invitation (github_id)` and `(tenant_id)`, `support_session (user_id,
+expires_at)`, `subscription (tenant_id)`, `feedback (created_at desc)` and `(user_id, created_at
+desc)`. `platform_setting.default_tier` holds the tier's id as a JSON string; `signup` the mode as a
+JSON string.
 
 **The last-admin triggers** (migration 010): deferred constraint triggers check at commit that each
 affected tenant that isn't deleted still has an admin who isn't disabled (on update or delete of
@@ -679,7 +714,14 @@ installations, audit log, `project.tenant_id` and `over_limit`, `membership.sour
 
 ## 9. The views
 
-Every page title is `<what> · Project Magic` (a project page: `<view> · <project name>`).
+Every page title is `<what> · Project Magic`: `Overview`, `Activity`, `Search` (or `<query> · Search`),
+`Ask`, `Settings`, `Welcome`, `Sign in`, `Invitation`, the tenant pages by their tab (`Tenant`,
+`Members`, `Access`, `Installations`, `Plan & billing`, `Tenant settings`, `Audit`, `Delete tenant`),
+and `Test payment`. Admin pages are `<tab> · Admin · Project Magic` (`Admin` alone for its overview, a
+tenant's page `<tenant name> · Admin · Project Magic`). A project page is `<view> · <project name>`
+(`Board`, `Epics`, `Plan`, `Done`, `Delivery`, `Branches`, the document's path or `Docs`, the item's
+id, `Edit <id>`, `Add an item`, `Edit <path>`), except the List, which is `<project name> · Project
+Magic`. The signed-out home page is "Project Magic: see every project your agents are building".
 
 ### The shell
 
@@ -702,8 +744,8 @@ of the page, and the clicked sidebar link is marked busy (`aria-busy`) until the
 (static under `prefers-reduced-motion`).
 
 **On a phone** (max-width 760 px, PM34): the sidebar and header dissolve into one flowing block: the
-brand and the views (Activity hidden) in a row, then a project picker select ("Projects…" and each
-project) at half width with the user menu to its right, then the page. The project list is replaced
+brand and the views (Activity hidden) in a row, then a project picker select ("Projects…", going to
+`/`, and each project) at half width with the user menu to its right, then the page. The project list is replaced
 by the select. Inside a project, the head is compact (no repository crumb, a 24 px name, a one-line
 sync), the batch bar is hidden unless edits are unsaved and the batch toggle always, the tab bar
 becomes a narrow view select that shares a row with *Filters* and the add buttons (shortened to
@@ -726,30 +768,34 @@ reasons ("One place for every project", "What is waiting on you", "The files sta
 it works* in three steps (the conventions, with a sample heading and meta line; a GitHub App reads
 the repositories; you read, and edit when you need to), *Run it for your projects* (a GitHub account,
 Postgres, a SvelteKit host; three steps; a link to the README's setup guide), *Add a repository*
-(connect on Tenant → Installations, the set-up PR of §7.3a, then add items), and a footer.
+(connect on Tenant → Installations, the set-up PR of §7.3a, then add items), and a footer. The full
+text is Appendix F.
 
 ### The overview (`/`, signed in)
 
 Signed in with no tenant, `/` redirects to `/welcome`. Otherwise it is one card per project, which is
 the point of the tool. A head says "Overview", "What is planned, in flight and done, across every
-project." and totals: `<n> projects · <n> in flight · <n> waiting on you`. Projects with a backlog
-get cards; repositories without one are listed in a line below ("Also installed, without a
-backlog: …"). Each card shows:
+project." and totals over the cards: `<n> projects · <n> in flight · <n> waiting on you` (the sums of
+the cards' In flight and Waiting on you counts). Projects with a backlog get cards, in repository-name
+order; repositories without one are listed in a line below ("Also installed, without a backlog: …",
+each linking to its project). Each card shows:
 
 - the project's name (linking to it) and its last commit on any branch, with its age and branch;
 - badges: `<n> pending edits` (items changed by pending edits, §10.3), and `<n> notices` (the health
   panel's count, linking to it);
 - the last sync's error, if it failed;
-- a count per status of every item on main, except done, each linking to the List filtered by it,
-  and done in the last 14 days;
+- a count per status of every item on main, except done, in the status order of Appendix D and only
+  where it isn't zero, each a pill and the number linking to the List filtered by it
+  (`?status=`), then the done pill with "<n> in 14 days" (items shipped in the last 14 days);
 - the delivery line (§16.5), when there is anything to show;
-- **Waiting on you**: the built and blocked items that have a waiting reason, the first three with
-  their reason, and the count. A built one has an **Accept** button for editors (PM10), which sets it
-  done (§10.1) and returns to `/`;
-- **In flight**: each active branch other than main, the edits branch and deployment branches, with
-  its linked items (or its inferred item, marked *inferred*, or its plan tasks, or "not in the
-  backlog"), ahead and behind counts, its open PR (or "no PR"), the age of its last commit and its
-  message;
+- **Waiting on you · <n>**: the built and blocked items that have a waiting reason, the first three
+  with their id, title, status pill and reason. A built one has an **Accept** button for editors
+  (PM10), which sets it done (§10.1) and returns to `/`;
+- **In flight · <n>**: each active branch other than main, the edits branch and deployment branches,
+  with its linked items (`→ <id> <title>`, or its inferred item, marked *(inferred)*, or `→ plan
+  <tasks>`, or "not in the backlog"), then `<n> ahead · <n> behind · PR #n` (with "(draft)") or "no
+  PR", the age of its last commit and its message in quotes. With none: "No branches with work on
+  them.";
 - the plan's progress for the next task's group (done of total, as a bar) and its **next task**
   (§5.2), linking to the Plan;
 - when it was synced.
@@ -760,97 +806,143 @@ and a failed sync.
 ### A project (`/p/{repo}`)
 
 `{repo}` is the repository name, or `{owner}--{repo}` when two of the tenant's projects share a name
-(§17.4). The project layout shows the repository (linking to GitHub), the name, "synced <age>" and
-*Refresh*; the last sync's error; a note passed back in `?merge=` (from Merge, Save now or Discard);
+(§17.4). The project layout shows the repository (`owner/repo`, linking to GitHub), the name, "synced
+<age>" and *Refresh*; "Last sync failed: <error>"; a note passed back in `?merge=` (from Merge, Save
+now or Discard);
 the **edits state** when the last edit left one (§10.2): "Edits are waiting in PR #n and aren't on
 main yet: <why>" with *Merge* for those who may merge, "**Edits not merged.** <detail>", or "**Edits
 need a merge by hand.** <detail> PR #n"; and, for editors where the project allows batch edits, the
-**batch bar** (§10.5). Then the tabs, with counts:
+**batch bar** (§10.5). Then the tabs, in this order. Four carry a count: List (items on main, bugs
+included), Epics (epics), Done (unpruned plus shipped items; deleted ones aren't counted) and
+Branches (active branches, main included). Board, Plan, Delivery and Docs have none.
 
 - **List** (count: items) — the default, because order is priority. The backlog in document order,
   as written: the preamble (collapsed, *Preamble*), items and notes (notes collapsed, by title) under
   their section headings and intros. Each item is a row that opens in place to show its body: status
   pill, id (linking to the item), ★, title, tags (*pending*, *blocked* when blocked but shown as
   another status, *bug*, job, `For:`, epic, size), and the source line, with "waiting on …", "no meta
-  line" and the inferred status (§13) after it. Filters: **Status** (all, or each), **Job**, **Show
-  done** (with the count; done items are hidden unless asked for, or the done status is chosen,
-  PM26), **Type** (when any item has one), **Epic** (when any exist), and **For** (anyone, *mine*,
-  people, agents, and each value in use). Each is mirrored in the URL (`status`, `job`, `done=1`,
-  `type`, `epic`, `for`) so a filtered list can be shared. While any filter is set, notes, the
-  preamble and empty sections are hidden. *Add item* and *Add bug* for editors. A **Health** panel
-  (collapsed, `#health`, "Health: n notices") lists disagreements, parse warnings by line, dangling
-  references, unreadable plan cells, config warnings, bad `For:` and `Epic:` values, and notes
-  (headings without an id). Editors can **drag** a row onto another to put it just before that one,
-  or onto a section's end zone ("Drop here to put it last in …"), while no filter is set; the row
-  shows in its new place at once while the move is saved. Without a backlog: "This repository has
-  no backlog.md, so there is nothing to list. Its branches and docs are in the other tabs."
+  line" and the inferred status (§13) after it, all joined by ` · `. Above the list, "In the file’s
+  order, which is its priority." Filters: **Status** (`all`, or each in the order of Appendix D),
+  **Job** (`all`, or each job in use, sorted), **Show done** (a tick-box with the count of done items
+  on main; done items are hidden unless asked for, or a status is chosen, which disables the box,
+  PM26), **Type** (`all`, or each type in use; shown when any item has one), **Epic** (`any`, or each
+  epic as `<id> <title>`; shown when any exist), and **For** (`anyone`, `mine` when signed in, then
+  `people`, `agents` and each other value in use, sorted). Each is mirrored in the URL (`status`,
+  `job`, `done=1`, `type`, `epic`, `for`, by a shallow replace) so a filtered list can be shared.
+  While a Status, Job, Type, Epic or For filter is set, notes and the preamble are hidden. A section
+  is shown only when it has a row to show, unless nothing is filtered *and* done items are shown: so
+  by default a section with only done items, only notes, or nothing is hidden. *Add item* and *Add
+  bug* for editors (`/new` and `/new?bug=1`). A **Health** panel (collapsed, `#health`, shown when
+  there is a notice, "Health: n notices") lists, each with a bold label: disagreements
+  ("Disagreement:"), parse warnings ("Backlog line <n>:"), dangling references ("Dangling reference:
+  <ref> (from <where>)"), unreadable plan cells ("Plan task <n>: its status cell doesn’t start with a
+  known word"), config warnings (".projectmagic.yml:"), bad `For:` ("For:") and `Epic:` ("Epic:")
+  values; the count covers those. Below them, not counted, "Notes (headings without an id): a · b".
+  Editors can **drag** a row onto another to put it just before that one, or onto a section's end
+  zone ("Drop here to put it last in …"), while no filter is set ("Drag a row onto another to put it
+  just before that one."); the row shows in its new place at once while the move is saved, and a
+  refusal shows above the list. Without a backlog: "This repository has no backlog.md, so there is
+  nothing to list. Its branches and docs are in the other tabs."
 - **Board** — columns todo · in progress · blocked · in review · built · done, with a count each
   (done includes the shipped lane), and swimlanes from the backlog's `##` sections in order (items
   before the first section get a lane "Before the first section"; bugs from `bugs.md` are the
   *Bugs* lane; empty lanes are hidden). Cards show id, ★, tags (*pending*, *bug*, job, `For:`, epic,
   size), title, the waiting reason for blocked and built items, and the source line, and link to the
-  item. A last lane, **Shipped in the last 30 days**, holds shipped items in the done column. Filters:
-  Type, Epic and For, mirrored in the URL. **Drag**, for editors: a card dropped on another in its
-  column goes before it, and on a lane's empty space goes last in that section (reordering is off
-  while the For filter is set); a card dropped in another column sets its status (PM27), for todo,
-  blocked, built and done only. Dropping into blocked or built when the item has no waiting reason
-  asks "What is <id> blocked on?" / "waiting on?" first. In progress and in review can't be dropped
-  into, and the Board says so.
+  item. Lanes are collapsible and open, each with its count; while a filter is set, lanes with no
+  card are hidden. A last lane, **Shipped in the last 30 days**, holds shipped items (not deleted
+  ones) in the done column, each card its id, title and age, linking to `/done#<id>`. Above the
+  board: "Columns come from the files and branches, so cards move when the work does. Lanes are the
+  backlog’s sections, in order." Filters: Type, Epic and For, as on the List, mirrored in the URL.
+  **Drag**, for editors: a card dropped on another in its column goes before it, and on a lane's empty
+  space goes last in that section (not in the lane before the first section; reordering is off while
+  the For filter is set); a card dropped in another column sets its status (PM27), for todo, blocked,
+  built and done only. Dropping into blocked or built when the item has no waiting reason asks
+  "What is <id> blocked on?" / "What is <id> waiting on?" first (a required field, *Set <status>* and
+  *Cancel*). In progress and in review can't be dropped into: "<status> comes from branches and pull
+  requests, so a card can't be dropped there." Editors see the rules: "Drag a card onto another in its
+  column to put it before that one, or onto a lane’s empty space to put it last in that section. Drag
+  it into another column to set its status: todo, blocked, built or done. In progress and in review
+  come from branches and pull requests."
 - **Epics** (count; hidden when there are none) — §13.
 - **Plan** (hidden without a plan) — `PROGRESS.md`'s current tasks by group, each group with done of
   total and a bar, collapsed when complete. Each task: number, title, note, chips linking to the items
   linked to it, a status pill, and for editors an *Edit* (status and note, §13). The next task is
-  marked. Superseded rows are under *Earlier tables* ("n rows a later table renumbered"). A side rail
+  marked. A group with no heading is titled "Plan". The Plan page is a 404 ("This project has no
+  plan") without one. Superseded rows are under *Earlier tables* ("n rows a later table
+  renumbered"), number, title and a small pill only. A side rail
   lists the disagreements ("Shown, never resolved: the backlog and the plan are both edited by hand.",
   or "The backlog and the plan agree.") and unreadable status cells. Task anchors are `#task-<n>`.
-- **Done** (count) — "Done, still in the backlog" (unpruned items), then **Shipped**, newest first,
-  each with its age, commit (7 characters, linking to GitHub) and PR; then *Deleted (n)*, collapsed,
-  with who deleted each (PM24). Anchors are the ids.
+- **Done** (count) — "Done, still in the backlog" ("Marked done in their meta lines; the agents prune
+  these when they next tidy the backlog."; shown only when there are any), then **Shipped**
+  ("Removed from main’s backlog, newest first. Found by walking main’s history."), each with its age,
+  commit (7 characters, linking to GitHub) and PR, or "Nothing has shipped yet."; then *Deleted (n)*,
+  collapsed ("Deleted with Project Magic’s Remove, so never shipped. Their ids are not used
+  again."), with each one's age and `@<login>` of who deleted it (PM24). Every entry links to its item
+  page. Anchors are the ids.
 - **Delivery** — §16.5.
 - **Branches** (count: active branches) — a table of every branch: name (tags *main*, *Project Magic
   edits*, *deploys*, *stale*), what it links to (items, plan tasks, an inferred item, or "not in the
-  backlog"), ahead · behind, up to two PRs with state, and the last commit's age and message. Sorted
-  main first, then unlinked active work (work the backlog doesn't know about), then active, then by
-  last commit.
+  backlog"), ahead · behind (blank for main), up to two PRs with state (and "draft"), and the last
+  commit's age and message. Each name links to its tree on GitHub. Sorted main first, then unlinked
+  active work (work the backlog doesn't know about), then active, then by last commit, newest first.
+  Above it: "Every branch on GitHub. Active work the backlog doesn’t know about comes first. A branch is
+  active when it is ahead of main and was committed to recently, or has an open PR."
 - **Docs** — a tree of the configured files on a branch (main by default; a branch picker lists main
   and active branches other than the edits and deployment branches, `?ref=`), files grouped under
-  their directories. `/p/{repo}/docs` opens `README.md` (or the first file). Rendered with GFM tables
+  their directories (root files first, then directories by name, each as `<dir>/`). A `?ref=` naming
+  any branch the project has works, even one the picker leaves out; an unknown one is a 404 ("No
+  branch <ref>"), as is a path that isn't one of the documents ("<path> is not one of this project’s
+  documents on <ref>"). With no documents: "No documents match this project’s `docs` setting."
+  `/p/{repo}/docs` redirects (307) to `README.md` (matched in any case, at the root), else the first
+  file, keeping `?ref=`. Rendered with GFM tables
   and code; Mermaid fences drawn in the browser (PM8: Mermaid 11.17.2, loaded only on a page that has
   a diagram, `securityLevel: 'strict'`, the `dark` or `neutral` theme; a diagram with an error keeps
   its source and says what is wrong). Item ids and current plan task numbers in any document become
-  links. Relative links between documents resolve to the docs view; relative images resolve to the
-  image route (PM21, §11.3). An *On this page* contents of h2 and h3. The path, a *GitHub* link and,
-  on main for editors, *Edit* (§13).
+  links: an item id to its page, a current plan task number that no item has to `/plan#task-<n>`
+  (only dotted task numbers such as `5.8` are recognised in text, not bare ones like `23`).
+  Relative links between documents resolve to the docs view (keeping `?ref=`); relative images
+  resolve to the image route (PM21, §11.3); absolute, `#` and scheme links are left alone. An *On
+  this page* contents of h2 and h3. Above the text, the path ("on <branch>" off main), a *GitHub*
+  link to the blob and, on main for editors, *Edit* (§13).
 
 **An item (`/p/{repo}/i/{id}`)** shows "← All items"; the id, ★, job, size, `for …`, *bug*, the epic
 (linking to the Epics tab) and *pending edit*; the title and, for editors, *Edit*; where a bug was
 found and when it was raised; the rendered body. A side panel: the status pill (and a small blocked
-pill when blocked but shown otherwise), the source line, "From <the rule in words>", the waiting
-reason, the inferred status (§13), and for a built item an **Accept** button for editors (PM10);
-disagreements, hints, and "This item has no meta line, so its status is inferred."; the meta line's
-keys and values; **Linked** branches (ahead, age, stale), inferred branches ("inferred from the
-branch's name; not used for status"), PRs (state, draft) and plan tasks (status, title); and
-**Where**: the section and a link to the line on GitHub. Below the body, **On branches**: a line diff
-of main's version against each linked branch's differing copy; other differing copies (usually
-branches behind main) are only named, deployment branches left out. After a pending save:
+pill when blocked but shown otherwise), the source line, "From <the rule in words>." (Appendix D;
+for rules 2 and 3 followed by the detail in brackets, "(PR #7 open)"), "Waiting on <reason>", the
+inferred status (§13), and for a built item an **Accept** button for editors (PM10); disagreements,
+hints ("Hint: …"), and "This item has no meta line, so its status is inferred."; the meta line's keys
+and values; **Linked** branches (ahead, age, stale), inferred branches ("inferred from the branch’s
+name; not used for status"), PRs (number, title, state, draft) and plan tasks (status, title), or
+"Nothing yet."; and **Where**: the section (or "Before the first section") and "backlog.md line <n>"
+linking to that line on GitHub. Below the body, **On branches**: "Main’s version against
+`<branch>`’s:" and a line diff for each linked branch's differing copy; other differing copies
+(usually branches behind main) are only named ("Other branches carry a different copy of this item,
+usually because they are behind main: …"), deployment branches left out. After a pending save:
 "Saved. It reaches main when the edits PR is merged." (`?pending=1`).
 
-An id that isn't on main shows, in order: a **deleted** item's last text, who deleted it and the
-commit ("It was never shipped."); a **shipped** item's last text, commit and PR; for an id added
-through Project Magic in the last minute that the cache still lacks, "Adding <id>. It shows here as
-soon as GitHub has it.", refreshing every two seconds (PM17); otherwise 404.
+An id that isn't on main shows, in order: a **shipped** item ("<id> · shipped", "Removed from the
+backlog <age> in <commit> · PR #n. Its last text on main:" and its last body, heading removed); a
+**deleted** item ("<id> · deleted", "Deleted from the backlog <age> by @<login> in <commit>. It was
+never shipped. Its last text on main:"); for an id added through Project Magic in the last minute
+(a successful `add` in `edit_log`) that the cache still lacks, "Adding <id>. It shows here as soon as
+GitHub has it.", refreshing every two seconds (PM17); otherwise 404 ("No item <id>").
 
 **Search** (`/search?q=`) covers ids, titles and bodies of items on main across every project the
 person can see. The query and texts are folded (lower case, accents removed). An item whose id equals
 the query ranks first; then items whose title contains every word (or whose id equals a word); then
 items whose title or body contains every word, with a snippet of the body around the first match
-(60 characters before, 120 after, markup removed). At most 100 hits ("(the first 100)"), each with its
-status, id, title and project.
+(60 characters before, 120 after, `**` and backticks removed, whitespace collapsed, `…` at a cut).
+Ties keep project and file order. The page has its own box ("An id such as NW9, or words from a
+title or body") and says "<n> items on main", with "(the first 100)" at the limit; each hit shows its
+status, id, title and project and links to the item.
 
 **Activity** (`/activity`, PM5): the last 14 days across every project with a backlog, grouped by the
-item each event was about, newest group first: each active branch's latest commit (the sync caches
-only a branch's head; the edits and deployment branches are left out) under its first linked item or
-"not linked to an item", and items that shipped ("<id> shipped", with the PR).
+item each event was about, newest group first, events newest first: each active branch's latest
+commit (main's included; the sync caches only a branch's head; the edits and deployment branches are
+left out), its message, branch and first PR, under its first confidently linked item or "not linked
+to an item", and items that shipped ("<id> shipped", in bold, with the PR). Each group heads with the
+project and the item, linking to both. With nothing: "Nothing in the last 14 days."
 
 **Ask** (`/ask`) — §13.
 
@@ -869,7 +961,11 @@ only a branch's head; the edits and deployment branches are left out) under its 
   upper-cased, the epic's whitespace collapsed, `For:` without spaces, and CRLF in the body made LF. It is refused with a message when
   the title is empty ("A title is needed.") or more than one line, the job isn't one capitalised
   word, `For:` is bad, the epic is a bad name (below), a plan task isn't a task number, or a changed
-  id is taken. **The Epic field** takes an epic id (`EP3`, any case), or a name: the name of an
+  id is taken. The messages: "A title is needed.", "The title is one line of text." (also for a
+  title starting `###`), "A job is one word in capitals, such as PRO.", "For <the §5.1 problem>.",
+  "Plan tasks are numbers such as 46 or 5.8, separated by commas.", "An epic's name is at most 80
+  characters.", "An epic is an id such as EP3, or a name in plain text.", and §10.1's id messages.
+  **The Epic field** takes an epic id (`EP3`, any case), or a name: the name of an
   existing epic (its title, ignoring case) is that epic; any other name, of at most 80 characters, not
   starting with `#` and with no backtick or newline, **starts a new epic** (PM1), numbered one after
   the highest epic id in use. Before the item is saved, the new epic is declared at the end of the
@@ -882,10 +978,14 @@ only a branch's head; the edits and deployment branches are left out) under its 
   Waiting, For, Epic after the last known key before them; an emptied field removes its key (never
   Status); unknown keys are kept; `Job` is written where the item keeps it (the meta line if it has a
   `Job` key, else the heading's tag); a branch is written in backticks; an item with no meta line
-  gains one. Saving says *Saving…* and disables the button until the response.
+  gains one. Saving says *Saving…* and disables the button until the response. A new epic's commit
+  that conflicts answers "The epics file changed while you were saving. Try again."; one GitHub
+  refuses shows its message, and the item isn't saved. The edit page has *Cancel* (back to the item).
 - **Set an item's status**, alone: the Board's column drop (PM27) and **Accept** (PM10) are the same
-  edit as saving the form with that status, for todo, blocked, built or done only; moving to done
-  clears *Waiting*, and a waiting reason given for blocked or built sets it.
+  edit as saving the form with that status, for todo, blocked, built or done only (any other is
+  refused: "Only todo, blocked, built and done can be set; in progress and in review come from
+  branches and pull requests."); moving to done clears *Waiting*, and a waiting reason given for
+  blocked or built sets it. It returns to the form's `back` (a local path), else the Board.
 - **Add an item** (`/p/{repo}/new`): in a chosen section, at its end ("lowest priority in it") or top.
   Its id is suggested from `new_id_prefix` (or, without one, the most common letter prefix in use,
   ties alphabetically, `B` if none) and one more than the highest number in use with that prefix,
@@ -893,25 +993,38 @@ only a branch's head; the edits and deployment branches are left out) under its 
   tasks field suggests tasks no item holds yet. A plan task number can be entered as the id, to add
   the reasoning for an existing `PROGRESS.md` task. Uniqueness is checked against main, every active
   branch **and** done history (deleted items included), so a shipped id is never reused ("<id> is
-  already in use, or was used before"). An id must match one of §5.1's forms. A backlog with no `##`
-  section offers "Backlog", and adds after the preamble's last item or at the end. **Add a bug**
-  (`?bug=1`, PM29) suggests an id from `bug_prefix` and adds it after the last bug in `bugs.md`; a
-  project with no bugs file adds it to the backlog with `Type: bug`. The new block is the heading,
-  the meta line and the body after a blank line, separated from its neighbours by one blank line.
-  *Adding…* shows until the response.
+  already in use, or was used before"). An id must match one of §5.1's forms ("<id> is not an id:
+  use letters and a number (BP12) or a plan task number (5.8)"). The page is a 404 ("This project has
+  no backlog") without a backlog. The form is the edit form's, with **Section** (each section;
+  `?section=<index>` preselects one) and **Position** ("At the end (lowest priority in it)" or "At
+  the top"). A backlog with no `##` section offers "Backlog", and adds after the preamble's last
+  item or at the end. **Add a bug** (`?bug=1`, PM29; "Add a bug" heading, with a link to "Add an item
+  instead") suggests an id from `bug_prefix` and adds it at the chosen end of the bugs in `bugs.md`
+  ("It goes in the bugs file."); a project with no bugs file adds it to the backlog with `Type: bug`
+  ("This project has no bugs file, so it goes in the backlog with `Type: bug`."). Adding an item
+  where a bugs file exists links "Add a bug instead, in the bugs file." **The new block** is the
+  heading (`### <id>[ ★] <title>[ — <JOB>]`: a job given on the form is the heading's tag, never a
+  meta key), the meta line (`Status`, `Size`, `Branch`, `Plan`, `Waiting`, `For`, `Epic` in that
+  order, empty ones left out, then `Type: bug` for a bug in the backlog) and the body after a blank
+  line, separated from its neighbours by one blank line. A new epic named on the form is declared
+  first, as for an edit. It returns to the new item's page. *Adding…* shows until the response.
 - **Move an item**: before or after another item, within its section or into another, or first or
   last in a section. This is a cut and an insert of its exact range. Both `before` and `after` are
   needed, because only `after` can place an item last in a section. The cut takes the blank lines
   after the item, or, when the item is last in the file, the blank lines before it (spike 0.2). An
   empty section takes the item after its heading and intro. The edit page's *Move* offers "Top of
-  <section>" and "After <id> <title>" for each section; dragging on the List and Board makes the same
-  edit. **A move stays in its file**: a bug moves among the bugs ("A bug stays in bugs.md: move it
-  among the bugs.") and an item can't move into the bugs file ("An item can't move into the bugs
-  file: change its Type instead.").
-- **Remove an item**, with a tick-box confirmation ("I mean it"): **Mark it done; the agents prune it
-  later** sets `Status: done` on the meta line and leaves the item in place (it shows under "Done,
-  still in the backlog"), or **Delete it from the backlog now** cuts its range (the item is then
-  *deleted*, §7.3).
+  <section>" and "After <id> <title, first 50 characters>" for each section (other items only), under
+  "Choose a place…"; dragging on the List and Board makes the same edit (`before:<id>`, `after:<id>`,
+  `start:<section>`, `end:<section>`). **A move stays in its file**: a bug moves among the bugs ("A
+  bug stays in bugs.md: move it among the bugs.") and an item can't move into the bugs file ("An item
+  can’t move into the bugs file: change its Type instead."); first or last in the Bugs section is
+  before the first or after the last other bug. A move returns to the List. *Moving…* shows until the
+  response.
+- **Remove an item** (*Remove <id>…* opens it), with a tick-box confirmation ("I mean it"; without it,
+  "Tick the box to confirm."): **Mark it done; the agents prune it later** (the default) sets
+  `Status: done` on the meta line and leaves the item in place (it shows under "Done, still in the
+  backlog"), returning to the item, or **Delete it from the backlog now** cuts its range (the item
+  is then *deleted*, §7.3), returning to the List. *Removing…* shows until the response.
 
 The backlog's commit messages are `Backlog: <op> <ID> <title>` (`Backlog: edit NW9 DXF export`,
 `Backlog: add …`, `Backlog: move …`, `Backlog: remove …`). Plan status cells and documents are
@@ -978,12 +1091,18 @@ a merged edit or the Merge button, `pending` with the reason and PR, or the bloc
    file isn't on the branch, and commits without a `sha`.
 4. On a 409 or 422, which means the file changed underneath, go back to step 1's read and retry, up
    to three tries in all. Splices are by id, so a concurrent change to a different item is harmless.
-5. Write `edit_log` (one row per edit: project, user, item, op, base oid, commit, PR; a failed or
-   refused edit is logged with its `error`). Open the PR if there is none.
+5. Open the PR if there is none. Write `edit_log` (one row per edit: project, user, item, op, base
+   oid, commit, PR; a failed, refused or blocked edit is logged with its `error` and no commit). The
+   `op` is the item operation (`add`, `edit`, `move`, `remove`; a status change and Mark done are
+   `edit`), `plan` (item: the task number), `doc` (item: the path; also a new epic's declaration),
+   `batch` (a failed batch with nothing applied), or `discarded` (§17.5). `edit_state` is set from
+   the result: cleared by a merge, `pending` with the reason and PR, or the blocked state with its
+   detail and PR; a refusal, conflict or no change leaves it alone.
 6. With `auto_merge`, merge the PR and delete the branch. While the PR stays open, rewrite its body
    to list every edit it holds, oldest first: "Edits made in Project Magic, on the `projectmagic`
-   branch. Each line is one edit." then `- <message> (<login>, <YYYY-MM-DD HH:MM>)` per edit
-   (`Backlog: <op> <item>`, `Plan: set <task>`, `Doc: edit <path>`).
+   branch. Each line is one edit." then `- <message> (<login>, <YYYY-MM-DD HH:MM>)` (UTC; `unknown`
+   for no login) per successful `edit_log` row of that PR (`Backlog: <op> <item>`, `Plan: set
+   <task>`, `Doc: edit <path>`, `Backlog: batch (<item>)`).
 7. Sync until the cache holds the merge commit as main's head (or, while the PR is pending, the
    branch's commit as `projectmagic`'s head), for up to ten seconds, trying every half second: a
    sync a webhook started may still be running (then ours waits for it to finish), and GitHub can
@@ -997,15 +1116,26 @@ adds `?pending=1`. A conflict on the item form shows "<id> changed on main since
 Nothing has been saved.", a diff of what changed on main ("It has been removed from main." if it
 was), and a diff of what this edit would change against main's version now, with the three choices:
 **Save mine** (resubmits against the new version, replacing it), *reopen the form* to take theirs,
-or edit the fields to combine them. GitHub's 403 or 404 is "Your GitHub account can't <do it> in
-this repository (<status> <message>)." An expired sign-in is "Your GitHub sign-in has expired. Sign
-in again to edit." with a *Sign in again* link.
+or edit the fields to combine them ("Save again to **keep yours** (it replaces main’s version),
+reopen the form to **take theirs**, or edit the fields below to combine them."). A conflict on a
+move, status change or remove, which sends no base, can't happen; any other conflict answers "The
+backlog changed on main while you were looking. Reload and try again." GitHub's 403 or 404 is "Your
+GitHub account can’t <do it> in this repository (<status> <message>)." (HTTP 403), another refusal
+"GitHub refused to <do it>: <status> <message>" (403), a blocked edits branch its detail (409), a
+splice that fails its message (400). The *<do it>* phrases: `read main`, `create the projectmagic
+branch`, `read the projectmagic branch`, `merge <main> into the edits branch`, `compare the edits
+branch with main`, `reset the projectmagic branch`, `read <path>`, `commit to <path>`, `open the
+edits pull request`. An expired sign-in is "Your GitHub sign-in has expired. Sign in again to edit."
+(401) with a *Sign in again* link (`/auth/github?next=<this page>`). A GitHub 5xx is an error, not a
+message.
 
 **Pending edits are visible.** While a PR is open, each item whose copy on the active `projectmagic`
 branch differs from main's carries a *pending* badge. Views read main, so the board doesn't change
 until the edit is merged. **Merging** happens on GitHub, or with a *Merge* button for a project
-`maintainer` (`POST /p/{repo}/edits/merge`), which squash-merges the open PR as them, deletes the
-branch, clears the edits state, syncs, and reports "Merged PR #n." or GitHub's message.
+`maintainer` (`POST /p/{repo}/edits/merge`), which squash-merges the PR in `edit_pr` as them (GitHub's
+default squash title, the PR's own, `Project Magic edits (#n)`), deletes the branch, clears the edits
+state, syncs until main's head is the merge commit, and reports "Merged PR #n.", GitHub's message,
+"There is no open edits PR." or the expired sign-in message, through `?merge=` on the List.
 
 **The `projectmagic` branch is never work.** It is excluded from linking (§6) and status
 derivation (§7.2), so a pending edit never makes an item look in progress.
@@ -1095,8 +1225,12 @@ batch bar, `POST /settings/batch`, stored in `user_pref.batch_edits`, default on
   else `Backlog: <n> edits (<ids, up to six, then …>)`. The commit is made with the token of whoever
   pressed *Save now*, or of the batch's first author when it is saved automatically. Each applied edit
   is logged under its own author. A batch spanning both the backlog and `bugs.md` is one commit per
-  file. Save now reports "Saved n edits; m left pending because the item changed." or "Nothing to
-  save.".
+  file. Save now (`POST /p/{repo}/pending`) reports, through `?merge=` on the page it was pressed on,
+  "Saved n edit(s); m left pending because the item changed.", "Nothing to save.", GitHub's refusal,
+  or the expired sign-in message; Discard (the same route with `do=discard` and the edit's id)
+  reports "Discarded." or the claimed-edit message below. A batch whose author is no longer a user
+  fails with "The person who made these edits is no longer a user." While edits are held, an edit
+  answers at once with a redirect, as if merged, and the batch bar shows it.
 - **Conflicts.** An edit whose item changed on main since the person saw it ("<id> has changed since
   this edit", "<id> is no longer there"), or that no longer splices, is not applied. It stays pending,
   marked with why, and the others are saved. Discard it, or make the change again.
@@ -1108,12 +1242,15 @@ batch bar, `POST /settings/batch`, stored in `user_pref.batch_edits`, default on
 ### 11.1 Identity
 
 - **Sign in with the GitHub App's user OAuth flow.** `GET /auth/github` makes a random state and
-  stores it, with the `next` path (a local path only), in an HTTP-only, secure, `SameSite=Lax` cookie
+  stores it (24 random bytes, base64url) as JSON `{state, next}`, with the `next` path (a local path
+  only, else `/`), in an HTTP-only, secure, `SameSite=Lax` cookie
   `pm_oauth` on path `/auth/github` for ten minutes, then redirects to
   `https://github.com/login/oauth/authorize?client_id=…&redirect_uri=<origin>/auth/github/callback&state=…`.
-  The callback checks the state (else 400 "The sign-in link expired or was not started here. Try
-  again."), exchanges the code, reads `GET /user`, and signs the person in (§17.2), then redirects to
-  `next`.
+  The callback deletes the cookie, checks the state (else 400 "The sign-in link expired or was not
+  started here. Try again."), exchanges the code (`POST https://github.com/login/oauth/access_token`
+  with the client id and secret, JSON), reads `GET /user`, and signs the person in (§17.2), then
+  redirects to `next`, or to `/welcome?full=<names>` when tenants at their member limit kept them
+  out and they belong to none.
 - **Who may sign in.** While sign-up is `open` or `approval`, any GitHub account can sign in and gets
   an `app_user` row; while it is `closed` (the default), only an account that already has a row, an
   invitation, or GitHub access to a tenant that admits by it (§17.5). The first platform admin comes
@@ -1135,8 +1272,11 @@ batch bar, `POST /settings/batch`, stored in `user_pref.batch_edits`, default on
   and their own GitHub checks. It buys a short-lived access token, cached in memory until five minutes
   before it expires; GitHub rotates the refresh token on every use, so the refresh is made under a row
   lock and the new one stored. A missing, expired or refused refresh token is *reauth required*.
-  Reads use installation tokens (from the App's JWT, RS256, `iat` backdated 60 s, valid 10 minutes;
-  cached until five minutes before they expire). Every GitHub request sends
+  An access token without an expiry is kept for an hour. Reads use installation tokens (`POST
+  /app/installations/{id}/access_tokens` with the App's JWT: RS256, `iat` backdated 60 s, `exp` 600 s
+  after `iat`, `iss` the App id; tokens cached until five minutes before they expire). A GitHub 5xx,
+  and any non-2xx on a paged REST read or a GraphQL call, throws; other REST calls return their 4xx
+  status for the caller to act on. Every GitHub request sends
   `accept: application/vnd.github+json` and `x-github-api-version: 2022-11-28`.
 
 ### 11.2 Roles and permissions
@@ -1165,9 +1305,10 @@ from the person's GitHub permission on the repository by default, or set by admi
 - **The hook** (`hooks.server.ts`), on every request that isn't a machine route: reads the session,
   the person's tenants and current tenant, or a platform admin's open support session in its place;
   in the background, refreshes GitHub-derived roles when due (§17.5) and records `last_seen_at` at most
-  every ten minutes. A route needing a signed-in user redirects to `/signin?next=<path>`. A tenant or
-  platform action that `can()` refuses is a 403. A project route resolves `{repo}` in the current
-  tenant (§17.4).
+  every ten minutes. A route needing a signed-in user redirects (303) to `/signin?next=<path>` (the
+  path without its query). A tenant or platform action that `can()` refuses is a 403 ("Not allowed").
+  A project route resolves `{repo}` in the current tenant (§17.4). A URL that matches no route is
+  SvelteKit's 404.
 - **A project the user can't see is a 404**, not a 403, and is absent from the overview and
   from search. A project route the user can see but whose action they lack is a 403.
 - **A hidden project** is seen only by its maintainers and tenant admins, so one of them can
@@ -1271,20 +1412,39 @@ migrations/        numbered SQL (§8); scripts/migrate.ts, scripts/sync.ts
 test/fixtures/     two made-up projects' files (Orchard, Lantern), test/golden/ their pinned parses
 ```
 
-- **The `#lib` import alias** (`package.json` `imports`) points at `src/lib`; files import with the
-  `.ts` extension. Environment variables are read from `$app/env/private`.
+- **The `#lib` import alias** (`package.json` `imports`: `#lib` → `./src/lib/index.js`, `#lib/*` →
+  `./src/lib/*`) points at `src/lib`; files import with the `.ts` extension. Environment variables are
+  declared in `src/env.ts` with SvelteKit's `defineEnvVars` (each with a validating schema, so a bad
+  value fails at start) and read from `$app/env/private`. Svelte runs in runes mode for the project's
+  own files (`compilerOptions.runes`, not for `node_modules`), and the Vercel adapter's region is
+  `lhr1`.
 - **In-memory caches per server instance**, all safe to lose: a project's assembled state (keyed by
-  its last sync, last error, pending edits and the tenant's AI switch), its database reads (per sync),
-  rendered markdown (4 000 entries, keyed by text hash), document trees (200, by head commit),
-  installation and user access tokens, and the AI-allowed answer.
+  its last sync, last error, pending edits and their conflict marks, and the tenant's AI switch; one
+  with pending edits and one without, §10.5), its database reads (per sync), rendered markdown (4 000
+  entries, keyed by repository, sync time, document path, link targets and a SHA-1 of the text;
+  oldest out first), document trees (200, by project and head commit), backlog blob texts for
+  replaying pending edits (cleared past 50) and the last replay per file (cleared past 20),
+  installation and user access tokens, and the AI-allowed answer per tenant (30 seconds; cleared when
+  a tenant's settings, tier or a tier's limits change). Within one request, a project's state is
+  loaded once and shared by the layout and the page; the load reads `params.repo`, so a client-side
+  move between projects reloads it (PM13).
 - **Markdown is parsed with `unified`/`remark-parse` + `remark-gfm`** for position-accurate headings
   and tables; offsets are UTF-16 indices into the decoded string. Rendering uses the same pipeline
   plus `remark-rehype`, `rehype-sanitize` and `rehype-stringify`, then: relative links resolved,
   known ids and task numbers autolinked (outside `a`, `code` and `pre`, as `<a class="ref">`), and
   h1–h4 given slug ids for a contents list (duplicates suffixed `-1`, `-2`).
 - **Golden tests against realistic files**: two made-up projects' `backlog.md` and `PROGRESS.md`,
-  written to the cases real ones produce, are committed under `test/fixtures/`, and their parse
-  is pinned in `test/golden/`.
+  written to the cases real ones produce, are committed under `test/fixtures/<project>/<branch>/`,
+  and their parse is pinned in `test/golden/` (`orchard-backlog.json`, `orchard-main-progress.json`,
+  `lantern-backlog.json`, `lantern-main-progress.json`, `lantern-feat-sketch-editor-progress.json`).
+  `orchard/main` exercises letter ids (`NW9`, `A1a`), `★`, job tags, every status, `Waiting:` and
+  `Plan:` keys, a note before the first section, a `---` between sections, a `####` heading and a
+  table inside bodies, a plan whose v2 table restarts numbering, `built*` cells, and backlog/plan
+  disagreements (NW7 against task 35, F9 against 26, C2 against 24). `lantern/main` exercises task
+  numbers as ids (`2.6`, `5.8`), `Branch:` keys, a blocked `★` item (`9.1`), plan tables in several
+  phases, bold status cells with notes and a spike table with more columns.
+  `lantern/feat-sketch-editor/PROGRESS.md` is a branch's plan with rows main lacks (3.7, 5.7–5.11) and
+  a task further along than on main (2.6). Each fixture project has a `.projectmagic.yml`.
 - **The splice round trip is a property test**: for every item in a fixture, a no-op edit
   returns the file byte for byte, and an edit changes only that item's range.
 - **Vitest** for the core and the shell (`src/**/*.test.ts`, Node environment, every test must
@@ -1293,9 +1453,14 @@ test/fixtures/     two made-up projects' files (Orchard, Lantern), test/golden/ 
   the cross-tenant isolation checks against Postgres when `TEST_DATABASE_URL` is set, and is skipped
   otherwise. **Playwright** (`*.e2e.ts`, against a production build on port 4173): the signed-out home
   page, the sign-in redirect for a project page, a 404, and navigation.
-- **`make`** targets: `install`, `dev`, `test` (unit tests, `svelte-check`, lint), `test-e2e`,
-  `check`, `lint` (Prettier and ESLint), `format`, `build`, `migrate`, and `sync` (`scripts/sync.ts`:
-  list the installations and sync every project, or those named in `REPOS`, from the command line).
+- **`make`** targets: `install` (`npm ci`), `dev`, `test` (`test-unit`, `check` and `lint`),
+  `test-unit` (`vitest --run`), `test-e2e`, `check` (`svelte-kit sync` and `svelte-check`), `lint`
+  (`prettier --check .` and `eslint .`), `format`, `build`, `migrate`, and `sync` (`scripts/sync.ts`:
+  list the installations, then sync every project in the database, whatever its tenant, or those
+  whose repository name is in `REPOS`, from the command line; a failure is stored in `last_error`;
+  no repository is set up, §7.3a). Playwright's web server is `npm run build && npm run preview` on
+  port 4173, matching `**/*.e2e.{ts,js}`. Vitest requires every test to assert
+  (`expect.requireAssertions`).
 
 ## 13. Built since v0.1, and later
 
@@ -1358,11 +1523,24 @@ Each one is also an item in this repository's `backlog.md`.
   tokens, free text) is rendered as markdown, and a citation `[repo:ID]` becomes a link `[<project
   name> <ID>](/p/<repo>/i/<ID>)` only if that item is in the digest; any other becomes plain text, so
   an invented or injected link is dead. Tokens are counted under `ask:<user id>`, within the tenant's
-  daily allowance. Refusals: no model ("No model is configured, so there is nothing to ask."), AI off
-  for the tenant, the allowance used ("This tenant has used today's AI allowance. It resets at
-  midnight UTC."), a support session, a person who hid AI features, no items, the model not
-  answering, an empty answer. The last answer survives going back (a SvelteKit snapshot). No memory
-  between questions, and no item bodies in the digest.
+  daily allowance; they are counted even when the answer is empty. Refusals, in the order checked: a
+  support session ("Ask is off during a support session."), a person who hid AI features ("You have
+  hidden AI features."), no model ("No model is configured, so there is nothing to ask."), an empty
+  question ("Type a question."), one over 500 characters ("Keep the question under 500 characters."),
+  AI off for the tenant ("AI features are off for this tenant."), the allowance used ("This tenant
+  has used today’s AI allowance. It resets at midnight UTC."), no items ("There are no items to ask
+  about yet."), the model not answering ("The model did not answer. Try again in a moment."), an
+  empty answer ("The model sent back an empty answer. Try asking again."). The page says "A question
+  about your projects, answered from the backlogs as last synced: every item with its status, what it
+  waits on, who it is for, and what shipped in the last 30 days. A model reads it, so check an answer
+  against the items it links to."; the box (placeholder "What is waiting on me? What shipped this
+  week? What is blocked?", at most 500 characters) and *Ask* (*Asking…* while it runs); when the
+  digest was cut, "The digest was too long for the model, so some items were left out." Where AI
+  isn't available it says "No model is configured, so there is nothing to ask."; for a person who hid
+  AI features, "You have hidden AI features, so Ask is off. The button in the header turns them back
+  on." (§21). The last answer survives going back (a SvelteKit snapshot). No memory between
+  questions, and no item bodies in the digest. The digest's headings and citations use the
+  repository name, not the `{owner}--{repo}` address (§21).
 - **Activity feed** (built, PM5): §9.
 - **Delivery and quality** (built, PM9): §16.
 - **Editing `PROGRESS.md` status cells and docs** (built, PM6). The Plan page has an *Edit* on each
@@ -1375,7 +1553,12 @@ Each one is also an item in this repository's `backlog.md`.
   *Edit* (`/p/{repo}/edit-doc/{path}`) that opens its text in a box and saves it whole (`Docs: edit
   <path>`); a file with Windows line endings keeps them. A change on main since it was opened is a
   conflict ("<path> changed on main while you were editing it. Saving again replaces the new version
-  with yours."). Documents are limited to the project's `docs` globs on main and 1 MB. Both are
+  with yours."). Documents are limited to the project's `docs` globs on main (else 404) and the new
+  text to 1 MB ("The document is too large to edit here."); the box is a plain textarea with *Cancel*
+  and *Save* (*Saving…*), and a save returns to the document. The plan task's *Edit* is a status
+  select, a note box and *Save*; an unknown status is refused ("<status> is not a plan status."),
+  a task the file lacks is "There is no task <n> with a status cell", and a save returns to
+  `/plan#task-<n>`. Both are
   commits through the §10.2 path, as the person. Not built: a document editor with a preview, and
   creating or deleting documents or plan tasks.
 - **Tenants, members, tiers and billing** (built, PM20, which folded in PM7): §17.
@@ -1475,7 +1658,21 @@ show production faults that no PR has fixed yet.
   item's status, days waiting ("age unknown" without history) and reason; **Main's CI** (runs in 4
   weeks, linking to Actions on main, the failure rate or count, red now or the longest red stretch, and
   how many runs never started). Without stored events: "No deployments, merged pull requests or CI
-  runs are stored yet."
+  runs are stored yet. They are read on the next sync (after the PM9 migration has been run)." Each
+  section has its anchor: `#deploys`, `#lead`, `#failure`, `#restore`, `#throughput`, `#queue`,
+  `#health`. The tab's own lines: "How this project moves, against its own past. Counts are shown as
+  counts until there are enough for a rate, and there are no targets. Deploys of a Project Magic edit
+  change nothing that runs, so they are left out."; "<n> this week · <n> production deploys in 120
+  days (<n> of edits left out)"; "<duration> median, merged PRs in 4 weeks, from the first commit to
+  the production deploy"; "<rate> production bug fixes over production deploys, 4 weeks"; "<duration>
+  median, from `Raised:` (or the fix's first commit) to the production deploy", or "No pull request
+  says `Bug: production` yet."; "Items shipped a week, weighted by size (S = 1, M = 3, L = 8)." and
+  "Item lead time <d> days, cycle time <d> days (median of <n> items shipped in 4 weeks)"; "<n> built
+  or blocked, waiting on a person, oldest first", or "Nothing is waiting on a person."; "<n> runs in 4
+  weeks, <p>% failed" (or "<n> failed") with "· red for <duration>" or "· longest red stretch
+  <duration>", "<n> runs never started (no job ran a step, as when Actions billing fails). They are
+  not counted as failures.", or "No CI runs on main are stored." Weekly bars are a small SVG, one bar
+  a week with a polyline for the rolling mean, each bar titled "Week of <date>: <value>".
 
 Durations read `40 min`, `14 h` (under 48 hours) or `3.5 days`; `—` when unknown.
 
@@ -1496,16 +1693,23 @@ How the figures are computed, so they are read for what they are:
 - **Time to restore** starts at the first `Raised:` among the items the PR's `Backlog:` cites (on main,
   or as they were removed), parsed as a date and time (UTC when no zone is written; a date alone is
   midnight), else the PR's first commit, else its creation.
+- **A production bug-fix PR** is one whose body has a line `Bug: production` (leading spaces
+  allowed, any case, *not* bold), and the ids it cites are every id-shaped word on any `Backlog:`
+  line (also not bold). This is a narrower reading than §5.3's (§21).
 - **Change failure** counts production bug-fix PRs merged in the last 28 days over real deploys in the
   same window.
+- **Medians**: lead time for changes over PRs whose deploy is in the last 28 days; time to restore over
+  every stored fix that has been deployed (the 120-day window); item lead and cycle time over items
+  shipped in the last 28 days. The lists show the last 15 lead times, newest first, and the 15 most
+  recently merged fixes. Item lead and cycle time are shown in days to one decimal.
 - **Cycle time** starts at an item's first `Status: in progress` in the backlog's history, not at
   a linked branch, so an item that was never marked in progress has a lead time but no cycle time.
   Lead time starts at the item's first appearance. Both end at its removal (shipped, not deleted).
 - **Throughput** is items shipped per week, size-weighted by each item's size as removed. Plan tasks
   per week are not counted: `PROGRESS.md` has no history walk.
-- **The founder queue** is the built and blocked items that have a waiting reason or are `For:` a
-  person; its age is whole days since the latest change of the item into its current status, from
-  history.
+- **The founder queue** is the built and blocked items that have a waiting reason or a `For:` that
+  starts with `person`; its age is whole days since the latest change of the item into its current
+  status, from history; oldest first, unknown ages last.
 - **Main's CI**: runs on main in the last 28 days, cancelled ones and runs that never started left
   out. A failed run whose jobs ran no step is stored as not started, and their count is shown. Red
   runs from a failure to the next success; the rate needs 10 runs.
@@ -1583,8 +1787,18 @@ removed, runs of other characters made `-`, at most 40) while sign-up isn't clos
 admin ("Creating tenants is closed. Ask a colleague who already uses Project Magic to invite you."
 otherwise). The creator is its first `admin` (source `signup`), it starts on the default tier, and
 becomes their current tenant. With sign-up `approval` (and not a platform admin) it is created
-`pending` ("New tenants wait for approval before they can connect GitHub."); otherwise `active`, and
-they go to *Installations*.
+`pending` ("New tenants wait for approval before they can connect GitHub. You will see a notice here
+until it is approved.") and they go to `/`; otherwise `active`, and they go to *Installations*. The
+form has **Name** and **Address** (the slug, filled from the name until edited; "Lower-case letters,
+numbers and hyphens. It cannot be changed later."); a blank address is made from the name. Problems:
+"Give the tenant a name.", "Keep the name under 80 characters.", "Use 3 to 40 lower-case letters,
+numbers and hyphens.", "A slug cannot start or end with a hyphen.", "That name is reserved.", "That
+address is taken. Choose another." The page opens "Welcome to Project Magic" with either "You already
+belong to <tenants>. Go to it, or create another tenant here." or "You are not in a tenant yet. A
+tenant is your team: its people, its GitHub accounts and its settings. Create one, or ask a colleague
+to invite you to theirs.", then the full-tenant notice (from `?full=`), "You have been invited"
+(each tenant and role with *Join*), and the form. Creating the tenant also writes its
+`tenant_setting` row (defaults) and audits `tenant.created`.
 
 ### 17.3 Connecting GitHub
 
@@ -1593,28 +1807,49 @@ type and id, repository selection, and, on `created`, the sender's GitHub id), o
 list sync lists it, with no tenant and nothing synced. `suspend` / `unsuspend` set and clear
 `suspended_at`; `deleted` sets `removed_at` and marks its projects uninstalled.
 
-**Connect GitHub** (tenant admin, *Installations*): sends them to
-`https://github.com/apps/<GITHUB_APP_SLUG>/installations/new?state=<token>`, where the state is 32
-random bytes, stored only as its SHA-256, bound to the person and the tenant, valid for an hour and
-single-use. GitHub returns to the Setup URL `/tenant/installations/setup?installation_id=…&state=…`,
-which checks the state and **claims** the installation if every check passes:
+**Connect GitHub** (tenant admin, *Installations*, `POST /tenant/installations/connect`): sends them
+to `https://github.com/apps/<GITHUB_APP_SLUG>/installations/new?state=<token>`, where the state is 32
+random bytes (base64url), stored only as its SHA-256 hex, bound to the person and the tenant, valid
+for an hour and single-use (states more than a day past expiry are deleted when a new one is made).
+Without `GITHUB_APP_SLUG` it returns to *Installations* with "GITHUB_APP_SLUG is not set, so the
+install link cannot be made." GitHub returns to the Setup URL
+`/tenant/installations/setup?installation_id=…&state=…` (a signed-out arrival is sent to sign in and
+back). A state that is unknown, used, expired or someone else's is refused ("That link has expired
+or was not started here. Start again from Connect GitHub."); **without a state** (GitHub's *Redirect
+on update*, after someone changes an installation on GitHub) the current tenant is used. Either way
+the person must be an admin of that tenant and the tenant active ("Only an admin of an active tenant
+can connect GitHub."), and it becomes their current tenant. Then it **claims** the installation if
+every check passes:
 
-- the person's own token can see it (`GET /user/installations`);
-- GitHub knows it (`GET /app/installations/{id}` as the App, for one no webhook announced yet);
-- it hasn't been removed from GitHub;
-- **the person controls its account**: it is their own user account, they are an `admin` of the
-  organisation (`GET /user/memberships/orgs/{org}`, not pending), or they are the webhook's sender;
+- the person's own token can see it (`GET /user/installations`; else "Your GitHub sign-in cannot see
+  that installation.");
+- GitHub knows it (`GET /app/installations/{id}` as the App, for one no webhook announced yet, which
+  is then recorded; else "GitHub does not know that installation.");
+- it hasn't been removed from GitHub ("That installation has been removed from GitHub.");
 - it isn't connected to another tenant ("This GitHub account is already connected to another Project
-  Magic tenant. Ask its admin.").
+  Magic tenant. Ask its admin.");
+- **the person controls its account**: they are the webhook's sender, it is their own user account,
+  or they are an `admin` of the organisation (`GET /user/memberships/orgs/{org}`, not pending); else
+  "You are not an admin of <account> on GitHub, so you cannot connect it. Ask an owner to do it."
 
-A claim that fails says why. *Connect GitHub* also lists existing installations the person can see,
-that are unclaimed and that they control, to claim directly (`/tenant/installations/claim`). After a
-claim the project list is synced and each new project's first sync starts.
+The claim itself is one conditional update (only while unclaimed or already this tenant's), so two
+people claiming at once can't both win; it sets `claimed_by` and, the first time, `claimed_at`, and
+is audited (`installation.connected`). The outcome returns to *Installations* as `?ok=` ("Connected
+<account>. Its repositories are being added.") or `?error=`; an expired GitHub sign-in shows its
+message. *Connect GitHub* also lists existing installations the person can see, that are unclaimed
+and that they control ("Already installed, not yet connected"), to claim directly (`POST
+/tenant/installations/claim`). After a claim, in the background, the project list is synced and each
+of the installation's projects starts a sync.
 
-**Disconnecting** (tenant admin, with confirmation) detaches the installation and marks its projects
-uninstalled. Members, edit logs and pending edits are kept with the projects, so reconnecting brings
-them back. Installations unclaimed for seven days are listed for platform admins, who can uninstall
-them (`DELETE /app/installations/{id}`, as the App).
+**Disconnecting** (tenant admin) detaches the installation (tenant, claimer and claim time cleared)
+and marks its projects uninstalled, audited as `installation.disconnected`; a tick-box *also
+uninstall the App on GitHub* uninstalls it too (`DELETE /app/installations/{id}` as the App, "…and
+uninstalled from GitHub" or "…, but GitHub would not uninstall it"). Members, edit logs and pending
+edits are kept with the projects, so reconnecting brings them back ("Disconnected. Its projects are
+kept and come back if you reconnect it."). Every unclaimed installation is listed for platform
+admins, marked *stale* after seven days, and they can uninstall one (`DELETE
+/app/installations/{id}`, as the App; it is then marked removed and audited
+`installation.uninstalled`; "GitHub would not uninstall it." on failure).
 
 ### 17.4 Isolation and `can()`
 
@@ -1660,24 +1895,49 @@ them (`DELETE /app/installations/{id}`, as the App).
   deletes the derived rows; moving back makes every member's roles due.
 - **Joining by GitHub access** happens at sign-in only (§17.2). A personal account's installation
   never admits anyone else.
-- **Invitations** (tenant admin, *Members*): by GitHub login, checked when sent (`GET /users/{login}`,
-  a `User`) and held against the numeric id, so a renamed account still finds it; with a tenant role
-  and, under managed access, project roles; a token (stored hashed) for a link `/invite/{token}`;
-  valid 14 days. A new one replaces an open one for the same person. Refused for an existing member
-  and at the member limit (open invitations count: "Your plan allows n members, and they are taken or
-  promised."). Accepted from *Welcome* or the link, by the account it names; the invitation page says
-  whom it is for. Admins can copy the link and revoke it.
+- **Invitations** (tenant admin, *Members*): by GitHub login (a leading `@` dropped), checked when
+  sent with the admin's own token (`GET /users/{login}`, a `User`; a login GitHub couldn't hold, or
+  no such user, is "GitHub has no user called <login>.") and held against the numeric id, so a
+  renamed account still finds it; with a tenant role and, under managed access, project roles (a
+  select per project: no role, viewer, editor, maintainer); a token (32 random bytes, stored as its
+  SHA-256) for a link `/invite/{token}`; valid 14 days. A new one replaces an open one for the same
+  person. Refused for an existing member ("<login> is already a member.") and at the member limit
+  (open invitations for other people count: "Your plan allows n members, and they are taken or
+  promised."). Sending says "Invited <login>. They will see it when they next sign in, or you can
+  send them this link:" with the link. Accepted from *Welcome* (*Join*) or the link, by the account it
+  names: the link's page says whom it is for ("Join <tenant> as a member/an admin.", or, signed in as
+  someone else, "This invitation to <tenant> is for the GitHub account <login>, and you are signed in
+  as <me>. Sign out and sign in as <login> to accept it."; a used, revoked or expired one, "This
+  invitation has expired or was withdrawn. Ask for a new one."). Accepting is refused when the tenant
+  is full ("This tenant is full. Ask its admins to make room.") or the account differs ("That
+  invitation is for a different GitHub account."); it adds the member (source `invited`), the
+  project roles as `manual` rows, makes the tenant current, audits `member.joined`, and goes to `/`.
+  Admins can copy the link and revoke it (*Withdraw*: "Invitation withdrawn.").
+- **The Members page** lists each member's login (and "(you)", "disabled"), role (a select and *Set*,
+  "Role changed."), how they joined, projects they hold an explicit role on, joined and last seen,
+  with *Remove* ("Removed."); the open invitations ("Waiting to be accepted"); and *Joining by GitHub
+  access* (a tick-box "Let people join this way" and *Save*: "People with GitHub access to your
+  organisations can now join." / "Joining by GitHub access is off.").
 - **Leaving** (personal *Settings*) and **removing** (tenant admin): their project roles in that tenant
   go, edit-log rows stay, and their pending batch edits pass to another author of the project's batch
-  or are discarded with a note in the edit log. Changing a role, removing or leaving is refused for the
-  last admin ("…the only admin…"), and the database enforces it too (§8).
+  or are discarded with a note in the edit log (op `discarded`, no user, error "Pending edit
+  discarded: its author left the tenant." or "…removed the tenant."). If the tenant was their current
+  one, it is cleared. Audited `member.left` or `member.removed`. Changing a role, removing or leaving
+  is refused for the last active admin ("A tenant needs at least one active admin. Make someone else
+  an admin first."), and the database enforces it too (§8).
 - **Deleting an account** (personal *Settings*, typing the login): removes them from every tenant,
   erases their stored token, and deletes the account; edit-log rows stay with no user. Refused while
-  they are a tenant's only admin, or the only platform admin.
+  they are a tenant's only admin ("They are the only admin of <tenants>. Make someone else an admin
+  first."), or the only platform admin ("They are the only platform admin."). A mistyped login is
+  "Type your GitHub login exactly to confirm."; afterwards the session is cleared and they go to
+  `/signin`.
 - **Support sessions** (platform admin, from a tenant's admin page, with a reason of at least five
-  characters): read-only, for 60 minutes, audited (`support.opened`, `support.ended`) and shown on the
-  tenant's *Audit* page. While one is open the platform admin sees that tenant instead of their own,
-  cannot edit, and Ask, revalidation and batch saves are off. *End session* ends it.
+  characters, else "Say why, in a few words: the tenant’s admins can read it."): read-only, for 60
+  minutes, audited (`support.opened` with the reason, `support.ended`) and shown on the tenant's
+  *Audit* page. Opening one ends any other the admin has open, and goes to `/`. While one is open the
+  platform admin sees that tenant instead of their own, cannot edit, and Ask, revalidation, batch
+  saves and GitHub role refreshes are off. *End session* (`POST /admin/support/end`) ends it and goes
+  to `/admin/tenants`; it also ends at its expiry.
 
 ### 17.6 Tiers, quotas and flags
 
@@ -1693,10 +1953,12 @@ tier can't be disabled), quotas and prices. The `ai` flag has a minimum tier (nu
 - **A flag** is a live tenant override in either direction, else off if the flag is disabled, else on
   at or above its minimum tier. Anything unresolvable is off. **AI is allowed** for a tenant when a
   model is configured, the `ai` flag resolves on, and the tenant's own `ai_enabled` is on.
-- **Where they bite.** `members` (active members): no auto-join, no new invitations, nobody removed.
-  `projects` (installed projects that are synced): at each project list sync the pinned projects, then
-  the oldest (by id), are kept, and the rest are marked `over_limit` (not shown, not synced; a tenant
-  admin pins on *Installations*). `ai_tokens_daily`: the tenant's `tenant:<id>` usage plus every
+- **Where they bite.** `members` (every member row, disabled accounts included): no auto-join, no new
+  invitations, no accepting one, nobody removed. `projects` (installed projects that aren't over the
+  limit): at each project list sync, and when a tenant admin pins or unpins on *Installations*, a
+  tier or limit changes, or billing moves the tenant, the pinned projects, then the oldest (by id),
+  are kept, and the rest are marked `over_limit` (not shown anywhere but *Installations*, not synced,
+  no webhooks acted on). `ai_tokens_daily`: the tenant's `tenant:<id>` usage plus every
   member's `ask:<id>` usage today (UTC); at the limit inference and Ask stop until midnight UTC.
   **Going down a tier takes nothing away**: only adding more is refused.
 - **A banner on every tenant admin page** says what is at or over a limit ("You are at your plan's
@@ -1714,16 +1976,40 @@ units, GBP); a blank price takes it off sale and moves nobody.
   enabled tier; Project Magic makes the provider's customer once (`billing_customer`), a subscription
   (`incomplete`) and a checkout, audits `billing.checkout`, and sends the admin to the provider's page.
 - **The stub provider** keeps its own record (`stub_subscription`) and takes no money. Its page
-  (`/billing/stub/{checkout}`, for the checkout's own tenant admins) says so plainly, with *Complete*
-  (active, period end one interval away) and *Abandon*. It is available only with
+  (`/billing/stub/{checkout}`, for the checkout's own tenant admins; anyone else, or billing off, gets a
+  404) says so plainly ("Test payment page", "No money is taken", the tenant, tier, interval and
+  price), with *Complete* (active, period end one interval away: 30 days for a month, 365 for a
+  year) and *Abandon* (cancelled), each going to `/tenant/billing/return?checkout=<id>`. The
+  customer ref is `stub_cus_<tenant>`, the subscription ref `stub_sub_<subscription>`. It is
+  available only with
   `BILLING_PROVIDER=stub`, and on a production deploy (`VERCEL_ENV=production`) only with
   `BILLING_STUB` set too. The stub renews itself: an active period that has ended rolls forward.
 - **Reconcile** is the one way state comes in: on return from the provider's page
   (`/tenant/billing/return`) and in the daily cron. It copies the provider's state onto the
   subscriptions and moves the tenant to the best **entitled** subscription's tier (active; past due
   within seven days of its period's end; cancelled with the period still running), else the default
-  tier (`platform_setting.default_tier`).
-- **Cancel** ends the subscription at the period's end, keeping the tier until then.
+  tier (`platform_setting.default_tier`). A tier change is audited (`billing.tier`) and re-applies the
+  project limit. The return marks the checkout `complete` (its subscription active), `abandoned`
+  (cancelled) or leaves it `open`, and goes to `/tenant/billing?result=<that>`; a completed checkout
+  cancels, at their period's end, the tenant's other active subscriptions, so the new one replaces
+  them. A blank price can't be bought ("That plan is not on sale."); a bad interval is "Choose
+  monthly or yearly."
+- **Cancel** ends the subscription at the period's end, keeping the tier until then ("Your
+  subscription will end at the close of the period you have paid for."; with none, "There is no
+  subscription to cancel."), audited `billing.cancelled`.
+- **The Plan & billing page** shows "Your plan: <tier>" ("Set by the people who run this service,
+  without payment." under an override), a table of each quota (Members, Projects, AI tokens a day)
+  with used, a level pill ("nearly there" at 80%, "at the limit") and allowed (or "unlimited"), and
+  "AI features (inferred statuses and Ask): included / not included in this plan. Going down a plan
+  takes nothing away; it only stops you adding more."; the subscriptions (other than incomplete ones)
+  with price ("£12.00 a month"), status and "renews/ends <date>", and *Cancel at the end of the
+  period* for an active one not already ending; and *Change plan*: "Billing is not set up on this
+  service, so plans are set by the people who run it." without billing; else "This is a test billing
+  page: no money is taken, and nothing here is a real payment." and a card per enabled tier with
+  active prices, by position, with a radio per interval (month chosen) and *Choose* (or *Your plan*,
+  disabled), or "No paid plans are on sale yet.". A return shows "Your plan has changed.",
+  "Checkout was abandoned. Nothing has changed.", "Checkout is not finished yet." or "We could not
+  find that checkout."
 - Without `BILLING_PROVIDER`, billing is off ("Billing is not set up on this service."). Not built: a
   real provider and its webhook, invoices, tax, proration and dunning, and a tenant's own model key.
 
@@ -1737,15 +2023,29 @@ units, GBP); a blank price takes it off sale and moves nobody.
 - **Moving a tenant** (each audited with before and after): approve (pending → active), suspend
   (active → suspended, with a reason, shown to its members), restore (suspended → active), delete
   (pending, active or suspended → deleted; by a tenant admin typing the slug, or a platform admin),
-  undelete (deleted → active, until the purge). Deleting detaches its installations, marks its
-  projects uninstalled and uninstalls the App from GitHub on a best-effort basis; members lose access
-  at once. **The cron purges** a tenant 30 days after deletion. A suspended tenant's members see its
-  notice, and syncs and webhooks stop.
+  undelete (deleted → active, until the purge). A move from the wrong status is refused ("A <status>
+  tenant cannot be <action>d."); suspending without a reason is "Give a reason for suspending.";
+  deleting needs the slug typed ("Type the tenant’s address exactly to confirm." for a tenant admin,
+  "Type the tenant’s address to confirm deleting it." for a platform admin). Deleting detaches its
+  installations, marks its projects uninstalled and uninstalls the App from GitHub on a best-effort
+  basis; members lose access at once, and a tenant admin who deleted it goes to `/welcome`.
+  **The cron purges** a tenant 30 days after deletion: its projects (and with them their caches,
+  memberships, edit logs and pending edits), its audit log rows, then the tenant (and with it its
+  members, settings, invitations, overrides and billing rows). A suspended tenant's members see its
+  notice, and syncs and webhooks stop. A platform admin can't disable themselves ("You cannot disable
+  yourself."); disabling a last admin is refused with §17.5's messages.
 
 ### 17.9 Screens
 
-- **Personal settings** (`/settings`): the GitHub login; *Inferred statuses* shown or hidden (when AI
-  is available); their tenants with *Leave*; delete account.
+- **Personal settings** (`/settings`, "Your settings"): "Signed in with GitHub as `@<login>`.";
+  *Inferred statuses* (when AI is available: "For an item with no meta line, a model can propose a
+  status. They are **shown/hidden** in your views. This is your choice alone." and *Hide/Show
+  inferred statuses*); their tenants with their role and *Leave* ("You left the tenant."), or "You
+  are not in a tenant. Create one or accept an invitation." linking to `/welcome`; and *Delete your
+  account* ("Removes you from every tenant, erases your stored GitHub sign-in and deletes your
+  account. Your edits stay in the repositories and in each project's edit history, without your
+  name. You cannot do this while you are the only admin of a tenant.", typing the login, *Delete my
+  account*).
 - **Tenant** (`/tenant`, admins; tabs): *Overview* (members, projects, installations and AI tokens
   today against the plan's limits; recent admin actions), *Members* (each member's login, role, how they
   joined, last seen; change role, remove; invitations: send, copy link, revoke; `join_by_github`),
@@ -1768,6 +2068,18 @@ units, GBP); a blank price takes it off sale and moves nobody.
   (§19), *Audit* (every platform action and support session).
 
 Every admin action is written to `audit_log` with who, what, the target and the before and after.
+The actions: `tenant.created`, `tenant.migrated`, `tenant.settings`, `tenant.join_by_github`,
+`tenant.approve|suspend|restore|delete|undelete`, `member.role`, `member.left`, `member.removed`,
+`member.joined` (`via` invitation or github), `invitation.sent`, `invitation.revoked`,
+`access.mode`, `access.role`, `installation.connected`, `installation.disconnected`,
+`installation.uninstalled`, `support.opened`, `support.ended`, `billing.checkout`, `billing.tier`,
+`billing.cancelled`, `user.disabled`, `user.enabled`, `platform.signup`, `platform.default_tier`,
+`tier.created`, `tier.updated`, `tier.moved`, `tier.quota`, `price.set`, `price.off`,
+`flag.updated`, `tenant.tier_override`, `tenant.quota_override`, `tenant.quota_override_removed` and
+`tenant.flag_override`. Targets are
+written `tenant:<id>`, `user:<id>`, `project:<id>`, `installation:<id>`, `github:<login>`,
+`tier:<id>` or `platform_setting:<key>`. The audit pages list the newest 300 (a tenant's overview
+the newest 8, a tenant's admin page the newest 20) with when, who, action, target and detail.
 
 ### 17.10 Migrating an existing deployment, and self-hosting
 
@@ -1799,14 +2111,19 @@ A **Feedback** item in the user menu opens a dialog (a `<dialog>`, so focus and 
 "How is it going?", "Tell us what is wrong or missing. A score is optional: if something is broken,
 just say so.", five faces for a score (Very poor, Poor, Neither good nor bad, Good, Very good; one face
 whose mouth moves from frown to smile; pressing the chosen one again clears it), a comment (at most
-4 000 characters), *Cancel* and *Send*. It posts JSON `{score, comment, page}` to `POST /feedback`
-(signed in), with the page's path. A submission needs a score or a comment ("Leave a score, or tell
-us what is wrong."); a score is a whole number 1–5; the page is kept only if it is a local path of at
-most 300 characters. One account may send 10 an hour (else 429, "That is a lot of feedback; try again
-later."). It is stored in `feedback` with the tenant, and the dialog says "Thank you. We read
+4 000 characters), *Cancel* and *Send*. The faces sit in a fieldset "Overall"; each is a 24×24 SVG
+circle with two eyes and a mouth `M 8 16.5 Q 12 <16.5 + (score − 3) × 3> 16 16.5`, labelled by its
+name, `aria-pressed` when chosen. Opening it clears the last one. It posts JSON `{score, comment,
+page}` to `POST /feedback` (signed in, else 401), with the page's path, the comment trimmed and
+either left out when empty. A submission needs a score or a comment ("Leave a score, or tell us what
+is wrong.", checked in the browser too); a score is a whole number 1–5 ("The score is from 1 to
+5."); a comment over 4 000 characters is "Keep it under 4000 characters."; the page is kept only if
+it is a local path of at most 300 characters with no whitespace. Errors are HTTP errors whose
+message the dialog shows ("Could not send that." without one). One account may send 10 an hour
+(else 429, "That is a lot of feedback; try again later."). Success answers `{sent: true}`. It is stored in `feedback` with the tenant, and the dialog says "Thank you. We read
 everything that comes in." Nobody is notified: platform admins read it on *Admin → Feedback*, newest
-first (the last 200), with who, their tenant, the score, the comment and the page, and the average
-score.
+first (the last 200), with when, who (their name, else login), their tenant, the score, the comment
+and the page, and the average score over every scored submission with its count.
 
 ## 20. Constants
 
@@ -1857,6 +2174,19 @@ intent:
   new member's `user_pref.batch_edits` still defaults to on whatever it says.
 - **GitHub uninstalling the App** (`installation.deleted`) marks the installation removed and its
   projects uninstalled, but doesn't detach it from its tenant as *Disconnect* does.
+- **Delivery reads PR bodies more narrowly than linking does** (§16.7): a bold `**Bug:**
+  production` or `**Backlog:**` line counts for linking (§5.3) but not as a production bug fix or its
+  cited items.
+- **The `{owner}--{repo}` address isn't used everywhere.** Rendered documents' links and images, and
+  the Docs index redirect, use the bare repository name, as do Ask's digest and citations, so for two
+  projects of one name in a tenant those links resolve to neither.
+- **Setting up a repository** (§7.3a): if opening the set-up PR fails after its files were committed,
+  the `projectmagic` branch is left behind, so every later sync finds the branch in use and defers.
+- **The Ask page's text for a person who hid AI features** says "The button in the header turns them
+  back on"; the switch is on *Settings* now (PM34).
+- **Footers on the edit forms** say the edit is committed through the `projectmagic` branch and (on
+  the item form) merged straight away, whatever the project's `auto_merge` and the person's batch
+  edits say (Appendix D).
 
 ## Appendix A. Routes
 
@@ -1872,7 +2202,7 @@ tenant and 404 for a project the person can't view.
 | `/settings`, `/settings/ai`, `/settings/batch` | signed in | §17.9, §13, §10.5 |
 | `/feedback` | signed in | §19 |
 | `/welcome`, `/invite/[token]`, `/tenant/switch` | signed in | §17.2, §17.5 |
-| `/tenant/installations/setup` | signed in (the state token decides) | §17.3 |
+| `/tenant/installations/setup` | signed in (the state token decides; without one, the current tenant, as its admin) | §17.3 |
 | `/billing/stub/[checkout]` | signed in (checks the checkout is yours) | §17.7 |
 | `/tenant`, `/tenant/settings` | `tenant.settings` | §17.9 |
 | `/tenant/members`, `/tenant/access` | `tenant.members` | §17.5 |
@@ -2014,8 +2344,17 @@ The full version is [specs/conventions.md](DOCS/specs/conventions.md); the setti
 - **Ages**: "never", "just now" (under a minute), "n min ago", "n h ago", "1 day ago" / "n days ago"
   (under 30 days), else the date.
 - **Status order** in filters and counts: in progress, in review, blocked, built, todo, done.
-- **Edit forms' footers**: "Commits to main through the projectmagic branch, as you; its pull request
-  is merged straight away."
+- **Edit forms' footers** (`<main>` is the project's main branch): the item form "Commits to `<main>`
+  through the `projectmagic` branch, as you; its pull request is merged straight away."; the add
+  form and the document editor "Commits to `<main>` through the `projectmagic` branch, as you."
+- **Filters' empty choices**: Status, Job and Type "all"; Epic "any"; For "anyone", then "mine"
+  (signed in), "people" (`person`), "agents" (`agent`) and the other values. On a phone the filters
+  fold behind "Filters (n) ▾", n counting the set filters and *Show done*.
+- **Tenant and admin tabs**: Tenant — Overview, Members, Access, Installations, Plan & billing,
+  Settings, Audit, Delete tenant (each tenant page shows the plan banners of §17.6); Admin —
+  Overview, Tenants, Tiers & prices, Users, Installations, Settings, Feedback, Audit. The most
+  specific matching tab is marked current.
+- **Saved notes** on tenant and admin forms: "Saved." unless a section says otherwise.
 
 ## Appendix E. Design tokens
 
@@ -2039,7 +2378,70 @@ Light (`:root`), with dark under `@media (prefers-color-scheme: dark)` for `:roo
 | built | `#00695f` `#cdeee8` | `#8edfd3` `#0f3f3a` |
 | done | `#2f6b31` `#d8eed5` | `#a8dba4` `#1f3d20` |
 
-`--serif: 'Newsreader', Georgia, serif`; `--sans: 'Inter', system-ui, sans-serif`; `--mono:
-'JetBrains Mono', ui-monospace, monospace`; `--radius: 6px`; `--sidebar: 15rem`. Fonts from Google
-Fonts: Inter 400/500/600, JetBrains Mono 400/500, Newsreader optical sizes 6–72 at 400/500 and italic
-400.
+The status colours are `--st-<key>` (text) and `--st-<key>-bg`, the key being `todo`, `progress`,
+`blocked`, `review`, `built` or `done`; a pill is `<span class="pill <key>">` with the status as its
+text, and a `small` variant. `color-scheme` is `light`, and `dark` in the dark block.
+
+`--serif: 'Newsreader', Georgia, 'Times New Roman', serif`; `--sans: 'Inter', system-ui,
+-apple-system, 'Segoe UI', sans-serif`; `--mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular',
+Menlo, monospace`; `--radius: 6px`; `--sidebar: 15rem`. The body is `14px/1.55` sans on `--bg`; h1–h3
+are serif at weight 400 with `-0.01em` letter spacing; code and `.mono` are mono at 0.86em. A
+project's name is 36 px (24 px on a phone); the brand is serif 20 px beside a 28 px square mark,
+`--text` on `--bg`, radius 6 px. Fonts from Google Fonts: Inter 400/500/600, JetBrains Mono 400/500,
+Newsreader optical sizes 6–72 at 400/500 and italic 400.
+
+## Appendix F. The home page's text (§9)
+
+Header: brand; *Set it up* (`<repo>#readme`), *GitHub* (`<repo>`), *Sign in* (`/signin`), where
+`<repo>` is `https://github.com/nickwhiteley/projectmagic`. Meta description: "A dashboard over the
+backlogs, plans, branches and pull requests that AI agents keep in markdown in GitHub."
+
+**Hero**: "See every project your agents are building, without asking each one." Lede: "When AI
+agents build your software, they keep the backlog and the plan as markdown in each repository.
+Project Magic reads those files, the branches and the pull requests across all your repositories,
+and shows what is planned, what is in flight, what is done, and what is waiting on you." Buttons:
+*Run it for your projects* (`<repo>#setting-up`) and *How it works* (`#how`). The sample card
+(made-up data): *Orchard*, "1 notice", "last commit 2 h ago on `feat/or12-invoices`", pills in
+progress 2, blocked 1, built 3, todo 14; "Waiting on you · 4": `OR7` Renewal reminders (built), "the
+email copy checked against the terms"; "In flight · 2": `feat/or12-invoices` → `OR12` Invoices as
+PDF, "3 ahead · PR #41 · “Number invoices per tenant”", and `spike/hosting` "not in the backlog";
+"Phase 3: billing", "6 of 9 done" and a two-thirds bar.
+
+**Three reasons**: *One place for every project* — "A card per repository: what is in progress and
+on which branch, what is in review, what is blocked and why, and the plan’s next task. No more
+opening each repository, or asking each agent, to find out where things are." *What is waiting on
+you* — "Agents can build and merge, but some things need a person: an acceptance check, a decision,
+an account. Items marked *built* or *blocked* carry what they wait on, so your own queue is on the
+front page." *The files stay the record* — "Nothing is held anywhere else. Status comes from the
+backlog, the plan, branches and pull requests, and an edit made here is an ordinary commit to the
+backlog, merged to main through a pull request, as you. Agents and people read the same files."
+
+**How it works** (`#how`): 1. *The agents follow a few conventions* — "Each backlog item is a `###`
+heading that starts with an id, with a status line under it. Branches name the item they work on,
+and pull requests say what they build. A block of instructions in each repository’s `CLAUDE.md` or
+`AGENTS.md` asks the agents to keep to them.", with the sample ``### OR12 Invoices as PDF — MONEY`` /
+``**Status:** in progress · **Size:** M · **Branch:** `feat/or12-invoices` ``. 2. *A GitHub App
+reads the repositories* — "Install it on the repositories you want to follow. A push or a pull
+request reaches Project Magic within seconds, and it re-reads only what changed: the branches, the
+backlog and the plan, and the history that shows what shipped." 3. *You read, and edit when you need
+to* — "An overview, then per project a list in priority order, a board, the plan, what is done, the
+branches and the documents. Change an item’s status, add one, reorder or remove them; each edit is a
+commit you made."
+
+**Run it for your projects**: "Project Magic is open source and runs on your own accounts. You need
+a GitHub account, a Postgres database (Neon’s free tier is enough) and somewhere to host a SvelteKit
+app (it is set up for Vercel). Setting it up takes under an hour:" 1. "Register a GitHub App." 2.
+"Create the database and deploy the app with its environment." 3. "Sign in with GitHub and install
+the App on your repositories." *Read the setup guide* (`<repo>#setting-up`).
+
+**Add a repository** (`#add`): "Once Project Magic is running, adding a repository takes a minute:"
+1. "In Project Magic, open **Tenant → Installations → Connect GitHub** and choose the repositories to
+follow, or use the App’s page on GitHub → *Configure* to add more to an account already connected."
+2. "On the next sync Project Magic opens a pull request and merges it at once, adding `backlog.md`,
+`bugs.md`, `.projectmagic.yml`, `AGENTS.md` and `CLAUDE.md`. Nothing that exists is changed; the last
+two gain a section that tells agents how to use Project Magic. An empty repository gets the same
+files committed to its default branch." 3. "Add items with **Add**, or ask your agents to. They
+follow the conventions written into `AGENTS.md`." Then "Choosing a repository in the App is consent
+for Project Magic to commit to it." and *Details and settings* (`<repo>#adding-a-repository`).
+
+Footer: "Project Magic" and *Source on GitHub*.
