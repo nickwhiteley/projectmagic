@@ -98,6 +98,14 @@ function insertionPoint(
 ): { at: number; after: boolean } {
 	if ('before' in to) return { at: find(b, to.before).start, after: false };
 	if ('after' in to) return { at: find(b, to.after).end, after: true };
+	// A backlog with no `##` sections (a new repository's) takes its items after the preamble.
+	if (!b.sections.length && to.section === 0) {
+		const items = b.items.filter((i) => i.id !== exclude);
+		if (!items.length) return { at: text.length, after: true };
+		return to.at === 'start'
+			? { at: items[0].start, after: false }
+			: { at: items[items.length - 1].end, after: true };
+	}
 	const section = b.sections[to.section];
 	if (!section) throw new SpliceError(`no section ${to.section}`);
 	const items = b.items.filter((i) => i.section === to.section && i.id !== exclude);
