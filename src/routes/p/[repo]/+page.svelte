@@ -269,6 +269,15 @@
 			flex-basis: auto;
 		}
 	}
+	@media (max-width: 760px) {
+		.tools {
+			gap: 0.5rem;
+			margin-bottom: 0.5rem;
+		}
+		.tools p {
+			display: none;
+		}
+	}
 	label {
 		font-size: 13px;
 		color: var(--text-2);

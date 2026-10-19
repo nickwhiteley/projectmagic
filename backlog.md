@@ -226,7 +226,7 @@ This feature will need a full admin screen implementation.
 Look at plinth for help
 
 ### PM34 Mobile view
-**Status:** built · **Size:** S · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** person.nickwhiteley
 
 The Project Magic site is cluttered on a mobile/small screen. Can elements be consolidated into lists?  Available projects in a dropdown, hide Activity so Overview, search, ask all appear next to the logo. Hide batch edits botton. List, Board, Plan, Done, Delivery, Branches, Docs as a dropdown list. Filters as an expanding list.
 
@@ -237,6 +237,11 @@ Body text box is too narrow (fixed by agent just now but not merged)
 2026-10-18: This is still a problem, the issues are only visible towards the bottom of a mobile page as there is too much standard stuff at the top of the page.
 
 I can also not see an easy way to go back to the issue list from an item's detail view
+
+Second pass, 2026-10-19: on a phone the project header is smaller (no repository crumb, a 24px name,
+a one-line sync), the "Batch edits are available" bar is hidden unless edits are unsaved, the
+"in the file's order" hint is hidden, and the view dropdown sits closer, so the list starts higher.
+An item's page has an **← All items** link above it, on every screen size. Not checked on a real phone.
 
 ### PM35 Feedback button
 **Status:** done

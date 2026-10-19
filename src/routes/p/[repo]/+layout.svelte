@@ -74,7 +74,7 @@
 {/if}
 
 {#if p.canEdit && b.allowed}
-	<div class="batch" role="status">
+	<div class="batch" class:idle={!b.pending.length} role="status">
 		<span>
 			{#if b.pending.length}
 				<strong>{b.pending.length} unsaved edit{b.pending.length === 1 ? '' : 's'}</strong
@@ -267,8 +267,26 @@
 		.batch-toggle {
 			display: none;
 		}
+		/* A phone's first screen should show the list: no bar that only says batch edits exist. */
+		.batch.idle {
+			display: none;
+		}
+		.head {
+			align-items: center;
+			gap: 0.5rem;
+		}
 		.head h1 {
-			font-size: 28px;
+			font-size: 24px;
+		}
+		.crumb {
+			display: none;
+		}
+		.sync {
+			gap: 0.5rem;
+			font-size: 12px;
+		}
+		.tabs-select {
+			margin: 0.6rem 0 0.8rem;
 		}
 	}
 	.count {
