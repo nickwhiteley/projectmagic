@@ -433,25 +433,21 @@
 		max-width: 1400px;
 	}
 	@media (max-width: 760px) {
+		/* One flowing block: the logo and views, then the project picker with the user menu to its
+		   right, then the page. The sidebar and the main column dissolve so the header can join. */
 		.shell {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		aside {
-			position: static;
-			height: auto;
-			padding: 0.6rem 0.75rem;
-		}
-		.brand {
-			padding-bottom: 0.5rem;
-		}
-		aside {
 			display: flex;
 			flex-wrap: wrap;
 			align-items: center;
-			gap: 0.2rem 0.5rem;
+			gap: 0.4rem 0.5rem;
+			padding: 0.6rem 1rem 0;
+		}
+		aside,
+		.main {
+			display: contents;
 		}
 		.brand {
-			padding: 0 0.4rem 0;
+			padding: 0 0.4rem 0 0;
 		}
 		aside nav.views {
 			flex-direction: row;
@@ -465,19 +461,31 @@
 		}
 		.project-select {
 			display: block;
-			flex-basis: 100%;
+			flex: 0 0 calc(50% - 0.25rem);
+			width: auto;
+			min-width: 0;
 		}
 		header {
-			flex-wrap: wrap;
+			flex: 1 1 0;
+			min-width: 0;
 			position: static;
+			padding: 0;
+			border: 0;
+			background: none;
+			backdrop-filter: none;
 		}
 		.who {
 			gap: 0.5rem;
 		}
-		header,
+		.notice {
+			flex: 1 1 100%;
+			padding-left: 0.8rem;
+			padding-right: 0.8rem;
+		}
 		main {
-			padding-left: 1rem;
-			padding-right: 1rem;
+			flex: 1 1 100%;
+			min-width: 0;
+			padding: 0.5rem 0 4rem;
 		}
 	}
 </style>

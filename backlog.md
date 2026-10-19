@@ -249,6 +249,10 @@ Inferred statuses switch are on the Settings page, not in the menu. On a phone
 the view dropdown is narrow and shares a row with Filters and the Add buttons (shortened to
 "+ item" and "+ bug"), and the drag hint is hidden. Not checked on a real phone.
 
+Fourth pass, 2026-10-19: on a phone the project picker is half width with the user menu to its right,
+which frees a line. The List's section headings are 20px, not 26px, and the gaps around the preamble
+and between sections are tighter, on every screen size. Not checked on a real phone.
+
 ### PM35 Feedback button
 **Status:** done
 
