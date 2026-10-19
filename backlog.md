@@ -285,7 +285,7 @@ links to the documentation, and a "Project Magic" section is added to `AGENTS.md
 (created if missing).
 
 ### PM32 Information for agents
-**Status:** todo · **Size:** M · **For:** agent
+**Status:** built · **Size:** M · **Waiting:** Nick's check · **For:** person.nickwhiteley
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
@@ -308,6 +308,15 @@ Decided with Nick on 2026-10-19:
 - **Bugs work the same way.** Plan tasks don't, for now.
 - **`specs/conventions.md`, the `AGENTS.md` section (spec Appendix C) and spec.md** say what
   `Comment:` and `Reply:` mean and what an agent does with them.
+
+Built on 2026-10-19. The item page has a **Comment for the agents** box under the body, and
+**Mark read** above it when an agent has replied. A comment is its own kind of edit, applied to the
+item as it is when saved, so it goes through batch edits without conflicting. Markdown in a comment
+that could break out of the item (a heading, a rule, an unclosed code fence) is escaped. The overview
+lists replied items first under *Waiting on you*. Tried on `projectmagic-testing` (PT2): a comment,
+an agent's reply and *Mark read* all saved as expected. Posting on an open PR is not tried yet,
+since that repository has no PR. New repositories get the rule in their `AGENTS.md` section; existing
+ones need the bullet added from `specs/conventions.md`.
 
 ### PM36 Cross repo virtual backlog
 **Status:** built · **Size:** L · **Waiting:** Nick's check · **For:** person.nickwhiteley

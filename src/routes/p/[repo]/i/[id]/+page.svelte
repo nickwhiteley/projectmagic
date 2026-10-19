@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance, type SubmitFunction } from '$app/forms';
 	import { page } from '$app/state';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { refreshAll } from '$app/navigation';
@@ -12,6 +13,30 @@
 		return () => clearTimeout(t);
 	});
 	const repo = $derived(page.params.repo!);
+	const editUrl = $derived(`/p/${repo}/i/${encodeURIComponent(page.params.id!)}/edit`);
+	const openPrs = $derived(
+		(data.item?.prs ?? []).filter((p) => p.state === 'OPEN' && p.branch !== 'projectmagic')
+	);
+	// A comment for the agents (PM32). The action is the edit page's, so its answer is read here.
+	let comment = $state('');
+	let commenting = $state(false);
+	let commentError = $state<string | null>(null);
+	const sendComment: SubmitFunction = () => {
+		commenting = true;
+		commentError = null;
+		return async ({ result, update }) => {
+			if (result.type === 'failure')
+				commentError = String(
+					(result.data as { message?: string } | undefined)?.message ?? 'The comment wasn’t saved.'
+				);
+			else if (result.type === 'error') commentError = 'The comment wasn’t saved.';
+			else {
+				comment = '';
+				await update();
+			}
+			commenting = false;
+		};
+	};
 	const RULES: Record<number, string> = {
 		1: 'done in the backlog',
 		2: 'a linked pull request is open',
@@ -97,7 +122,45 @@
 			{#if page.url.searchParams.get('pending')}<p class="muted small">
 					Saved. It reaches {data.main} when the edits PR is merged.
 				</p>{/if}
+			{#if it.reply}
+				<div class="reply-notice small" role="status">
+					<span>An agent replied to a comment on {it.reply}. Its reply is under Comments.</span>
+					{#if page.data.project.canEdit}
+						<form method="POST" action="{editUrl}?/read" use:enhance>
+							<button class="button">Mark read</button>
+						</form>
+					{/if}
+				</div>
+			{/if}
 			<div class="prose">{@html it.bodyHtml}</div>
+
+			{#if page.data.project.canEdit}
+				<form
+					method="POST"
+					action="{editUrl}?/comment"
+					class="comment-form"
+					use:enhance={sendComment}
+				>
+					<label class="label" for="comment">Comment for the agents</label>
+					<textarea
+						id="comment"
+						name="text"
+						rows="4"
+						maxlength="4000"
+						bind:value={comment}
+						placeholder="What should the agent working on {it.id} know?"></textarea>
+					<p class="muted small">
+						It is added to the item under Comments, signed and dated, with <code>Comment:</code> set
+						so the agents read it{#if it.status === 'built' || it.status === 'done'}, and {it.id} goes
+							back to todo{/if}.{#if openPrs.length}
+							It is also posted on {#each openPrs as p, i (p.number)}{i ? ' and ' : ''}PR #{p.number}{/each}.{/if}
+					</p>
+					{#if commentError}<p class="error small" role="alert">{commentError}</p>{/if}
+					<button class="button" disabled={commenting || !comment.trim()} aria-busy={commenting}
+						>{commenting ? 'Commenting…' : 'Comment'}</button
+					>
+				</form>
+			{/if}
 
 			{#if it.olderCopies.length}
 				<p class="muted small older">
@@ -130,6 +193,9 @@
 					From {RULES[it.rule]}{it.rule === 2 || it.rule === 3 ? ` (${it.sourceDetail})` : ''}.
 				</p>
 				{#if it.waitingHtml}<p class="waiting small">Waiting on {@html it.waitingHtml}</p>{/if}
+				{#if it.comment}<p class="small">
+						A comment of {it.comment} is waiting for an agent to read it.
+					</p>{/if}
 				{#each it.waits as w (w.ref)}
 					<p class="small">
 						{#if w.href}<a href={w.href}><code>{w.ref}</code></a>{:else}<code>{w.ref}</code>{/if}
@@ -325,6 +391,41 @@
 	}
 	.waiting {
 		color: var(--warn);
+	}
+	.reply-notice {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		background: var(--warn-bg);
+		color: var(--warn);
+		border-radius: 8px;
+		padding: 0.5rem 0.9rem;
+		margin: 0 0 1rem;
+	}
+	.reply-notice form {
+		margin: 0;
+	}
+	.comment-form {
+		display: flex;
+		flex-direction: column;
+		align-items: start;
+		gap: 0.4rem;
+		margin-top: 2rem;
+	}
+	.comment-form textarea {
+		border: 1px solid var(--line-strong);
+		background: var(--card);
+		border-radius: var(--radius);
+		padding: 0.4rem 0.55rem;
+		width: 100%;
+		font: inherit;
+		font-size: 14px;
+		line-height: 1.55;
+		resize: vertical;
+	}
+	.error {
+		color: var(--danger);
 	}
 	dl {
 		display: grid;

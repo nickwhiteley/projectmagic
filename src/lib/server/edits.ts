@@ -324,6 +324,40 @@ export async function savePendingIfDue(project: ProjectRow): Promise<void> {
 	}
 }
 
+/**
+ * Posts a person's comment on an item's open PRs too (PM32), so an agent working on the branch
+ * sees it without waiting to merge main. As the person, like their edits. A PR that can't take
+ * the comment is skipped: the comment is already in the backlog.
+ */
+export async function commentOnPrs(
+	user: SessionUser,
+	project: ProjectRow,
+	prs: { number: number; state: string; branch: string }[],
+	item: { id: string; url: string },
+	text: string
+): Promise<number> {
+	const open = prs.filter((p) => p.state === 'OPEN' && p.branch !== EDIT_BRANCH);
+	if (!open.length) return 0;
+	const gh = userClient(user.id);
+	const body = `${text.trim()}\n\n— @${user.githubLogin} on [${item.id}](${item.url}) in Project Magic. It is also in the backlog, with \`Comment:\` set.`;
+	let posted = 0;
+	for (const p of open) {
+		try {
+			const res = await gh.send(
+				'POST',
+				`/repos/${project.owner}/${project.repo}/issues/${p.number}/comments`,
+				{ body }
+			);
+			if (res.status === 201) posted++;
+			else console.error(`comment on PR #${p.number}: GitHub said ${res.status}`);
+		} catch (e) {
+			if (e instanceof ReauthRequired) throw e;
+			console.error(`comment on PR #${p.number}:`, e);
+		}
+	}
+	return posted;
+}
+
 /** An item added in the last minute, which the cache may not hold yet (PM17). */
 export async function justAdded(projectId: string, itemId: string): Promise<boolean> {
 	const [r] = await db()<{ n: number }[]>`
@@ -335,6 +369,7 @@ export async function justAdded(projectId: string, itemId: string): Promise<bool
 
 export const edits = {
 	batching,
+	commentOnPrs,
 	edit,
 	editFile,
 	mergeEdits,

@@ -9,7 +9,7 @@ import { asMessage, conflictDiffs, respond, safeBack } from '#lib/server/edit-ac
 import { problems, readBase, readItemForm } from '#lib/server/item-form.ts';
 import { epicChoices } from '#lib/server/cross.ts';
 import { loadProjectState, neighbours } from '#lib/server/project-state.ts';
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -145,6 +145,59 @@ export const actions: Actions = {
 				it.file
 			);
 			return respond(result, safeBack(form.get('back'), `/p/${params.repo}/board`));
+		} catch (e) {
+			return asMessage(e);
+		}
+	},
+
+	// A person's comment for the agents (PM32), from the item page. It goes in the item's body, sets
+	// `Comment:`, sends a built or done item back to todo, and is posted on the item's open PRs.
+	comment: async ({ locals, params, request, url }) => {
+		const form = await request.formData();
+		const text = String(form.get('text') ?? '')
+			.replace(/\r\n/g, '\n')
+			.trim();
+		const back = `/p/${params.repo}/i/${encodeURIComponent(params.id)}`;
+		if (!text)
+			return fail(400, { comment: text, message: 'Write a comment first.', reauth: false });
+		if (text.length > 4000)
+			return fail(400, { comment: text, message: 'Keep it under 4000 characters.', reauth: false });
+		const { it } = await context(locals, params.id);
+		const op: Op = {
+			op: 'comment',
+			id: it.id,
+			by: locals.user!.githubLogin,
+			date: new Date().toISOString().slice(0, 10),
+			text
+		};
+		try {
+			const result = await edits.edit(locals.user!, locals.project!, op, null, it.file);
+			if (result.kind !== 'conflict' && result.kind !== 'blocked' && result.kind !== 'refused')
+				await edits.commentOnPrs(
+					locals.user!,
+					locals.project!,
+					it.prs,
+					{ id: it.id, url: `${url.origin}${back}` },
+					text
+				);
+			return respond(result, back, { comment: text });
+		} catch (e) {
+			return asMessage(e, { comment: text });
+		}
+	},
+
+	// The person has read the agents' reply (PM32): clear `Reply:`.
+	read: async ({ locals, params }) => {
+		const { it } = await context(locals, params.id);
+		if (!it.reply) redirect(303, `/p/${params.repo}/i/${encodeURIComponent(it.id)}`);
+		const op: Op = {
+			op: 'edit',
+			id: it.id,
+			change: { meta: updateMeta(it.meta ?? [], { reply: '' }) }
+		};
+		try {
+			const result = await edits.edit(locals.user!, locals.project!, op, null, it.file);
+			return respond(result, `/p/${params.repo}/i/${encodeURIComponent(it.id)}`);
 		} catch (e) {
 			return asMessage(e);
 		}
