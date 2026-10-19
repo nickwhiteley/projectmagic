@@ -19,9 +19,13 @@ export function summarise(s: ProjectState, now = Date.now()) {
 		? s.plan.tasks.find((t) => t.number === s.plan!.next && !t.superseded)
 		: undefined;
 	const group = next ? s.plan!.groups.find((g) => g.title === next.group) : undefined;
-	const waiting = s.items.filter(
-		(i) => (i.status === 'built' || i.status === 'blocked') && i.waiting
-	);
+	// An agent's reply to a person's comment (PM32) comes first: it is for them by name.
+	const waiting = [
+		...s.items.filter((i) => i.reply),
+		...s.items.filter(
+			(i) => !i.reply && (i.status === 'built' || i.status === 'blocked') && i.waiting
+		)
+	];
 	return {
 		repo: s.repo,
 		name: s.name,
@@ -59,7 +63,9 @@ export function summarise(s: ProjectState, now = Date.now()) {
 			id: i.id,
 			title: i.titleText,
 			status: i.status,
-			waitingHtml: renderInline(i.waiting ?? '')
+			waitingHtml: i.reply
+				? renderInline(`An agent replied to a comment on ${i.reply}.`)
+				: renderInline(i.waiting ?? '')
 		})),
 		waitingCount: waiting.length,
 		pending: s.items.filter((i) => i.pending).length

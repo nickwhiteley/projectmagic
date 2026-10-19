@@ -26,7 +26,9 @@ type KnownKey =
 	| 'found'
 	| 'raised'
 	| 'epic'
-	| 'for';
+	| 'for'
+	| 'comment'
+	| 'reply';
 
 export interface MetaEntry {
 	/** The key as written, for showing unknown keys as-is. */
@@ -53,6 +55,10 @@ export interface Meta {
 	epic?: string;
 	/** Who the item is for (PM16): `person…` or `agent…`, backticks removed. */
 	for?: string;
+	/** A person's comment waiting for an agent to read it (PM32): its date, as written. */
+	comment?: string;
+	/** An agent's reply waiting for a person to read it (PM32): its date, as written. */
+	reply?: string;
 	/** Entries whose key isn't a known one, kept and shown as-is. */
 	unknown: MetaEntry[];
 }
@@ -116,6 +122,8 @@ export function parseMeta(line: string): Meta | null {
 			case 'found':
 			case 'raised':
 			case 'epic':
+			case 'comment':
+			case 'reply':
 				meta[key] = e.value;
 				break;
 			default:
@@ -140,6 +148,8 @@ export interface MetaFields {
 	waiting?: string;
 	for?: string;
 	epic?: string;
+	comment?: string;
+	reply?: string;
 }
 
 const FIELD_KEYS: [keyof MetaFields, string][] = [
@@ -150,7 +160,9 @@ const FIELD_KEYS: [keyof MetaFields, string][] = [
 	['plan', 'Plan'],
 	['waiting', 'Waiting'],
 	['for', 'For'],
-	['epic', 'Epic']
+	['epic', 'Epic'],
+	['comment', 'Comment'],
+	['reply', 'Reply']
 ];
 
 /**

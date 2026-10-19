@@ -68,6 +68,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			inferred: it.inferred,
 			found: it.found,
 			raised: it.raised,
+			comment: it.comment,
+			reply: it.reply,
 			section: it.section === null ? null : (s.sections[it.section]?.titleText ?? null),
 			status: it.status,
 			rule: it.statusSource.rule,

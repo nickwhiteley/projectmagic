@@ -140,6 +140,9 @@ export interface ItemView {
 	/** Where a bug was found and when it was raised, as written (PM2). */
 	found: string | null;
 	raised: string | null;
+	/** `Comment:` and `Reply:` (PM32): a comment for the agents, and their reply for a person. */
+	comment: string | null;
+	reply: string | null;
 	section: number | null;
 	/** The file it lives in when that is `bugs.md`, else null (PM29). */
 	file: string | null;
@@ -268,6 +271,15 @@ const prLink = (p: PrInfo): PrLink => ({
 	branch: p.headRefName
 });
 
+/**
+ * A meta key's value, read from the entries, which every cached parse has: a parse cached before
+ * the key was known (PM32's `Comment:` and `Reply:`) lacks its field, and the parser version is
+ * kept so caches stay valid (PM28).
+ */
+function metaValue(meta: { entries: MetaEntry[] } | null, key: string): string | null {
+	return meta?.entries.find((e) => e.key.toLowerCase() === key)?.value.trim() || null;
+}
+
 export function assembleState(raw: StateInput): ProjectState {
 	const { config } = raw;
 	// The bugs file reads as part of the backlog from here on (PM29).
@@ -381,6 +393,8 @@ export function assembleState(raw: StateInput): ProjectState {
 			type: it.meta?.type?.trim().toLowerCase() || (it.file ? 'bug' : null),
 			found: it.meta?.found || null,
 			raised: it.meta?.raised || null,
+			comment: metaValue(it.meta, 'comment'),
+			reply: metaValue(it.meta, 'reply'),
 			section: it.section,
 			file: it.file ?? null,
 			line: it.line,

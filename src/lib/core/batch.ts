@@ -75,6 +75,8 @@ export function pendingLabel(op: Op): string {
 			return `remove ${op.id}`;
 		case 'move':
 			return `move ${op.id}`;
+		case 'comment':
+			return `comment on ${op.id}`;
 		case 'edit': {
 			const c = op.change;
 			const status = c.meta?.find((m) => m.key.toLowerCase() === 'status')?.value;

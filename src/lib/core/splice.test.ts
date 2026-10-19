@@ -252,3 +252,86 @@ group('adding to a backlog with no sections', () => {
 		expect(parseBacklog(text).items.map((i) => i.id)).toEqual(['PT1', 'PT2']);
 	});
 });
+
+group('splice: comment (PM32)', () => {
+	const comment = (id: string, text: string, by = 'nick'): Op => ({
+		op: 'comment',
+		id,
+		by,
+		date: '2026-10-19',
+		text
+	});
+	const item = (t: string, id: string) => parseBacklog(t).items.find((i) => i.id === id)!;
+
+	it('adds a Comments heading and the comment, sets Comment and sends a built item to todo', () => {
+		const out = splice(SAMPLE, comment('NW9', 'Still broken on a phone.'));
+		expect(out).toBe(
+			SAMPLE.replace(
+				'**Status:** built · **Size:** M\n\nThe body.\n',
+				'**Status:** todo · **Size:** M · **Comment:** 2026-10-19\n\nThe body.\n\n#### Comments\n\n**@nick, 2026-10-19:** Still broken on a phone.\n'
+			)
+		);
+	});
+
+	it('adds a second comment under the same heading, and clears Reply and Waiting', () => {
+		const start = SAMPLE.replace(
+			'**Status:** built · **Size:** M',
+			'**Status:** built · **Size:** M · **Waiting:** Nick · **Reply:** 2026-10-18'
+		);
+		const once = splice(start, comment('NW9', 'One.'));
+		const twice = splice(once, comment('NW9', 'Two.'));
+		const it = item(twice, 'NW9');
+		expect(it.meta!.entries.map((e) => `${e.key}=${e.value}`)).toEqual([
+			'Status=todo',
+			'Size=M',
+			'Comment=2026-10-19'
+		]);
+		expect(it.body).toBe(
+			'The body.\n\n#### Comments\n\n**@nick, 2026-10-19:** One.\n\n**@nick, 2026-10-19:** Two.'
+		);
+	});
+
+	it('leaves a todo item’s status alone, and gives an item without a meta line one', () => {
+		expect(item(splice(SAMPLE, comment('BP3', 'x')), 'BP3').meta!.entries).toEqual([
+			{ key: 'Status', value: 'todo' },
+			{ key: 'Comment', value: '2026-10-19' }
+		]);
+		const a1a = item(splice(SAMPLE, comment('A1a', 'x')), 'A1a');
+		expect(a1a.meta!.status).toBe('todo');
+		expect(a1a.body).toContain('**Specced:** prose, not meta.');
+	});
+
+	it('keeps a comment inside its item, whatever markdown it holds', () => {
+		const nasty = [
+			'### BP99 Not an item',
+			'## Not a section',
+			'Underlined',
+			'---',
+			'===',
+			'* * *',
+			'<!-- runs on',
+			'```',
+			'### inside code is kept',
+			'(no closing fence)'
+		].join('\n');
+		const out = splice(SAMPLE, comment('NW9', nasty));
+		const b = parseBacklog(out);
+		expect(b.items.map((i) => i.id)).toEqual(ids(SAMPLE));
+		expect(b.sections.map((s) => s.titleText)).toEqual(
+			parseBacklog(SAMPLE).sections.map((s) => s.titleText)
+		);
+		expect(item(out, 'BP3').meta!.status).toBe('todo');
+		expect(item(out, 'NW9').body).toContain('### inside code is kept\n(no closing fence)\n```');
+	});
+
+	it('puts a comment that opens with a code fence below the signature', () => {
+		const out = splice(SAMPLE, comment('BP3', '```\ncode\n```'));
+		expect(item(out, 'BP3').body).toContain('**@nick, 2026-10-19:**\n```\ncode\n```');
+	});
+
+	it('names the op in the commit message', () => {
+		expect(describe(comment('NW9', 'x'), parseBacklog(SAMPLE))).toBe(
+			'Backlog: comment NW9 DXF export'
+		);
+	});
+});

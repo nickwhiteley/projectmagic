@@ -38,6 +38,12 @@ Keep to these conventions so it reads them correctly:
     them. Take an item that is for a person only when they say so, and then set `For:` to you.
   - **When you set an item to `built` and it needs a person to check it**, set `For:` to that
     person: `person`, or `person.<login>` when you know who.
+- **A person's comment for you is in the item** (PM32), under `#### Comments`, and the item
+  has `**Comment:** <date>`. Project Magic also posts it on the item's open PR. Read the comments
+  before you go on with the item, act on them, then remove `Comment:`. A comment sends a built or
+  done item back to `todo`. To reply, add a paragraph under `#### Comments` starting
+  `**agent.<maker>.<family>, <date>:**` (`**agent.claude.opus, 2026-10-19:**`) and set
+  `**Reply:** <date>`. The person removes `Reply:` once they have read it.
 - **`**Epic:**` groups items**: `Epic: EP3` joins an item to epic EP3. Declare an epic as an
   item (`### EP3 Billing`) or a section (`## EP3 Billing`) whose id is `EP` and a number. Project
   Magic shows each epic's items by status, shipped ones included, so an item you remove when it
