@@ -326,12 +326,16 @@
 		margin: 0.5rem 0 0;
 		padding-left: 1.2rem;
 	}
-	.preamble,
 	.note {
 		background: var(--surface-1);
 		border-radius: var(--radius);
 		padding: 0.6rem 0.9rem;
 		margin: 0.5rem 0 0.25rem;
+	}
+	/* The preamble is only a fold-out line above the list, so it takes no room of its own. */
+	.preamble {
+		margin: 0;
+		padding: 0.1rem 0;
 	}
 	.preamble summary,
 	.note summary {
