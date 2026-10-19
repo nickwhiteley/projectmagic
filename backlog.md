@@ -285,7 +285,7 @@ links to the documentation, and a "Project Magic" section is added to `AGENTS.md
 (created if missing).
 
 ### PM32 Information for agents
-**Status:** todo · **Size:** M · **For:** agent
+**Status:** in progress · **Size:** M · **Branch:** `feat/pm32-comments` · **For:** agent
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
