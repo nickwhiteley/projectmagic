@@ -234,3 +234,21 @@ group.each(['orchard', 'lantern'] as const)('splice on the %s backlog', (repo) =
 			);
 	});
 });
+
+group('adding to a backlog with no sections', () => {
+	it('appends the first item, then the next, after the preamble', () => {
+		let text = '# Backlog\n\nHow to.\n';
+		text = splice(text, {
+			op: 'add',
+			to: { section: 0, at: 'end' },
+			item: { id: 'PT1', title: 'Foo', meta: [], body: '' }
+		} as never);
+		expect(parseBacklog(text).items.map((i) => i.id)).toEqual(['PT1']);
+		text = splice(text, {
+			op: 'add',
+			to: { section: 0, at: 'end' },
+			item: { id: 'PT2', title: 'Bar', meta: [], body: '' }
+		} as never);
+		expect(parseBacklog(text).items.map((i) => i.id)).toEqual(['PT1', 'PT2']);
+	});
+});
