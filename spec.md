@@ -359,8 +359,13 @@ backlog".
 ### 7.3a Setting up a new repository (PM33)
 
 The first time a sync sees a repository (`project.initialised_at` is null), and it is not archived,
-the App adds what is missing from its root: `backlog.md`, `bugs.md` and `.projectmagic.yml`. A repository with a backlog already (`backlog.md` or
-`BACKLOG.md`) gets only `.projectmagic.yml`; an existing file is never changed. They are committed
+the App adds what is missing from its root: `backlog.md`, `bugs.md`, `.projectmagic.yml`,
+`AGENTS.md` and `CLAUDE.md`. A repository with a backlog already (`backlog.md` or `BACKLOG.md`)
+gets no backlog or bugs file. An existing file is never changed, except that a "Project Magic"
+section (what an item is, the meta line, `For:`, branch and PR rules, and links to
+`specs/conventions.md`) is added to the end of an `AGENTS.md` or `CLAUDE.md` that lacks it. Where
+neither exists, `AGENTS.md` gets the section and `CLAUDE.md` is `@AGENTS.md`. The config opens with
+links to the documentation. They are committed
 to the `projectmagic` branch as the App, and a PR is opened and squash-merged at once, whatever the
 project's `auto_merge`, because selecting the repository in the App is the consent. A refused merge
 leaves the PR open and is not retried. An empty repository, or a `projectmagic` branch already in

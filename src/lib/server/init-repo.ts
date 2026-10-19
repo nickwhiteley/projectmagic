@@ -2,7 +2,7 @@
 // backlog and `.projectmagic.yml` are added if missing, by a PR from the `projectmagic` branch that
 // is merged at once. This is done as the App, since no person is acting. No SvelteKit imports.
 import { EDIT_BRANCH } from '#lib/core/branchref.ts';
-import { SCAFFOLD_PR_TITLE, scaffold } from '#lib/core/scaffold.ts';
+import { AGENT_MARKER, SCAFFOLD_PR_TITLE, scaffold } from '#lib/core/scaffold.ts';
 import type { GitHubClient } from './github-client.ts';
 
 export interface NewRepo {
@@ -27,11 +27,26 @@ export async function initialiseRepo(gh: GitHubClient, r: NewRepo): Promise<Init
 		`${repo}/contents?ref=${enc(r.defaultBranch)}`
 	);
 	if (!ok(root.status)) return 'deferred';
-	const files = scaffold(
+	let files = scaffold(
 		r.repo,
 		r.defaultBranch,
 		root.body.filter((e) => e.type === 'file').map((e) => e.name)
 	);
+	// An agent file that exists gets the section added to its end, unless it has it already.
+	const appended = new Map<string, string>();
+	for (const f of files.filter((f) => f.append)) {
+		const cur = await gh.send<{ sha: string; content: string }>(
+			'GET',
+			`${repo}/contents/${enc(f.path)}?ref=${enc(r.defaultBranch)}`
+		);
+		if (!ok(cur.status)) return 'deferred';
+		const text = Buffer.from(cur.body.content, 'base64').toString('utf8');
+		if (text.includes(AGENT_MARKER)) files = files.filter((x) => x !== f);
+		else {
+			appended.set(f.path, cur.body.sha);
+			f.content = text + (text.endsWith('\n') ? '\n' : '\n\n') + f.content;
+		}
+	}
 	if (!files.length) return 'done';
 
 	const main = await gh.send<{ object: { sha: string } }>(
@@ -48,9 +63,10 @@ export async function initialiseRepo(gh: GitHubClient, r: NewRepo): Promise<Init
 
 	for (const f of files) {
 		const put = await gh.send('PUT', `${repo}/contents/${f.path.split('/').map(enc).join('/')}`, {
-			message: `Add ${f.path}`,
+			message: `${appended.has(f.path) ? 'Update' : 'Add'} ${f.path}`,
 			content: Buffer.from(f.content, 'utf8').toString('base64'),
-			branch: EDIT_BRANCH
+			branch: EDIT_BRANCH,
+			...(appended.has(f.path) ? { sha: appended.get(f.path) } : {})
 		});
 		if (!ok(put.status)) {
 			await gh.send('DELETE', `${repo}/git/refs/heads/${EDIT_BRANCH}`);
@@ -62,7 +78,7 @@ export async function initialiseRepo(gh: GitHubClient, r: NewRepo): Promise<Init
 		title: SCAFFOLD_PR_TITLE,
 		head: EDIT_BRANCH,
 		base: r.defaultBranch,
-		body: `Project Magic added ${files.map((f) => `\`${f.path}\``).join(', ')} to this repository.`
+		body: `Project Magic added or updated ${files.map((f) => `\`${f.path}\``).join(', ')} to this repository.`
 	});
 	if (!ok(pr.status)) return 'deferred';
 	const merged = await gh.send('PUT', `${repo}/pulls/${pr.body.number}/merge`, {

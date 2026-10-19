@@ -247,6 +247,10 @@ the App is set up, archived ones excepted and forks included. The templates are 
 bugs file, and a config of commented-out defaults with `new_id_prefix` set to the repo's initials.
 Needs migration 013. Spec §7.3a.
 
+Added on 2026-10-19 at Nick's request, so that agents know how to use Project Magic: the config
+links to the documentation, and a "Project Magic" section is added to `AGENTS.md` and `CLAUDE.md`
+(created if missing).
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
