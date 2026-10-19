@@ -655,3 +655,10 @@ Such as BitBucket
 **Status:** todo · **For:** agent
 
 Add a branch switcher so a user can make changes and see items and bugs on a branch. It will reply on the branch being pushed to Github.
+
+### PM38 MCP server or API
+**Status:** todo · **For:** agent
+
+Should we have an MCP server or API so that agents can make changes to the *main* version of the backlog?
+It degrades the imperative to keep all code and project dics completely aligned but for future tasks or discussions it may be beneficial.
+Discuss this.
