@@ -3,6 +3,7 @@ import { checkId, suggestId, type Op, type Position } from '#lib/core/splice.ts'
 import { updateMeta } from '#lib/core/meta.ts';
 import { asMessage, respond } from '#lib/server/edit-actions.ts';
 import { edits } from '#lib/server/edits.ts';
+import { settleEpic } from '#lib/server/epic-field.ts';
 import { problems, readItemForm, type ItemFormValues } from '#lib/server/item-form.ts';
 import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
 import { loadProjectState, projectState } from '#lib/server/project-state.ts';
@@ -65,6 +66,10 @@ export const actions: Actions = {
 		const bug = form.get('bug') === '1';
 		const bad = problems(v) ?? checkId(v.id, s.usedIds);
 		if (bad) return fail(400, { values: v, message: bad, reauth: false });
+		// A name in the Epic field starts a new epic (PM1): declare it, then use its id.
+		const epic = await settleEpic(locals.user!, locals.project!, s, v.epic).catch((e) => e);
+		if (epic instanceof Error) return asMessage(epic, { values: v });
+		if ('message' in epic) return fail(400, { values: v, message: epic.message, reauth: false });
 		// The Bugs section is bugs.md, which has no place of its own for it: next to its bugs (PM29).
 		const file = s.sections[section]?.file ?? null;
 		const to: Position = file
@@ -85,7 +90,7 @@ export const actions: Actions = {
 						plan: v.plan ? v.plan.split(',') : [],
 						waiting: v.waiting,
 						for: v.assignee,
-						epic: v.epic
+						epic: epic.epic
 					}),
 					// In the bugs file an item is a bug already; elsewhere it says so (PM2).
 					...(bug && !file ? [{ key: 'Type', value: 'bug' }] : [])

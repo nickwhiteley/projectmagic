@@ -675,7 +675,7 @@ installations, audit log, `project.tenant_id` and `over_limit`, `membership.sour
 *Default* at position 1, `platform_setting.default_tier` set to it, every tenant on it, and the flag
 `ai`, "AI: inferred statuses and Ask"); `012_feedback`; `013_project_initialised`
 (`project.initialised_at`, set to now for every existing project); `014_blob_parse_epics` (widens
-`blob_parse.kind`'s check to allow `epics`; in PR #86, see §21).
+`blob_parse.kind`'s check to allow `epics`, which migration 001's didn't).
 
 ## 9. The views
 
@@ -688,7 +688,7 @@ mark and "Project Magic", linking to `/`), the views **Overview**, **Activity**,
 AI is available (§13), **Ask**, then **Projects**: each project the person can see, by name, with a
 dot that turns red when its last sync failed. A **header** holds a search box (`/search?q=`,
 placeholder "Search ids, titles and text across projects") and the **user menu**: a button with the
-person's name (or login) and ▾ that opens a panel with *Settings*, *Feedback* (§19), the tenant's
+person's name (or *Account* when GitHub has none) and ▾ that opens a panel with *Settings*, *Feedback* (§19), the tenant's
 name, or a switcher (a select and *Switch*, posting to `/tenant/switch`) when they belong to several,
 *Tenant* for an active tenant's admins, *Admin* for platform admins, and *Sign out* (`POST
 /auth/signout`). The menu closes on a click outside it, Escape, or a navigation.
@@ -862,13 +862,22 @@ only a branch's head; the edits and deployment branches are left out) under its 
   *Write* / *Preview* switch). The fields: **Id**, **Title**, **Status** (the six), **Job**
   (suggesting the jobs in use), **Size** (suggesting S, S–M, M, M–L, L), **For** (suggesting
   `person`, `agent` and the values in use; "person.<login> or agent.claude… Empty is anyone's."),
-  **Epic** (suggesting declared epics), **★ On the cut line**, **Waiting on** (shown for blocked and
+  **Epic** (suggesting declared epics; "Pick an epic, or type a new name to start one. Empty is
+  none."), **★ On the cut line**, **Waiting on** (shown for blocked and
   built, or when it has a value), **Plan tasks** (suggesting current tasks) and **Branch**. The form
-  is read with values trimmed, the title's and waiting reason's whitespace collapsed, job and epic
-  upper-cased, `For:` without spaces, and CRLF in the body made LF. It is refused with a message when
+  is read with values trimmed, the title's and waiting reason's whitespace collapsed, the job
+  upper-cased, the epic's whitespace collapsed, `For:` without spaces, and CRLF in the body made LF. It is refused with a message when
   the title is empty ("A title is needed.") or more than one line, the job isn't one capitalised
-  word, `For:` is bad, the epic isn't `EP` and a number, a plan task isn't a task number, or a changed
-  id is taken. **Only what changed is written**: an untouched form changes nothing; existing meta keys
+  word, `For:` is bad, the epic is a bad name (below), a plan task isn't a task number, or a changed
+  id is taken. **The Epic field** takes an epic id (`EP3`, any case), or a name: the name of an
+  existing epic (its title, ignoring case) is that epic; any other name, of at most 80 characters, not
+  starting with `#` and with no backtick or newline, **starts a new epic** (PM1), numbered one after
+  the highest epic id in use. Before the item is saved, the new epic is declared at the end of the
+  epics file (§13) as `### EPn Name`, after a blank line, by its own commit (`Epics: declare EPn
+  Name`, logged as a `doc` edit) through the §10.2 path; the file is created, starting `# Epics`, if
+  it doesn't exist. A project with `epics: null` refuses a new name ("“Name” would be a new epic, but
+  this project doesn't read an epics file (the epics key in .projectmagic.yml). Use an epic id such as
+  EP3."). **Only what changed is written**: an untouched form changes nothing; existing meta keys
   keep their place and spelling, new keys are inserted in the order Status, Size, Job, Branch, Plan,
   Waiting, For, Epic after the last known key before them; an emptied field removes its key (never
   Status); unknown keys are kept; `Job` is written where the item keeps it (the meta line if it has a
@@ -965,6 +974,8 @@ a merged edit or the Merge button, `pending` with the reason and PR, or the bloc
 3. Commit it to `projectmagic` with the contents API (`PUT /contents/<path>`), passing the blob `sha`
    as compare-and-swap, using the **acting user's** token, so the commit is attributed to whoever
    made the edit. The commit message is §10.1's.
+   A change that may create its file (declaring the first epic) starts from given text when the
+   file isn't on the branch, and commits without a `sha`.
 4. On a 409 or 422, which means the file changed underneath, go back to step 1's read and retry, up
    to three tries in all. Splices are by id, so a concurrent change to a different item is harmless.
 5. Write `edit_log` (one row per edit: project, user, item, op, base oid, commit, PR; a failed or
@@ -1303,7 +1314,8 @@ Each one is also an item in this repository's `backlog.md`.
   main with their status, and the items that shipped (read from each item as it was removed; deleted
   ones excluded). The List and Board filter by epic; rows and cards show it. A value that isn't an
   epic id is flagged in the health panel ("<id>: Epic <value> isn't an epic id (EP and a number)").
-  The add and edit forms have an *Epic* field that suggests the declared epics.
+  The add and edit forms have an *Epic* field that suggests the declared epics, and a name typed
+  there that no epic has starts a new one, declared in the epics file (§10.1).
 - **Bugs** (built, PM2 and PM29). `Type: bug` with `Found:` and `Raised:`, a red *bug* tag, and a Type
   filter on the List and Board when any item has a type. Bugs can also live in their own `bugs.md`
   (the `bugs` key), a second backlog in the same format with a `BUG` prefix (`BUG12`, the `bug_prefix`
@@ -1838,11 +1850,6 @@ score.
 Where the code does not yet do what this specification says, so a rebuild can choose to match the
 intent:
 
-- **`blob_parse.kind` doesn't allow `epics` until migration 014.** Migration 001's check is `backlog`,
-  `progress`, `config`, so storing an `epics.md` parse (PM28) fails the sync of any project with an
-  `epics.md`. Migration 014 (PR #86, `feat/pm1-new-epic-from-name`, open on 2026-10-19) fixes it; PR
-  #86 also lets a name typed in the Epic field start a new epic, which §13 should describe once it
-  is merged.
 - **No screen hides a project.** The `hidden` flag, the `hide` action and the rule that only
   maintainers see a hidden project are built; nothing sets the flag.
 - **The item page's *Where* link** always points at `backlog.md`, even for an item in `bugs.md`.

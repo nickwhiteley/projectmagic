@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseBlob } from '../server/sync.ts';
 import { parseConfig } from './config.ts';
-import { declaredEpic, epicId, parseEpicsFile, rollUp } from './epics.ts';
+import { chooseEpic, declareEpic, declaredEpic, epicId, parseEpicsFile, rollUp } from './epics.ts';
 import { assembleState, type StoredBacklog } from './state.ts';
 
 describe('epicId', () => {
@@ -209,5 +209,42 @@ Not an epic.
 			[]
 		);
 		expect(e).toMatchObject({ title: 'Billing', description: 'Why.', target: 'Q4' });
+	});
+});
+
+describe('chooseEpic (PM1)', () => {
+	const known = [
+		{ id: 'EP1', title: 'Billing' },
+		{ id: 'EP4', title: null }
+	];
+	it('takes an id as an id, in upper case, and nothing as none', () => {
+		expect(chooseEpic('ep1', known)).toEqual({ kind: 'id', id: 'EP1' });
+		expect(chooseEpic('  ', known)).toEqual({ kind: 'none' });
+	});
+	it('takes the name of an epic that exists as that epic, ignoring case', () => {
+		expect(chooseEpic('billing', known)).toEqual({ kind: 'id', id: 'EP1' });
+	});
+	it('takes any other name as a new epic numbered after the highest in use', () => {
+		expect(chooseEpic(' Onboarding   flow ', known)).toEqual({
+			kind: 'new',
+			id: 'EP5',
+			title: 'Onboarding flow'
+		});
+		expect(chooseEpic('First', [])).toEqual({ kind: 'new', id: 'EP1', title: 'First' });
+	});
+	it('refuses a name that would not make a heading', () => {
+		expect(chooseEpic('# Heading', known).kind).toBe('bad');
+		expect(chooseEpic('x'.repeat(81), known).kind).toBe('bad');
+	});
+});
+
+describe('declareEpic', () => {
+	it('starts a file, and adds to one, with a heading the parser reads back', () => {
+		const first = declareEpic('', 'EP1', 'Billing');
+		const both = declareEpic(first, 'EP2', 'Onboarding');
+		expect(parseEpicsFile(both).map((e) => [e.id, e.title])).toEqual([
+			['EP1', 'Billing'],
+			['EP2', 'Onboarding']
+		]);
 	});
 });
