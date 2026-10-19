@@ -368,8 +368,9 @@ neither exists, `AGENTS.md` gets the section and `CLAUDE.md` is `@AGENTS.md`. Th
 links to the documentation. They are committed
 to the `projectmagic` branch as the App, and a PR is opened and squash-merged at once, whatever the
 project's `auto_merge`, because selecting the repository in the App is the consent. A refused merge
-leaves the PR open and is not retried. An empty repository, or a `projectmagic` branch already in
-use, defers the work to the next sync. Projects that existed when migration 013 ran are marked as
+leaves the PR open and is not retried. An empty repository has no commit to branch from, so its files are committed straight to the
+default branch, the first one creating it. A `projectmagic` branch already in use defers the work
+to the next sync. Projects that existed when migration 013 ran are marked as
 set up. The config is every key commented out at its default, with `new_id_prefix` set to the
 repository's initials (the first two letters if its name is one word).
 

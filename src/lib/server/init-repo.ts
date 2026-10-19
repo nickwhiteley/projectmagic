@@ -18,15 +18,40 @@ export type InitResult = 'done' | 'deferred';
 const enc = encodeURIComponent;
 const ok = (status: number) => status >= 200 && status < 300;
 
+/** An empty repository has no commit to branch from, so there is no PR to open: the files are
+ * committed straight to the default branch, which the first one creates. The App is the only one
+ * acting, and there is nothing yet to review or protect. */
+async function commitToEmpty(gh: GitHubClient, r: NewRepo): Promise<InitResult> {
+	const repo = `/repos/${enc(r.owner)}/${enc(r.repo)}`;
+	let first = true;
+	for (const f of scaffold(r.repo, r.defaultBranch, [])) {
+		const put = await gh.send('PUT', `${repo}/contents/${f.path.split('/').map(enc).join('/')}`, {
+			message: `Add ${f.path}`,
+			content: Buffer.from(f.content, 'utf8').toString('base64'),
+			// The first file makes the branch, so it names none; GitHub uses the repository's default.
+			...(first ? {} : { branch: r.defaultBranch })
+		});
+		// Tried again on the next sync, which then sees the files already made.
+		if (!ok(put.status)) return 'deferred';
+		first = false;
+	}
+	return 'done';
+}
+
 export async function initialiseRepo(gh: GitHubClient, r: NewRepo): Promise<InitResult> {
 	const repo = `/repos/${enc(r.owner)}/${enc(r.repo)}`;
 
-	// An empty repository has no commits to branch from, and answers 404 or 409.
+	// An empty repository answers 404 "This repository is empty" here.
 	const root = await gh.send<{ name: string; type: string }[]>(
 		'GET',
 		`${repo}/contents?ref=${enc(r.defaultBranch)}`
 	);
-	if (!ok(root.status)) return 'deferred';
+	if (!ok(root.status)) {
+		const empty =
+			root.status === 404 &&
+			/empty/i.test((root.body as unknown as { message?: string } | null)?.message ?? '');
+		return empty ? commitToEmpty(gh, r) : 'deferred';
+	}
 	let files = scaffold(
 		r.repo,
 		r.defaultBranch,

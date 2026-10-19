@@ -111,10 +111,37 @@ describe('initialiseRepo', () => {
 		expect(b.sha).toBe('old');
 		expect(text.startsWith('# Mine\n\n## Project Magic')).toBe(true);
 	});
-	it('defers an empty repository, and a projectmagic branch already in use', async () => {
+	it('commits straight to the default branch of an empty repository, the first file making it', async () => {
+		const g = fake({
+			...base,
+			'GET /repos/acme/furniture-magic/contents': {
+				status: 404,
+				body: { message: 'This repository is empty.' }
+			}
+		});
+		expect(await initialiseRepo(g.gh, repo)).toBe('done');
+		const puts = g.sent.filter((x) => x.key.startsWith('PUT'));
+		expect(puts.map((x) => x.key.split('/contents/')[1])).toEqual([
+			'backlog.md',
+			'bugs.md',
+			'.projectmagic.yml',
+			'AGENTS.md',
+			'CLAUDE.md'
+		]);
+		expect(puts[0].body).not.toHaveProperty('branch');
+		expect(puts[1].body).toMatchObject({ branch: 'main' });
+		expect(g.keys().some((k) => k.includes('/pulls'))).toBe(false);
+	});
+	it('defers when the repository cannot be read for another reason, and a projectmagic branch already in use', async () => {
 		expect(
 			await initialiseRepo(
-				fake({ ...base, 'GET /repos/acme/furniture-magic/contents': { status: 404 } }).gh,
+				fake({
+					...base,
+					'GET /repos/acme/furniture-magic/contents': {
+						status: 404,
+						body: { message: 'Not Found' }
+					}
+				}).gh,
 				repo
 			)
 		).toBe('deferred');
