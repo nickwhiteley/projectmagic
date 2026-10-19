@@ -331,7 +331,7 @@
 		background: var(--surface-1);
 		border-radius: var(--radius);
 		padding: 0.6rem 0.9rem;
-		margin: 0.5rem 0;
+		margin: 0.5rem 0 0.25rem;
 	}
 	.preamble summary,
 	.note summary {
@@ -345,7 +345,7 @@
 		font-size: 15px;
 	}
 	section {
-		margin-top: 1.25rem;
+		margin-top: 0.6rem;
 	}
 	.drag[draggable='true'] {
 		cursor: grab;
@@ -375,6 +375,7 @@
 	}
 	h2 {
 		font-size: 20px;
+		line-height: 1.25;
 		margin: 0;
 		padding-bottom: 0.1rem;
 	}
