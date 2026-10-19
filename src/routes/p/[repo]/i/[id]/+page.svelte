@@ -29,6 +29,10 @@
 	></svelte:head
 >
 
+{#if !data.adding}
+	<p class="back small"><a href="/p/{repo}">← All items</a></p>
+{/if}
+
 {#if data.adding}
 	<p class="muted" role="status" aria-live="polite">
 		Adding <code>{page.params.id}</code>. It shows here as soon as GitHub has it.
@@ -219,6 +223,13 @@
 {/if}
 
 <style>
+	.back {
+		margin: 0 0 0.5rem;
+	}
+	.back a {
+		text-decoration: none;
+		color: var(--text-2);
+	}
 	.item {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 20rem;
