@@ -48,9 +48,14 @@ export function typesInUse(s: ProjectState): string[] {
 	return [...new Set(s.items.map((i) => i.type).filter((t): t is string => !!t))].sort();
 }
 
-/** The epics (PM1), for the List's and Board's filter: declared or named by an item. */
+/** The epics (PM1), for the List's and Board's filter: declared or named by an item, and other
+ * repositories' epics that items here join (PM36). */
 export function epicsInUse(s: ProjectState): { id: string; title: string | null }[] {
-	return s.epics.map((e) => ({ id: e.id, title: e.title }));
+	const elsewhere = [...new Set(s.items.map((i) => i.epic).filter((e) => e?.includes(':')))];
+	return [
+		...s.epics.map((e) => ({ id: e.id, title: e.title })),
+		...elsewhere.map((id) => ({ id: id!, title: null }))
+	];
 }
 
 /** The `For:` values in use (PM16), plus the two kinds, for suggestions and filters. */

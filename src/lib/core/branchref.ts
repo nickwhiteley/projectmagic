@@ -1,5 +1,6 @@
 // Branch names and pull request text (spec §5.3): `<type>/<ref>-<slug>`, and a PR body's
 // `Backlog:`, `Plan:`, `Bug:` and `Raised:` lines.
+import { parseRef, type CrossRef } from './crossref.ts';
 import { LETTER_ID, TASK_ID } from './meta.ts';
 
 export const BRANCH_TYPES = ['feat', 'fix', 'spike', 'spec', 'chore', 'docs'] as const;
@@ -44,6 +45,8 @@ export type BugEnvironment = (typeof BUG_ENVIRONMENTS)[number];
 
 export interface PrText {
 	backlog: string[];
+	/** `<repo>:<id>` parts of the Backlog: line (PM36): items in this repository or another. */
+	refs: CrossRef[];
 	plan: string[];
 	bug: BugEnvironment | null;
 	/** As written; the caller parses dates. */
@@ -72,6 +75,10 @@ export function parsePrText(title: string, body: string | null): PrText {
 	const t = title.match(/^\s*([A-Z]{1,4}[0-9]+[a-z]?|[0-9]+(?:\.[0-9]+)*[a-z]?):/);
 	return {
 		backlog: ids(lineValue(b, 'Backlog') ?? '', anyId),
+		refs: (lineValue(b, 'Backlog') ?? '').split(',').flatMap((p) => {
+			const r = parseRef(p.trim().split(/\s+/)[0] ?? '');
+			return r ? [r] : [];
+		}),
 		plan: ids(lineValue(b, 'Plan') ?? '', (s) => TASK_ID.test(s)),
 		bug: (BUG_ENVIRONMENTS as readonly string[]).includes(bug ?? '')
 			? (bug as BugEnvironment)

@@ -7,7 +7,8 @@ import { updateMeta, type Status } from '#lib/core/meta.ts';
 import { edits } from '#lib/server/edits.ts';
 import { asMessage, conflictDiffs, respond, safeBack } from '#lib/server/edit-actions.ts';
 import { problems, readBase, readItemForm } from '#lib/server/item-form.ts';
-import { loadProjectState } from '#lib/server/project-state.ts';
+import { epicChoices } from '#lib/server/cross.ts';
+import { loadProjectState, neighbours } from '#lib/server/project-state.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		values,
 		base: it.source,
 		assignees: assigneesInUse(s),
-		epics: epicsInUse(s),
+		epics: epicChoices(epicsInUse(s), await neighbours(locals)),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
 		tasks: (s.plan?.tasks ?? [])
 			.filter((t) => !t.superseded)

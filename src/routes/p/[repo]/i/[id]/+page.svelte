@@ -105,8 +105,7 @@
 				{#if it.size}<span class="tag mono">{it.size}</span>{/if}
 				{#if it.assignee}<span class="tag mono" title="For">for {it.assignee}</span>{/if}
 				{#if it.type === 'bug'}<span class="tag bug">bug</span>{/if}
-				{#if it.epic}<a class="tag mono" href="/p/{repo}/epics#{it.epic}" title="Epic">{it.epic}</a
-					>{/if}
+				{#if it.epic}<a class="tag mono" href={it.epicHref} title="Epic">{it.epic}</a>{/if}
 				{#if it.pending}<span class="tag pending">pending edit</span>{/if}
 			</p>
 			<div class="title-row">
@@ -197,6 +196,14 @@
 				{#if it.comment}<p class="small">
 						A comment of {it.comment} is waiting for an agent to read it.
 					</p>{/if}
+				{#each it.waits as w (w.ref)}
+					<p class="small">
+						{#if w.href}<a href={w.href}><code>{w.ref}</code></a>{:else}<code>{w.ref}</code>{/if}
+						{#if w.status}<StatusPill status={w.status} small />{#if w.title}
+								<span class="muted">{w.title}</span>{/if}{:else}<span class="muted">not found</span
+							>{/if}
+					</p>
+				{/each}
 				{#if it.inferred && !page.data.ai?.optedOut}
 					<p class="small">
 						<em>Inferred</em>: <StatusPill
@@ -240,7 +247,7 @@
 
 			<section>
 				<div class="label">Linked</div>
-				{#if !it.branches.length && !it.prs.length && !it.tasks.length && !it.inferredBranches.length}<p
+				{#if !it.branches.length && !it.prs.length && !it.tasks.length && !it.inferredBranches.length && !it.elsewhere.prs.length && !it.elsewhere.waitedOnBy.length}<p
 						class="muted small"
 					>
 						Nothing yet.
@@ -264,6 +271,19 @@
 						<li>
 							<a href={p.url}>PR #{p.number}</a>
 							{p.title} <span class="muted">{p.state.toLowerCase()}{p.draft ? ', draft' : ''}</span>
+						</li>
+					{/each}
+					{#each it.elsewhere.prs as p (`${p.repo}#${p.number}`)}
+						<li>
+							<a href={p.url}>{p.repo} PR #{p.number}</a>
+							{p.title} <span class="muted">{p.state.toLowerCase()}{p.draft ? ', draft' : ''}</span>
+						</li>
+					{/each}
+					{#each it.elsewhere.waitedOnBy as w (`${w.repo}:${w.id}`)}
+						<li>
+							<a href={w.href}><code>{w.repo}:{w.id}</code></a>
+							<StatusPill status={w.status} small />
+							<span class="muted">waits on this: {w.title}</span>
 						</li>
 					{/each}
 					{#each it.tasks as t (t.number)}

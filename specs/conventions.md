@@ -48,6 +48,11 @@ Keep to these conventions so it reads them correctly:
   item (`### EP3 Billing`) or a section (`## EP3 Billing`) whose id is `EP` and a number. Project
   Magic shows each epic's items by status, shipped ones included, so an item you remove when it
   ships still counts for its epic.
+- **`<repo>:<id>` points at another repository's item** (PM36), the repo being its address in
+  Project Magic (`/p/<repo>`). `Epic: person-service:EP1` joins that repository's epic: a change
+  that spans repositories is one epic, declared in the repository that owns it, with an item in each
+  repository it touches. `Waiting: plinth:PL4` waits on that item, and the item shows as blocked
+  until it is done. `Backlog: plinth:PL4` in a PR body names it.
 - **Project Magic edits `backlog.md` and `bugs.md` on the main branch**, as people use it, so
   your branch's copy goes stale. Before you read the backlog to pick an item, or change any item
   (status, meta line, new item), run `git fetch` and merge `origin/main` into your branch, and do

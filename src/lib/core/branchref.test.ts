@@ -33,6 +33,7 @@ describe('parsePrText', () => {
 		);
 		expect(t).toEqual({
 			backlog: ['A3', 'NW9'],
+			refs: [],
 			plan: ['5.7', '5.8'],
 			bug: 'production',
 			raised: '2026-10-12 09:30',
@@ -44,6 +45,15 @@ describe('parsePrText', () => {
 		expect(parsePrText('NW9: DXF export', null).titleId).toBe('NW9');
 		expect(parsePrText('2.2: the backlog parser', null).titleId).toBe('2.2');
 		expect(parsePrText('3 small fixes', null).titleId).toBeNull();
+	});
+
+	it('reads another repository’s items on the Backlog: line (PM36)', () => {
+		const t = parsePrText('x', 'Backlog: NW9, `bloomprint:BP40`, person_service:ps2 (part)');
+		expect(t.backlog).toEqual(['NW9']);
+		expect(t.refs).toEqual([
+			{ repo: 'bloomprint', id: 'BP40' },
+			{ repo: 'person_service', id: 'PS2' }
+		]);
 	});
 
 	it('ignores what isn’t an id or a known environment', () => {

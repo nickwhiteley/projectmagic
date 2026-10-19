@@ -1,6 +1,7 @@
 // A project's state for the views (spec §9), assembled from the cached parses of every active
 // branch: each item's derived status and where it came from, its links, the plan, the branches,
 // what is done, and the health panel. Pure: the server loader passes the rows in.
+import { isHere, refString } from './crossref.ts';
 import {
 	parseBacklog,
 	type Backlog,
@@ -10,7 +11,7 @@ import {
 	type Warning
 } from './backlog.ts';
 import { assigneeProblem } from './assignee.ts';
-import { EDIT_BRANCH } from './branchref.ts';
+import { EDIT_BRANCH, parsePrText } from './branchref.ts';
 import { declaredEpic, epicId, rollUp, type EpicDeclaration, type EpicRollup } from './epics.ts';
 import type { Config } from './config.ts';
 import { mergeBugs } from './bugs.ts';
@@ -247,6 +248,8 @@ export interface ProjectState {
 	deleted: DeletedView[];
 	/** Each epic and what is in it (PM1). */
 	epics: EpicRollup[];
+	/** This project's PRs whose `Backlog:` line names another repository's items (PM36). */
+	crossPrs: { pr: PrLink; refs: string[] }[];
 	health: Health;
 	/** The last commit on any branch. */
 	lastCommit: { branch: string; at: string; message: string } | null;
@@ -318,7 +321,8 @@ export function assembleState(raw: StateInput): ProjectState {
 			body: p.body,
 			headRef: p.headRefName
 		})),
-		copies
+		copies,
+		here: input
 	});
 	// Inferred links (source 6) are shown, labelled, but never feed status (§6).
 	const edgesOf = (id: string) =>
@@ -389,7 +393,7 @@ export function assembleState(raw: StateInput): ProjectState {
 			headingJob: it.headingJob,
 			size: it.meta?.size ?? null,
 			assignee: it.meta?.for || null,
-			epic: epicId(it.meta?.epic),
+			epic: epicId(it.meta?.epic, input),
 			type: it.meta?.type?.trim().toLowerCase() || (it.file ? 'bug' : null),
 			found: it.meta?.found || null,
 			raised: it.meta?.raised || null,
@@ -489,7 +493,7 @@ export function assembleState(raw: StateInput): ProjectState {
 				commit: d.removedOid,
 				pr: d.prNumber,
 				body: d.lastBody,
-				epic: epicId(parseBacklog(d.lastBody).items[0]?.meta?.epic),
+				epic: epicId(parseBacklog(d.lastBody).items[0]?.meta?.epic, input),
 				unpruned: false
 			}))
 			.sort((a, b) => b.at.localeCompare(a.at))
@@ -540,6 +544,13 @@ export function assembleState(raw: StateInput): ProjectState {
 		branches: branchViews,
 		done,
 		deleted,
+		crossPrs: [...prs.values()].flatMap((p) => {
+			if (p.headRefName === EDIT_BRANCH) return [];
+			const refs = parsePrText(p.title, p.body)
+				.refs.filter((r) => !isHere(r.repo, input))
+				.map(refString);
+			return refs.length ? [{ pr: prLink(p), refs }] : [];
+		}),
 		epics: rollUp(
 			[
 				...views.flatMap((v) => {
