@@ -30,6 +30,10 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		epic: '',
 		body: ''
 	};
+	// A backlog with no `##` sections has none to pick, and the merged Bugs section would be the
+	// first (and default) one: offer the backlog itself, as -1, so a new item isn't a bug.
+	const hasSection = s.sections.some((x) => !x.file);
+	const listed = s.sections.map((x) => ({ index: x.index, title: x.titleText }));
 	return {
 		values,
 		suggested,
@@ -38,8 +42,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		section:
 			bugs && s.bugsFile
 				? (s.sections.find((x) => x.file)?.index ?? 0)
-				: Number(url.searchParams.get('section') ?? 0),
-		sections: s.sections.map((x) => ({ index: x.index, title: x.titleText })),
+				: Number(url.searchParams.get('section') ?? (hasSection ? 0 : -1)),
+		sections: hasSection ? listed : [{ index: -1, title: 'Backlog' }, ...listed],
 		assignees: assigneesInUse(s),
 		epics: epicsInUse(s),
 		jobs: [...new Set(s.items.map((i) => i.job).filter((j): j is string => !!j))].sort(),
