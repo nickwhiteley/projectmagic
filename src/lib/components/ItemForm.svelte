@@ -96,17 +96,11 @@
 	</label>
 	<label>
 		<span class="label">Epic</span>
-		<input
-			name="epic"
-			class="mono"
-			list="epics"
-			bind:value={v.epic}
-			placeholder="none"
-			autocomplete="off"
-		/>
+		<input name="epic" list="epics" bind:value={v.epic} placeholder="none" autocomplete="off" />
 		<datalist id="epics"
 			>{#each epics as e (e.id)}<option value={e.id}>{e.title ?? ''}</option>{/each}</datalist
 		>
+		<small class="muted">Pick an epic, or type a new name to start one. Empty is none.</small>
 	</label>
 	<label class="check">
 		<input type="checkbox" name="star" bind:checked={v.star} />

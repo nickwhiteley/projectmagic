@@ -19,7 +19,7 @@ export function readItemForm(form: FormData): ItemFormValues {
 		plan: get('plan'),
 		branch: get('branch'),
 		assignee: get('assignee').replace(/\s+/g, ''),
-		epic: get('epic').toUpperCase(),
+		epic: get('epic').replace(/\s+/g, ' '),
 		body: String(form.get('body') ?? '').replace(/\r\n/g, '\n')
 	};
 }
@@ -34,7 +34,6 @@ export function problems(v: ItemFormValues): string | null {
 	if (/^###|\n/.test(v.title)) return 'The title is one line of text.';
 	if (v.job && !/^[A-Z]+$/.test(v.job)) return 'A job is one word in capitals, such as PRO.';
 	if (v.assignee && assigneeProblem(v.assignee)) return `For ${assigneeProblem(v.assignee)}.`;
-	if (v.epic && !/^EP\d+$/.test(v.epic)) return 'An epic is EP and a number, such as EP3.';
 	if (v.plan && v.plan.split(',').some((n) => !/^[0-9]+(\.[0-9]+)*[a-z]?$/.test(n.trim())))
 		return 'Plan tasks are numbers such as 46 or 5.8, separated by commas.';
 	return null;

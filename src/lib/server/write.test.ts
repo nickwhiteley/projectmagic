@@ -55,6 +55,8 @@ class FakeRepo implements GitHubClient {
 	keepBranchAfterMerge = false;
 	calls: string[] = [];
 	refuseMerge = false;
+	/** The file isn't in the repository yet: reading it is a 404, and the first write makes it. */
+	missing = false;
 	forbid = new Set<string>();
 	/** Runs once before the next PUT of the file, to simulate a concurrent commit. */
 	beforePut: (() => void) | null = null;
@@ -174,6 +176,7 @@ class FakeRepo implements GitHubClient {
 			return r(201, {});
 		}
 		if (method === 'GET' && p.startsWith(`/contents/${PATH}?ref=`)) {
+			if (this.missing) return r(404, { message: 'Not Found' });
 			const text = this.text(p.split('ref=')[1]);
 			return r(200, {
 				sha: blob(text),
@@ -185,7 +188,10 @@ class FakeRepo implements GitHubClient {
 			this.beforePut?.();
 			this.beforePut = null;
 			const ref = String(body!.branch);
-			if (blob(this.text(ref)) !== body!.sha) return r(409, { message: 'sha does not match' });
+			if (this.missing && body!.sha !== undefined) return r(422, { message: 'sha was supplied' });
+			if (!this.missing && blob(this.text(ref)) !== body!.sha)
+				return r(409, { message: 'sha does not match' });
+			this.missing = false;
 			const sha = this.commit(
 				[this.refs.get(ref)!],
 				Buffer.from(String(body!.content), 'base64').toString('utf8')
@@ -410,6 +416,30 @@ describe('applyChange: another file (PM6)', () => {
 		expect(await applyChange(gh2, target, change('1', 'done'), 'todo')).toMatchObject({
 			kind: 'conflict',
 			theirs: 'blocked'
+		});
+	});
+});
+
+describe('applyChange: a file that may not exist (PM1)', () => {
+	const add = (create?: string) => ({
+		apply: (text: string) => `${text}### EP1 Billing\n`,
+		describe: () => 'Epics: declare EP1 Billing',
+		create
+	});
+
+	it('makes the file when it is missing and the change allows it', async () => {
+		const gh = new FakeRepo('');
+		gh.missing = true;
+		const res = await applyChange(gh, { ...target, path: 'backlog.md' }, add(''));
+		expect(res).toMatchObject({ kind: 'merged' });
+		expect(gh.text('main')).toBe('### EP1 Billing\n');
+	});
+
+	it('refuses, as before, when the change does not allow it', async () => {
+		const gh = new FakeRepo('');
+		gh.missing = true;
+		expect(await applyChange(gh, { ...target, path: 'backlog.md' }, add())).toMatchObject({
+			kind: 'refused'
 		});
 	});
 });
