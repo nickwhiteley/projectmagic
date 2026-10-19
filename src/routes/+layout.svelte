@@ -119,8 +119,7 @@
 								<a
 									role="menuitem"
 									href="/settings"
-									aria-current={path === '/settings' ? 'page' : undefined}
-									>Settings <span class="muted small">@{data.user.login}</span></a
+									aria-current={path === '/settings' ? 'page' : undefined}>Settings</a
 								>
 								<button
 									type="button"
@@ -130,17 +129,6 @@
 										feedback?.open();
 									}}>Feedback</button
 								>
-								{#if data.ai}
-									<form method="POST" action="/settings/ai">
-										<input type="hidden" name="optOut" value={data.ai.optedOut ? '0' : '1'} />
-										<input type="hidden" name="back" value={page.url.pathname + page.url.search} />
-										<button
-											role="menuitem"
-											title="Statuses proposed by a model for items with no meta line"
-											>Inferred statuses: {data.ai.optedOut ? 'hidden' : 'shown'}</button
-										>
-									</form>
-								{/if}
 								{#if data.tenants.length > 1}
 									<form method="POST" action="/tenant/switch" class="tenant">
 										<select name="tenant" aria-label="Tenant">

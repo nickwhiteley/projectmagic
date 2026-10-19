@@ -243,8 +243,9 @@ a one-line sync), the "Batch edits are available" bar is hidden unless edits are
 "in the file's order" hint is hidden, and the view dropdown sits closer, so the list starts higher.
 An item's page has an **← All items** link above it, on every screen size. Not checked on a real phone.
 
-Third pass, 2026-10-19: Feedback, Inferred statuses, the tenant (name or switcher), Tenant, Admin,
-Settings and Sign out are in a user menu that opens from the name, on every screen size. On a phone
+Third pass, 2026-10-19: Feedback, the tenant (name or switcher), Tenant, Admin, Settings and Sign
+out are in a user menu that opens from the name, on every screen size. The GitHub login and the
+Inferred statuses switch are on the Settings page, not in the menu. On a phone
 the view dropdown is narrow and shares a row with Filters and the Add buttons (shortened to
 "+ item" and "+ bug"), and the drag hint is hidden. Not checked on a real phone.
 
