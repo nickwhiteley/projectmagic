@@ -117,7 +117,7 @@ author, so the PR body, deleted detection and just-added checks see them. A page
 batch in the background instead of waiting for it. A pending edit can't be discarded while a save holds it.
 
 ### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** agent · **Epic:** EP1
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
