@@ -117,7 +117,7 @@ author, so the PR body, deleted detection and just-added checks see them. A page
 batch in the background instead of waiting for it. A pending edit can't be discarded while a save holds it.
 
 ### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** agent
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
@@ -127,6 +127,8 @@ Built for epics declared in `backlog.md` as an `### EP3 Title` item or a `## EP3
 The Epics tab lists each epic with a bar by status, its items and the ones that shipped; the List
 and the Board filter by epic (`?epic=EP3`); rows and cards show the id; a value that isn't an
 epic id is flagged in the health panel. `epics.md` and the form's Epic field are PM28.
+
+**Added by Nick on 2026-10-19**  As a user I do not know what the epic  ID should be so when I enter a name for the epic this should be taken as an implication that a new epic is being created.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
 **Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
