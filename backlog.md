@@ -117,7 +117,7 @@ author, so the PR body, deleted detection and just-added checks see them. A page
 batch in the background instead of waiting for it. A pending edit can't be discarded while a save holds it.
 
 ### PM1 Epics
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** agent · **Epic:** EP1
+**Status:** done · **Size:** M · **Type:** feature · **For:** agent · **Epic:** EP1
 
 Group items under an epic (`Epic: EP3`), declared in `backlog.md` or in `epics.md`. The views
 are an epic roll-up across its items' statuses, and an epic filter on the Board and List.
@@ -141,7 +141,7 @@ Needs migration 014: `blob_parse`'s kind check never allowed `epics` (PM28), so 
 an epic's description and target is not built.
 
 ### PM28 Epics: an `epics.md` file and an Epic field on the item form
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 What PM1 left out. `spec.md` §13 lets an epic be declared in its own `epics.md`, with a short
 description and an optional target, so the sync fetches and caches that file and the Epics tab
@@ -157,7 +157,7 @@ title from `backlog.md` and its description and target from `epics.md`; one decl
 suggestions; it accepts `EP` and a number, and clearing it removes the key.
 
 ### PM6 Edit `PROGRESS.md` status cells and docs
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 The item was a title only; this is what I took it to mean (`spec.md` §13). Say if it should be less
 or more.
@@ -178,7 +178,7 @@ Built:
   tasks.
 
 ### PM8 Mermaid in rendered docs
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **Type:** feature · **For:** person.nickwhiteley
 
 Built: a ```mermaid fence is drawn in the browser by Mermaid 11.17.2 with its strict security
 level, loaded only on a page that has a diagram. A diagram with an error keeps its source and
@@ -187,7 +187,7 @@ dependency; the fix is Mermaid 12.2.0, released on 2026-10-13, which is worth ta
 aged.
 
 ### PM20 Tenants: one Project Magic for many teams
-**Status:** built · **Waiting:** Nick's check · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** L · **Type:** feature · **For:** person.nickwhiteley
 
 **Specced:** `specs/tenants.md` (2026-10-16). Four phases, one PR each: the tenant model and
 scoping; sign-up and installations; members and access; tiers, quotas and billing. Nick answered
@@ -236,7 +236,7 @@ This feature will need a full admin screen implementation.
 Look at plinth for help
 
 ### PM34 Mobile view
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** person.nickwhiteley
+**Status:** done · **Size:** S · **For:** person.nickwhiteley
 
 The Project Magic site is cluttered on a mobile/small screen. Can elements be consolidated into lists?  Available projects in a dropdown, hide Activity so Overview, search, ask all appear next to the logo. Hide batch edits botton. List, Board, Plan, Done, Delivery, Branches, Docs as a dropdown list. Filters as an expanding list.
 
@@ -269,7 +269,7 @@ and between sections are tighter, on every screen size. Not checked on a real ph
 Add feedback smiley face buttons and feedback box like in Bloomprint. Perhaps add to plinth as it is  going to be used by several projects.
 
 ### PM33 Auto initialise a repo
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **For:** person.nickwhiteley
 
 Automatic creation of backlog.md, bug.md and project magic.yml when a new repo is added to the app.
 
