@@ -4,7 +4,7 @@
 import { prFacts } from '#lib/core/delivery.ts';
 import { isProductionEnvironment, type Config } from '#lib/core/config.ts';
 import type postgres from 'postgres';
-import type { GitHubClient } from './github-client.ts';
+import { GitHubError, type GitHubClient } from './github-client.ts';
 
 type Sql = postgres.Sql;
 
@@ -218,6 +218,32 @@ async function syncRuns(gh: GitHubClient, sql: Sql, projectId: string, base: str
 	}
 }
 
+/** The App permission each fetch needs (README, "Repository permissions"). */
+const PERMISSION: Record<string, string> = {
+	deploys: 'Deployments',
+	'pull requests': 'Pull requests',
+	'CI runs': 'Actions'
+};
+
+/** The log line for a failed fetch. GitHub's 403 "Resource not accessible by integration" means
+ * the installation lacks a permission, often one added to the App but not yet accepted, so the
+ * line says which one and where to accept it. */
+export function deliveryError(what: string, repo: string, e: unknown): string {
+	const message = e instanceof Error ? e.message : String(e);
+	if (
+		e instanceof GitHubError &&
+		e.status === 403 &&
+		message.includes('Resource not accessible by integration') &&
+		PERMISSION[what]
+	)
+		return (
+			`delivery: ${what} for ${repo}: the GitHub App installation needs ${PERMISSION[what]}: read. ` +
+			`Add it in the App's permissions, then accept the pending permissions under ` +
+			`Settings → Applications → Installed GitHub Apps. (${message})`
+		);
+	return `delivery: ${what} for ${repo}: ${message}`;
+}
+
 /** All three, each on its own: one failing leaves the others, and the sync, alone. */
 export async function syncDelivery(
 	gh: GitHubClient,
@@ -237,10 +263,7 @@ export async function syncDelivery(
 		} catch (e) {
 			// Before the migration the table isn't there; that is not worth a log line each sync.
 			if ((e as { code?: string })?.code === '42P01') return;
-			console.error(
-				`delivery: ${what} for ${project.owner}/${project.repo}:`,
-				e instanceof Error ? e.message : e
-			);
+			console.error(deliveryError(what, `${project.owner}/${project.repo}`, e));
 		}
 	}
 }
