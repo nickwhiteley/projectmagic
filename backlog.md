@@ -391,7 +391,7 @@ inside code, and email addresses, are ignored. The agents' rule is in `specs/con
 scaffolded `AGENTS.md` section and spec.md §5, §10 and Appendix C.
 
 ### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** M · **Branch:** `feat/pm39-waiting-on-you` · **Type:** feature · **For:** agent
 
 From the critical review of 2026-10-21. The queue of built items is the most useful thing
 Project Magic shows, but checking one still means opening GitHub and Vercel, and the queue only
