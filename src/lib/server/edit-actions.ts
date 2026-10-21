@@ -36,11 +36,11 @@ export function safeBack(raw: FormDataEntryValue | null, fallback: string): stri
 
 /**
  * A path on this site, or null. Browsers drop tabs and newlines from a URL and read `\` as `/`,
- * so `/\t/evil.example` would leave the site: no control characters or spaces at all, and the
- * path must resolve to this origin.
+ * so `/\t/evil.example` would leave the site: no control characters (Unicode `Cc`) or spaces at
+ * all, and the path must resolve to this origin.
  */
 export function localPath(to: string): string | null {
-	if (!/^\/(?![/\\])/.test(to) || /[\s\x00-\x1f\x7f]/.test(to)) return null;
+	if (!/^\/(?![/\\])/.test(to) || /[\s\p{Cc}]/u.test(to)) return null;
 	const base = 'http://local.invalid';
 	try {
 		return new URL(to, base).origin === base ? to : null;

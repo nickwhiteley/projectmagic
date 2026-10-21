@@ -13,6 +13,8 @@ describe('safeBack', () => {
 			'/\\evil.example',
 			'/\t/evil.example',
 			'/\n/evil.example',
+			'/\x00/evil.example',
+			'/\x7f/evil.example',
 			'/ /evil.example',
 			'',
 			'p/x'
