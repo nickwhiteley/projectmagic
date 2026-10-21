@@ -365,6 +365,26 @@ Built on 2026-10-19:
 - **Not built**: a PR in another repository doesn't change an item's status; it is only listed. The
   Board is still one repository's. The epic's view across repositories is the board for now.
 
+### PM45 Assign when commenting
+**Status:** todo · **Size:** S–M · **Type:** feature · **For:** agent
+
+From Nick's check of PM32 on 2026-10-21: adding a comment usually needs an assignment too, and
+today that means a second trip through *Edit*.
+
+- **A *For* dropdown beside the comment box**, saved with the comment as one edit. Its choices
+  are the paths in use in the project (`assigneesInUse`), `agent`, `person`, and `person.<login>`
+  for the project's members. It starts at the item's current `For:`, except when that is the
+  commenter, when it starts at `agent`: a person commenting is usually handing work over.
+- **Mentions in the text**: `@agent`, `@agent.claude`, `@nickwhiteley` (a login, meaning
+  `person.nickwhiteley`). The first mention sets the dropdown as you type, so what will be saved
+  is always on screen, and the person can still change it. An `@` that matches no member or
+  agent path is left as text.
+- **On the PR copy** (`commentOnPrs`), agent mentions are put in backticks so GitHub doesn't
+  notify an account called `agent`. Mentions of people stay live, so GitHub notifies them.
+- **The other way**: an agent replying under `#### Comments` sets `For:` to the person whose
+  comment it answers, as well as `Reply:`. This goes into `specs/conventions.md`, the `AGENTS.md`
+  section and spec.md beside PM32's rules.
+
 ### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
