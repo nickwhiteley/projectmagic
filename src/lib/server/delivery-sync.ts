@@ -2,6 +2,7 @@
 // main, each stored once in `event` and read incrementally, newest first, until a page holds
 // nothing new. Failures here never fail the sync; the Delivery view shows what it has.
 import { prFacts } from '#lib/core/delivery.ts';
+import { ciSummary, deploymentUrl, type PrEvidence } from '#lib/core/evidence.ts';
 import { isProductionEnvironment, type Config } from '#lib/core/config.ts';
 import type postgres from 'postgres';
 import { GitHubError, type GitHubClient } from './github-client.ts';
@@ -20,6 +21,11 @@ const PAGES = 4;
 const NEW_PRS_PER_SYNC = 60;
 const JOBS_PER_SYNC = 30;
 const FINAL = new Set(['success', 'failure', 'error', 'inactive']);
+/** PRs merged before PM39 get their evidence a few at a time, newest first, within this window. */
+const EVIDENCE_PER_SYNC = 15;
+const EVIDENCE_DAYS = 30;
+/** How far back through a PR's commits to look for a preview deployment. */
+const PREVIEW_COMMITS = 5;
 
 export async function saveEvents(sql: Sql, projectId: string, rows: Row[]): Promise<void> {
 	for (let i = 0; i < rows.length; i += 200) {
@@ -115,13 +121,109 @@ interface Pull {
 	created_at: string;
 	merged_at: string | null;
 	merge_commit_sha: string | null;
-	head: { ref: string };
+	head: { ref: string; sha: string };
 }
 
-async function syncPrs(gh: GitHubClient, sql: Sql, projectId: string, base: string, main: string) {
+/**
+ * What a person checks before accepting a built item (PM39): the diff's size, CI on the PR's head
+ * commit and its preview deployment. Null when GitHub won't say, so the next sync tries again.
+ */
+export async function prEvidence(
+	gh: GitHubClient,
+	base: string,
+	p: Pull,
+	config: Config
+): Promise<PrEvidence | null> {
+	try {
+		const full = (
+			await gh.rest<{ additions: number; deletions: number; changed_files: number }>(
+				`${base}/pulls/${p.number}`
+			)
+		).body;
+		const sha = encodeURIComponent(p.head.sha);
+		const runs = (
+			await gh
+				.rest<{ workflow_runs: (Run & { status: string })[] }>(
+					`${base}/actions/runs?head_sha=${sha}&per_page=20`
+				)
+				.catch(() => ({ body: { workflow_runs: [] } }))
+		).body.workflow_runs;
+		const checked = [];
+		for (const r of runs) {
+			let started = true;
+			if (r.conclusion === 'failure') {
+				const jobs = (
+					await gh.rest<{ jobs: Job[] }>(`${base}/actions/runs/${r.id}/jobs?per_page=100`)
+				).body.jobs;
+				started = runStarted(jobs);
+			}
+			checked.push({ status: r.status, conclusion: r.conclusion, started });
+		}
+		// The preview of the newest commit that has one: a commit that only touches the backlog
+		// may not be deployed (vercel.json's ignoreCommand).
+		let preview: string | null = null;
+		const commits = (
+			await gh
+				.rest<{ sha: string }[]>(`${base}/pulls/${p.number}/commits?per_page=100`)
+				.catch(() => ({ body: [{ sha: p.head.sha }] }))
+		).body
+			.map((c) => c.sha)
+			.reverse()
+			.slice(0, PREVIEW_COMMITS);
+		for (const c of commits) {
+			const deploys = (
+				await gh
+					.rest<Deployment[]>(`${base}/deployments?sha=${encodeURIComponent(c)}&per_page=10`)
+					.catch(() => ({ body: [] as Deployment[] }))
+			).body.filter((d) => !isProductionEnvironment(config, d.environment));
+			for (const d of deploys) {
+				const statuses = (
+					await gh.rest<{ state: string; environment_url?: string; target_url?: string }[]>(
+						`${base}/deployments/${d.id}/statuses?per_page=20`
+					)
+				).body;
+				preview = deploymentUrl(statuses);
+				if (preview) break;
+			}
+			// A preview of an older commit shows the change only if every later commit touched
+			// nothing but the backlog files.
+			if (preview && c !== p.head.sha) {
+				const backlogFiles = new Set([...config.backlog, ...(config.bugs ? [config.bugs] : [])]);
+				const files = (
+					await gh.rest<{ files?: { filename: string }[] }>(
+						`${base}/compare/${encodeURIComponent(c)}...${sha}`
+					)
+				).body.files;
+				if (!files || files.some((f) => !backlogFiles.has(f.filename))) preview = null;
+			}
+			if (preview) break;
+		}
+		return {
+			additions: full.additions,
+			deletions: full.deletions,
+			files: full.changed_files,
+			ci: ciSummary(checked),
+			preview
+		};
+	} catch (e) {
+		console.error(`evidence for PR #${p.number}:`, e instanceof Error ? e.message : e);
+		return null;
+	}
+}
+
+async function syncPrs(
+	gh: GitHubClient,
+	sql: Sql,
+	projectId: string,
+	base: string,
+	main: string,
+	config: Config
+) {
 	let url: string | null =
 		`${base}/pulls?state=closed&base=${encodeURIComponent(main)}&sort=updated&direction=desc&per_page=100`;
 	let added = 0;
+	let backfilled = 0;
+	const recent = Date.now() - EVIDENCE_DAYS * 86_400_000;
 	for (let page = 0; url && page < PAGES && added < NEW_PRS_PER_SYNC; page++) {
 		const res: { body: Pull[]; next: string | null } = await gh.rest<Pull[]>(url);
 		const merged = res.body.filter((p) => p.merged_at);
@@ -134,6 +236,20 @@ async function syncPrs(gh: GitHubClient, sql: Sql, projectId: string, base: stri
 		const fresh = merged
 			.filter((p) => !stored.has(String(p.number)))
 			.slice(0, NEW_PRS_PER_SYNC - added);
+		// Recent PRs stored before PM39, or whose evidence GitHub didn't give last time.
+		const lacking = merged
+			.filter((p) => {
+				const d = stored.get(String(p.number));
+				return d && !d.evidence && Date.parse(p.merged_at!) > recent;
+			})
+			.slice(0, Math.max(0, EVIDENCE_PER_SYNC - backfilled));
+		for (const p of lacking) {
+			backfilled++;
+			const evidence = await prEvidence(gh, base, p, config);
+			if (!evidence) continue;
+			await sql`update event set data = data || ${sql.json(JSON.parse(JSON.stringify({ evidence })))}
+				where project_id = ${projectId} and kind = 'pr' and key = ${String(p.number)}`;
+		}
 		const rows: Row[] = [];
 		for (const p of fresh) {
 			const first = (
@@ -152,13 +268,14 @@ async function syncPrs(gh: GitHubClient, sql: Sql, projectId: string, base: stri
 					firstCommitAt: first ?? null,
 					head: p.head.ref,
 					url: p.html_url,
-					...prFacts(p.body)
+					...prFacts(p.body),
+					evidence: Date.parse(p.merged_at!) > recent ? await prEvidence(gh, base, p, config) : null
 				}
 			});
 		}
 		await saveEvents(sql, projectId, rows);
 		added += rows.length;
-		if (!fresh.length) break;
+		if (!fresh.length && !lacking.length) break;
 		url = res.next;
 	}
 }
@@ -254,7 +371,7 @@ export async function syncDelivery(
 	const base = `/repos/${project.owner}/${project.repo}`;
 	const steps: [string, () => Promise<void>][] = [
 		['deploys', () => syncDeploys(gh, sql, project.id, base, config)],
-		['pull requests', () => syncPrs(gh, sql, project.id, base, config.main)],
+		['pull requests', () => syncPrs(gh, sql, project.id, base, config.main, config)],
 		['CI runs', () => syncRuns(gh, sql, project.id, base, config.main)]
 	];
 	for (const [what, run] of steps) {

@@ -5,6 +5,7 @@
 	import { refreshAll } from '$app/navigation';
 	import { ago } from '#lib/format.ts';
 	import { firstMention } from '#lib/core/assignee.ts';
+	import Evidence from '#lib/components/Evidence.svelte';
 
 	let { data } = $props();
 	// An item just added that the sync hasn't brought in yet: look again shortly (PM17).
@@ -245,11 +246,23 @@
 						Proposed by {it.inferred.model} from this item’s text. Add a meta line to replace it.
 					</p>
 				{/if}
+				{#if it.evidence}
+					<p class="small"><Evidence evidence={it.evidence} /></p>
+				{/if}
 				{#if page.data.project.canEdit && it.status === 'built'}
-					<form method="POST" action="/p/{repo}/i/{encodeURIComponent(it.id)}/edit?/status">
+					<form
+						class="accept-row"
+						method="POST"
+						action="/p/{repo}/i/{encodeURIComponent(it.id)}/edit?/status"
+					>
 						<input type="hidden" name="status" value="done" />
 						<input type="hidden" name="back" value="/p/{repo}/i/{encodeURIComponent(it.id)}" />
 						<button class="button" title="Mark {it.id} done">Accept</button>
+						<a
+							class="button"
+							href="#comment"
+							title="Say what is wrong, and {it.id} goes back to todo">Send back</a
+						>
 					</form>
 				{/if}
 			</section>
@@ -441,6 +454,11 @@
 		align-items: start;
 		gap: 0.4rem;
 		margin-top: 2rem;
+	}
+	.accept-row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
 	.comment-actions {
 		display: flex;

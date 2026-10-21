@@ -6,6 +6,8 @@ import { neighbours, projectState } from '#lib/server/project-state.ts';
 import { assigneesInUse, sourceText } from '#lib/server/item-view.ts';
 import { commentFor as initialFor } from '#lib/core/assignee.ts';
 import { listMembers } from '#lib/server/members.ts';
+import { loadEvents } from '#lib/server/delivery.ts';
+import { evidenceFor } from '#lib/core/evidence.ts';
 import { inline, md } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -66,6 +68,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		.filter((m) => !m.disabled)
 		.map((m) => m.login);
 	const commentFor = initialFor(it.assignee, locals.user?.githubLogin ?? '');
+	// What to check before accepting a built item (PM39), from the merged PR that names it.
+	const evidence =
+		it.status === 'built'
+			? await loadEvents(here.id).then(
+					(e) => evidenceFor({ id: it.id, body: it.body }, e.prs),
+					() => null
+				)
+			: null;
 	const forChoices = [
 		...new Set([...assigneesInUse(s), ...logins.map((l) => `person.${l}`), commentFor])
 	]
@@ -85,6 +95,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			assignee: it.assignee,
 			commentFor,
 			forChoices,
+			evidence,
 			logins,
 			epic: it.epic,
 			epicHref: epicRef

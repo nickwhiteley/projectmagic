@@ -391,7 +391,7 @@ inside code, and email addresses, are ignored. The agents' rule is in `specs/con
 scaffolded `AGENTS.md` section and spec.md §5, §10 and Appendix C.
 
 ### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** built · **Size:** M · **Branch:** `feat/pm39-waiting-on-you` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
 
 From the critical review of 2026-10-21. The queue of built items is the most useful thing
 Project Magic shows, but checking one still means opening GitHub and Vercel, and the queue only
@@ -406,6 +406,14 @@ works when someone remembers to open the page.
   setting, stored encrypted; the daily cron posts it, and nothing is sent when nothing waits. A
   webhook posts to one channel and can't take replies, so Accept and Send back stay links to the
   item page. Follow-ons: PM43 (a Slack app with buttons) and PM44 (email).
+
+Built: the delivery sync keeps each recent merged PR's evidence (diff from the PR, CI from Actions
+runs on its head commit, the preview from GitHub deployments); built items show it with their
+task-list count on the overview and the item page, beside **Accept** and **Send back** (a link to
+the comment box). The webhook is set on *Tenant → Settings* (needs migration 015, `make migrate`),
+with *Send now*; the daily cron posts after the sync. Found on the way: `vercel.json`'s ignore step
+compared with `HEAD^`, so a code commit pushed together with a backlog commit got no preview; it now
+compares with the branch's last deploy.
 
 ### PM40 Trust: catch stalled and drifting work
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
