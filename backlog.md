@@ -416,7 +416,7 @@ compared with `HEAD^`, so a code commit pushed together with a backlog commit go
 compares with the branch's last deploy.
 
 ### PM40 Trust: catch stalled and drifting work
-**Status:** in progress · **Size:** M · **Branch:** `feat/pm40-trust` · **Type:** feature · **For:** agent
+**Status:** built · **Size:** M · **Branch:** `feat/pm40-trust` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
 
 From the critical review of 2026-10-21. Derived status is only as good as the agents' habits,
 and plan drift is a known failure of coding agents. Today a branch is stale only after 30 days
@@ -432,6 +432,13 @@ New notices, shown on the item's card and row, not only in the health panel:
 
 Each offers to post a PM32 comment asking the agent to put it right, rather than changing the
 status itself: disagreements are shown, never resolved (§7.2).
+
+Built: warning tags on the List and Board, and on the item page a notice with **Ask the agent**,
+which fills the comment box (For: agent) for the person to edit and send. `stall_hours` is the new
+config key. A merged PR counts when its branch names the item, or its `Backlog:` does and cites
+five items or fewer (a backlog tidy citing 25 flagged Bloomprint's F9 and C2 until then). On
+Bloomprint today: BP12 and BP14 merged but still in review; F9 and C2 in progress for 7 days
+with no branch.
 
 ### PM41 A read-only MCP server for agents
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
