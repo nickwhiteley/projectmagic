@@ -225,6 +225,7 @@ changes that for a hosted service (`specs/tenants.md`).
      - specs/archive/**
    new_id_prefix: OR          # suggested for new items; default: the most common prefix
    active_branch_days: 30     # a branch with no commit for longer is stale
+   stall_hours: 24            # an in-progress item whose branch is quiet this long is stalled
    auto_merge: true           # merge each edit's pull request straight away
    batch_edits: true          # false saves every edit at once; true lets people hold edits and save them as one commit (needs migration 005)
    inference: true            # false opts out of model-inferred statuses (needs INFERENCE_PROVIDER)

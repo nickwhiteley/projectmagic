@@ -133,6 +133,7 @@ docs_exclude:                    # default: none
   - specs/archive/**
 main: main                       # default: the repository's default branch
 active_branch_days: 30           # default 30; a branch with no commit for this long is stale
+stall_hours: 24                  # default 24; an in-progress item quiet this long is stalled (PM40)
 new_id_prefix: BP                # default: none, inferred (§10.1); the prefix suggested for a new item
 auto_merge: true                 # default true; merge each edit's PR straight away (§10.2)
 batch_edits: true                # default true; hold edits and save them as one commit (§10.5)
@@ -151,7 +152,7 @@ production_environments:         # default: ["Production*"], GitHub deployment e
 - a bad value: that key's default, with the warning `<key> should be <what>; using the default`.
   Validity: `name`, `backlog`, `main` are non-blank strings (trimmed); `progress`, `bugs`, `epics`
   a path or `null`; `docs`, `docs_exclude`, `production_environments` lists of non-blank strings;
-  `active_branch_days` a whole number above 0; `bug_prefix` one to four capital letters
+  `active_branch_days` and `stall_hours` whole numbers above 0; `bug_prefix` one to four capital letters
   (`^[A-Z]{1,4}$`); `new_id_prefix` the same, or `null`; `auto_merge`, `batch_edits`, `inference`
   booleans. A `backlog` value replaces the candidate list with that one path.
 
@@ -463,6 +464,28 @@ tool never edits either file to reconcile them. For the comparison, `blocked` co
 
 `blocked` is also a **flag** shown on in-progress and in-review cards, with `Waiting:` text, so
 a blocked item with a branch reads as both.
+
+**Drift (PM40) is shown the same way**, from the merged PRs and status changes the delivery sync
+keeps (§16.6), so nothing shows before migration 004. A merged PR shipped an item when its
+branch's name names it (§5.3), or its `Backlog:` does and cites five items or fewer: a PR citing
+more is bookkeeping, such as a backlog tidy. Project Magic's own edits PRs never count. Three notices, as warning tags on the List's
+rows ("stalled 2 days", "PR #7 merged, not moved", "done, no merge") and lines on the Board's cards,
+with the sentence as a tooltip:
+
+- **Stalled**: derived `in progress`, and the newest commit on its active linked branches is older
+  than `stall_hours` (default 24); with no such branch, since it last went `in progress`. "In
+  progress, but `<branch>` has had no commit for <n hours | n days>." or "In progress for <age>,
+  with no branch pushed."
+- **Merged, not moved**: derived `in progress` or `in review` with no open PR, and a PR naming it
+  merged more than an hour ago with no commit on its branches since. Checked before *stalled*,
+  which it replaces.
+- **Done, no merge**: `done` on main, having gone there from `in progress`, `in review` or `built`
+  in the last 14 days, and no merged PR names it. An item done straight from `todo` is a decision,
+  not a change, and isn't flagged.
+
+The item page shows each notice's sentence in a warning box with, for editors, **Ask the agent**,
+which puts a question for the agent in the comment box (PM32) and sets its *For* to `agent`, for the
+person to edit and send. The status is never changed for them.
 
 An item whose linked current tasks are all `done` or `skipped`, but which is still on main and not
 done, carries the hint **"all plan tasks done; still in backlog"**.
@@ -2215,6 +2238,7 @@ and the page, and the average score over every scored submission with its count.
 | ---- | ----- |
 | Parser version | 2 |
 | Active branch window | `active_branch_days`, default 30 |
+| Stalled after (PM40) | `stall_hours`, default 24; merge grace 1 hour; done items checked for 14 days |
 | PRs per branch in the refs query | 5 |
 | Blob texts per query / commits per history query | 25 / 50 |
 | A sync presumed dead | 5 minutes |
@@ -2380,7 +2404,8 @@ is optional; the defaults` / `# are shown commented out.` / `#` / `# Documentati
 every key:      DOCS/spec.md (section 4)` / `#   Backlog and branch rules: DOCS/specs/conventions.md`
 / `#   Agents: the rules above are also in AGENTS.md and CLAUDE.md, under "Project Magic".` / `#`;
 then each default commented out in the order `name`, `backlog`, `progress`, `bugs`, `bug_prefix`,
-`epics`, `docs` (as a list), `main`, `active_branch_days`, `auto_merge`, `batch_edits`, `inference`;
+`epics`, `docs` (as a list), `main`, `active_branch_days`, `stall_hours`, `auto_merge`, `batch_edits`,
+`inference`;
 a blank line; `# The prefix suggested for a new item, such as PM12. Change it, or remove the line to
 take` / `# the prefix from the ids already in the backlog.`; and `new_id_prefix: <P>`.
 

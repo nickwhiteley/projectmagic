@@ -1,10 +1,12 @@
 import { projectState } from '#lib/server/project-state.ts';
 import { assigneesInUse, epicsInUse, row, typesInUse } from '#lib/server/item-view.ts';
 import { md } from '#lib/server/views.ts';
+import { loadDrift } from '#lib/server/delivery.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const s = await projectState({ locals, params });
+	const drift = await loadDrift(s, locals.project!.id);
 	// Items and notes in file order, under their sections: order is priority (§5.1).
 	type Entry =
 		| { kind: 'item'; start: number; item: ReturnType<typeof row> }
@@ -13,7 +15,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		[
 			...s.items
 				.filter((i) => i.section === section)
-				.map((i) => ({ kind: 'item' as const, start: i.start, item: row(s, i, true) })),
+				.map((i) => ({
+					kind: 'item' as const,
+					start: i.start,
+					item: row(s, i, true, drift[i.id])
+				})),
 			...s.notes
 				.filter((n) => n.section === section)
 				.map((n) => ({

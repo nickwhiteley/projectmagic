@@ -18,6 +18,8 @@ export interface Config {
 	docsExclude: string[];
 	main: string;
 	activeBranchDays: number;
+	/** An in-progress item whose branch has been quiet this long is stalled (PM40). */
+	stallHours: number;
 	/** The prefix suggested for a new item, or null to infer it from the existing ids. */
 	newIdPrefix: string | null;
 	autoMerge: boolean;
@@ -60,6 +62,7 @@ export function defaults(repo: RepoFacts): Config {
 		docsExclude: [],
 		main: repo.defaultBranch,
 		activeBranchDays: 30,
+		stallHours: 24,
 		newIdPrefix: null,
 		autoMerge: true,
 		batchEdits: true,
@@ -79,6 +82,7 @@ const KEYS = [
 	'docs_exclude',
 	'main',
 	'active_branch_days',
+	'stall_hours',
 	'new_id_prefix',
 	'auto_merge',
 	'batch_edits',
@@ -160,6 +164,11 @@ export function parseConfig(text: string | null, repo: RepoFacts): ConfigResult 
 		const d = y.active_branch_days;
 		if (typeof d === 'number' && Number.isInteger(d) && d > 0) config.activeBranchDays = d;
 		else bad('active_branch_days', 'a whole number of days above 0');
+	}
+	if ('stall_hours' in y) {
+		const h = y.stall_hours;
+		if (typeof h === 'number' && Number.isInteger(h) && h > 0) config.stallHours = h;
+		else bad('stall_hours', 'a whole number of hours above 0');
 	}
 	if ('new_id_prefix' in y) {
 		const p = y.new_id_prefix;

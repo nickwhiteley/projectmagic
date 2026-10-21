@@ -238,6 +238,8 @@ export interface ProjectState {
 	inferenceAllowed: boolean;
 	/** Whether the project allows batch edits (PM25). */
 	batchEdits: boolean;
+	/** Hours of quiet before an in-progress item is stalled (PM40). */
+	stallHours: number;
 	preambleText: string;
 	sections: Section[];
 	items: ItemView[];
@@ -536,6 +538,7 @@ export function assembleState(raw: StateInput): ProjectState {
 		hasBacklog: !!main?.backlog,
 		inferenceAllowed: config.inference !== false,
 		batchEdits: config.batchEdits === true,
+		stallHours: config.stallHours ?? 24,
 		preambleText: main?.backlog?.preambleText ?? '',
 		sections: main?.backlog?.sections ?? [],
 		items: views,

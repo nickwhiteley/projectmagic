@@ -19,6 +19,7 @@ describe('parseConfig', () => {
 			docsExclude: [],
 			main: 'main',
 			activeBranchDays: 30,
+			stallHours: 24,
 			newIdPrefix: null,
 			autoMerge: true,
 			batchEdits: true,
@@ -39,6 +40,7 @@ docs: [README.md]
 docs_exclude: [specs/archive/**]
 main: trunk
 active_branch_days: 14
+stall_hours: 48
 new_id_prefix: BP
 auto_merge: false
 batch_edits: false
@@ -58,6 +60,7 @@ production_environments: ["Production – orchard-web"]
 			docsExclude: ['specs/archive/**'],
 			main: 'trunk',
 			activeBranchDays: 14,
+			stallHours: 48,
 			newIdPrefix: 'BP',
 			autoMerge: false,
 			batchEdits: false,
