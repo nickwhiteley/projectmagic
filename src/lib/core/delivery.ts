@@ -3,6 +3,8 @@
 // recomputed and tested. Honest numbers (§16.3): a rate is only given when its denominator is at
 // least 10, and the rest are counts.
 
+import type { PrEvidence } from './evidence.ts';
+
 export const EDITS_PR_TITLE = 'Project Magic edits';
 const DAY = 86_400_000;
 const HOUR = 3_600_000;
@@ -31,6 +33,8 @@ export interface PrEvent {
 	/** Item ids the body cites with `Backlog:`. */
 	backlog: string[];
 	url?: string;
+	/** What a person checks before accepting the item it built (PM39). */
+	evidence?: PrEvidence | null;
 }
 
 export interface RunEvent {

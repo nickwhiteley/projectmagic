@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Evidence from '#lib/components/Evidence.svelte';
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { ago, duration, plural, STATUS_ORDER } from '#lib/format.ts';
 
@@ -94,9 +95,17 @@
 										<input type="hidden" name="status" value="done" />
 										<input type="hidden" name="back" value="/" />
 										<button class="button small" title="Mark {w.id} done">Accept</button>
+										<a
+											class="button small"
+											href="/p/{c.repo}/i/{w.id}#comment"
+											title="Say what is wrong, and {w.id} goes back to todo">Send back</a
+										>
 									</form>
 								{/if}
 								<div class="muted small">{@html w.waitingHtml}</div>
+								{#if w.status === 'built' && c.delivery?.evidence?.[w.id]}
+									<div><Evidence evidence={c.delivery.evidence[w.id]} /></div>
+								{/if}
 							</li>
 						{/each}
 					</ul>

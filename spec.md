@@ -585,8 +585,12 @@ set up. `scripts/sync.ts` (§12) never sets up repositories.
   order: re-list installations and projects; sync every active tenant's live, in-plan projects,
   longest since last synced first, until 40 s have been spent, the rest reported `deferred`; save
   every due batch (§10.5); delete `blob_text` older than 14 days; reconcile billing (§17.7); purge
-  tenants deleted more than 30 days ago (§17.8); delete `webhook_delivery` rows older than 14 days.
-  It answers `{ok: true, result: {"<owner>/<repo>": "ran" | "queued" | "deferred"}}`. Each later step
+  tenants deleted more than 30 days ago (§17.8); delete `webhook_delivery` rows older than 14 days;
+  and post the **daily digest** (PM39) of each active tenant with a Slack webhook whose
+  `digest_sent_on` isn't today: what waits on a person in each project with a backlog (agents'
+  replies, then the founder queue, §16, oldest first, with its age and reason, each linked), sent
+  only when something waits, then `digest_sent_on` set to today. It answers `{ok: true, result:
+  {"<owner>/<repo>": "ran" | "queued" | "deferred"}, digests: {sent, failed}}`. Each later step
   catches its own failure, so one doesn't stop the rest.
 - **A Refresh button** on every project page (`POST /p/{repo}/sync`) syncs now and returns to the
   page it was pressed on (the `Referer`'s path, if it is this site), else `/`.
@@ -718,7 +722,8 @@ installations, audit log, `project.tenant_id` and `over_limit`, `membership.sour
 *Default* at position 1, `platform_setting.default_tier` set to it, every tenant on it, and the flag
 `ai`, "AI: inferred statuses and Ask"); `012_feedback`; `013_project_initialised`
 (`project.initialised_at`, set to now for every existing project); `014_blob_parse_epics` (widens
-`blob_parse.kind`'s check to allow `epics`, which migration 001's didn't).
+`blob_parse.kind`'s check to allow `epics`, which migration 001's didn't); `015_slack_digest`
+(`tenant_setting.slack_webhook_enc`, `digest_origin` and `digest_sent_on`, PM39).
 
 ## 9. The views
 
@@ -799,7 +804,8 @@ each linking to its project). Each card shows:
 - **Waiting on you · <n>**: the items with `Reply:` (PM32), then the built and blocked items that
   have a waiting reason, the first three with their id, title, status pill and reason ("An agent
   replied to a comment on <date>." for a reply). A built one has an **Accept** button for editors
-  (PM10), which sets it done (§10.1) and returns to `/`;
+  (PM10), which sets it done (§10.1) and returns to `/`, and **Send back**, a link to the item's
+  comment box (PM32, PM45); under it, its evidence (as on the item page, PM39);
 - **In flight · <n>**: each active branch other than main, the edits branch and deployment branches,
   with its linked items (`→ <id> <title>`, or its inferred item, marked *(inferred)*, or `→ plan
   <tasks>`, or "not in the backlog"), then `<n> ahead · <n> behind · PR #n` (with "(draft)") or "no
@@ -924,7 +930,12 @@ todo" for a built or done item, and "It is also posted on PR #n." for each open 
 pill when blocked but shown otherwise), the source line, "From <the rule in words>." (Appendix D;
 for rules 2 and 3 followed by the detail in brackets, "(PR #7 open)"), "Waiting on <reason>", the
 inferred status (§13), "A comment of <date> is waiting for an agent to read it." with `Comment:`,
-and for a built item an **Accept** button for editors (PM10); disagreements,
+and for a built item its evidence and, for editors, **Accept** (PM10) beside **Send back** (a link to
+the comment box). **Evidence** (PM39) is what to check before accepting: the newest merged PR whose
+`Backlog:` names the item (linked), its size ("+238 −20 in 11 files"), CI on its head commit ("CI
+passed", "CI failed" or "CI running"; nothing when no run started), a **Preview** link, and the
+body's task-list lines ("2 of 3 criteria ticked"). A fact the sync didn't find is left out; with no
+such PR, "No merged PR names it". Disagreements,
 hints ("Hint: …"), and "This item has no meta line, so its status is inferred."; the meta line's keys
 and values; **Linked** branches (ahead, age, stale), inferred branches ("inferred from the branch’s
 name; not used for status"), PRs (number, title, state, draft) and plan tasks (status, title), or
@@ -1201,19 +1212,22 @@ lantern#71).
 **Vercel deploys every branch and every push to main**, so an edit causes a preview deploy of
 `projectmagic` and, once merged, a production deploy that changes nothing. A managed repository's
 `vercel.json` skips both: `deploymentEnabled` turns off the branch, and `ignoreCommand` is an
-Ignored Build Step that exits 0, skipping the build, when a commit touches nothing but
-`backlog.md`:
+Ignored Build Step that exits 0, skipping the build, when nothing but `backlog.md` has changed
+since the branch's last deploy:
 
 ```json
 {
 	"git": { "deploymentEnabled": { "projectmagic": false } },
-	"ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'"
+	"ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- ':(top)' ':(top,exclude)backlog.md'"
 }
 ```
 
-A squash merge is one commit on main, so `HEAD^` is main before the edit. An agent's commit that
-only changes `backlog.md` is skipped too. If the command fails, say because the clone has no
-parent commit, it exits non-zero and Vercel builds. Project Magic's own `vercel.json` carries both,
+`VERCEL_GIT_PREVIOUS_SHA` is the branch's last successful deploy, so a push of a code commit and a
+backlog commit together is built: comparing with `HEAD^` alone skipped it, leaving the PR with no
+preview of its code (found with PM39). A branch's first deploy has none, and compares with `HEAD^`. A
+squash merge is one commit on main, so `HEAD^` is main before the edit. An agent's push that only
+changes `backlog.md` is skipped too. If the command fails, say because the previous deploy's commit
+is outside the shallow clone, it exits non-zero and Vercel builds. Project Magic's own `vercel.json` carries both,
 and its cron (§7.4).
 
 Until that is set, §16 doesn't count deploys whose commit is a Project Magic edit.
@@ -1794,7 +1808,14 @@ and the sync alone (a missing `event` table is silent; other errors are logged):
 - **Merged PRs into main**: `GET …/pulls?state=closed&base=<main>&sort=updated&direction=desc`,
   keeping merged ones not stored, each with its first commit's author date
   (`GET …/pulls/{n}/commits?per_page=1`), title, creation, head branch, URL, whether its body says
-  `Bug: production`, and the ids its `Backlog:` lines cite.
+  `Bug: production`, and the ids its `Backlog:` lines cite. One merged in the last 30 days also
+  gets its **evidence** (PM39): additions, deletions and files from `GET …/pulls/{n}`; CI from
+  `GET …/actions/runs?head_sha=<head>` (any failure fails, an unfinished run is pending, a failed
+  run whose jobs ran no steps is left out, none is nothing); and the preview, the first https
+  `environment_url` (or a success's `target_url`) of a non-production deployment of the newest of
+  its last five commits that has one (`GET …/deployments?sha=`), kept only if every later commit
+  changed nothing but the backlog files (`GET …/compare/<it>...<head>`). A PR stored without
+  evidence, or whose evidence GitHub didn't give, gets it on a later sync, 15 a sync.
 - **Workflow runs** on main: `GET …/actions/runs?branch=<main>&status=completed&per_page=100`, until
   a page holds nothing new; a failed run's jobs (`…/runs/{id}/jobs`) decide whether it started.
 
@@ -2114,7 +2135,9 @@ units, GBP); a blank price takes it off sale and moves nobody.
   *Installations* (each connected account, its repositories and whether each is synced or over the
   plan, pin, connect another, disconnect), *Plan & billing* (the tier, its limits, the subscription and
   its period, change tier, cancel), *Settings* (name, AI on or off, batch edits on by default for new
-  members), *Audit* (admin actions and support sessions, newest first), *Delete tenant* (typing the
+  members; and the **daily digest to Slack**, PM39: an incoming webhook URL, which must start
+  `https://hooks.slack.com/services/` and is stored encrypted with `TOKEN_ENCRYPTION_KEY`, with the
+  admin's origin for links; *Send now*; *Remove*), *Audit* (admin actions and support sessions, newest first), *Delete tenant* (typing the
   slug).
 - **Admin** (`/admin`, platform admins; tabs): *Overview* (tenants by status, sign-ups this week,
   pending approvals, unclaimed and stale installations), *Tenants* (search; each tenant's metadata —
@@ -2128,7 +2151,8 @@ units, GBP); a blank price takes it off sale and moves nobody.
   (§19), *Audit* (every platform action and support session).
 
 Every admin action is written to `audit_log` with who, what, the target and the before and after.
-The actions: `tenant.created`, `tenant.migrated`, `tenant.settings`, `tenant.join_by_github`,
+The actions: `tenant.created`, `tenant.migrated`, `tenant.settings`, `tenant.slack.set`,
+`tenant.slack.removed`, `tenant.join_by_github`,
 `tenant.approve|suspend|restore|delete|undelete`, `member.role`, `member.left`, `member.removed`,
 `member.joined` (`via` invitation or github), `invitation.sent`, `invitation.revoked`,
 `access.mode`, `access.role`, `installation.connected`, `installation.disconnected`,

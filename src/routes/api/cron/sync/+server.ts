@@ -7,6 +7,7 @@ import { activeProjects } from '#lib/server/projects.ts';
 import { reconcileAll } from '#lib/server/billing.ts';
 import { purgeDeletedTenants } from '#lib/server/platform.ts';
 import { syncAll } from '#lib/server/sync-runner.ts';
+import { sendDigests } from '#lib/server/digest.ts';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -28,5 +29,10 @@ export const GET: RequestHandler = async ({ request }) => {
 	await reconcileAll().catch((e) => console.error('billing', e));
 	await purgeDeletedTenants().catch((e) => console.error('purge', e));
 	await db()`delete from webhook_delivery where received_at < now() - interval '14 days'`;
-	return json({ ok: true, result });
+	// The daily digest to Slack (PM39), after the sync so it is current.
+	const digests = await sendDigests().catch((e) => {
+		console.error('digest', e);
+		return null;
+	});
+	return json({ ok: true, result, digests });
 };

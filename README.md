@@ -238,11 +238,11 @@ changes that for a hosted service (`specs/tenants.md`).
 
    ```json
    "git": { "deploymentEnabled": { "projectmagic": false } },
-   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(top)' ':(top,exclude)backlog.md'"
+   "ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- ':(top)' ':(top,exclude)backlog.md'"
    ```
 
-   The first skips the `projectmagic` branch's previews; the second skips any push to main that
-   only changes `backlog.md`, such as a merged edit.
+   The first skips the `projectmagic` branch's previews; the second skips any push that only
+   changes `backlog.md` since the branch's last deploy, such as a merged edit.
 
 ## Developing
 

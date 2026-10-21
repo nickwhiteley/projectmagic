@@ -2,6 +2,7 @@
 // the pure functions in core/delivery.ts. Before the migration the table is missing, which reads
 // as no events.
 import { parseBacklog } from '#lib/core/backlog.ts';
+import { evidenceFor, type Evidence } from '#lib/core/evidence.ts';
 import {
 	delivery,
 	isoOf,
@@ -52,7 +53,8 @@ export async function loadEvents(projectId: string) {
 				head: d.head,
 				bug: !!d.bug,
 				backlog: d.backlog ?? [],
-				url: d.url
+				url: d.url,
+				evidence: d.evidence ?? null
 			});
 		else if (r.kind === 'run')
 			runs.push({
@@ -82,8 +84,13 @@ export async function loadDelivery(s: ProjectState, projectId: string, now = Dat
 			if (iso && !raised.has(d.id)) raised.set(d.id, iso);
 			return { id: d.id, at: d.at!, size: meta?.size ?? null };
 		});
+	// The evidence on each built item (PM39), from the merged PR that names it.
+	const evidence: Record<string, Evidence> = {};
+	for (const i of s.items)
+		if (i.status === 'built') evidence[i.id] = evidenceFor({ id: i.id, body: i.body }, events.prs);
 	return {
 		has: events.deploys.length + events.prs.length + events.runs.length > 0,
+		evidence,
 		...delivery({
 			...events,
 			shipped,
@@ -109,6 +116,7 @@ export function cardLine(d: DeliveryView) {
 		deploysThisWeek: d.deploysThisWeek,
 		leadTimeHours: d.leadTimeHours,
 		bugs: d.failure.count,
-		queue: d.founder.length
+		queue: d.founder.length,
+		evidence: d.evidence
 	};
 }
