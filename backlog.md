@@ -365,6 +365,69 @@ Built on 2026-10-19:
 - **Not built**: a PR in another repository doesn't change an item's status; it is only listed. The
   Board is still one repository's. The epic's view across repositories is the board for now.
 
+### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+
+From the critical review of 2026-10-21. The queue of built items is the most useful thing
+Project Magic shows, but checking one still means opening GitHub and Vercel, and the queue only
+works when someone remembers to open the page.
+
+- **Evidence on each built item**, in the queue and on the item page: the PR's preview deployment
+  URL, its CI result, the size of the diff, and the item's acceptance criteria when its body has
+  them. None of these are read today.
+- **Accept** and **Send back with a comment** (PM32) side by side, so a check is one decision.
+- **A daily digest to Slack through an incoming webhook**: what is built, what is blocked on a
+  person, and how long each has waited, with links to the items. The webhook URL is a tenant
+  setting, stored encrypted; the daily cron posts it, and nothing is sent when nothing waits. A
+  webhook posts to one channel and can't take replies, so Accept and Send back stay links to the
+  item page. Follow-ons: PM43 (a Slack app with buttons) and PM44 (email).
+
+### PM40 Trust: catch stalled and drifting work
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+
+From the critical review of 2026-10-21. Derived status is only as good as the agents' habits,
+and plan drift is a known failure of coding agents. Today a branch is stale only after 30 days
+(`active_branch_days`), and disagreements sit in the collapsed health panel.
+
+New notices, shown on the item's card and row, not only in the health panel:
+
+- **Stalled**: in progress, and its branch has had no commit for a set time (24 hours by default,
+  a `.projectmagic.yml` key).
+- **Merged but not moved**: a PR naming the item is merged, but the item is still in progress or
+  in review on main.
+- **Done without a merge**: marked done, but no merged PR names it.
+
+Each offers to post a PM32 comment asking the agent to put it right, rather than changing the
+status itself: disagreements are shown, never resolved (§7.2).
+
+### PM41 A read-only MCP server for agents
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+
+From the critical review of 2026-10-21, as a first answer to PM38. An agent working in one
+repository can't see items in other repositories that it blocks or waits on (PM36's epics and
+`<repo>:<id>` references); Project Magic can. Start read-only: an agent asks for an epic's items
+across repositories, what an item waits on, or what is waiting on a person, answered from the
+cache with the caller's permissions. Writes keep going through git, so the files stay the record;
+whether to allow them is PM38's question.
+
+### PM43 A Slack app: digest to each person, and Accept from Slack
+**Status:** todo · **Size:** M–L · **Type:** feature · **For:** agent
+
+Follows PM39's webhook digest. A Slack app installed per tenant by OAuth, with its bot token
+stored encrypted, sends each person a direct message with what waits on them. Each built item
+gets **Accept** and **Send back** buttons. Needs: a link between a Slack user and a Project Magic
+user, and an interactivity endpoint that checks Slack's request signature. That endpoint makes
+the edit with the person's own stored GitHub token, the same path as the Board. Distribution to
+other workspaces is unlisted at first; a Slack Marketplace listing needs Slack's review.
+
+### PM44 Email digest
+**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+
+Follows PM39, for people who don't use Slack. Project Magic doesn't know anyone's email address
+today: the GitHub App needs the *Email addresses* account permission, and people re-authorise.
+Then a sending provider (Resend or Postmark), SPF and DKIM on projectmagic.work, and an
+unsubscribe link. Same content as PM39's digest.
+
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
 
@@ -662,3 +725,11 @@ Add a branch switcher so a user can make changes and see items and bugs on a bra
 Should we have an MCP server or API so that agents can make changes to the *main* version of the backlog?
 It degrades the imperative to keep all code and project dics completely aligned but for future tasks or discussions it may be beneficial.
 Discuss this.
+
+### PM42 Read other task formats
+**Status:** todo · **Size:** L · **Type:** feature · **For:** agent
+
+From the critical review of 2026-10-21. Low priority: it widens the market, not Nick's own use.
+Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into the same status
+engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
+starting point for a repository with none.
