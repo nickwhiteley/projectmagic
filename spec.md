@@ -342,7 +342,8 @@ The `CLAUDE.md` addition (`specs/conventions.md`), kept short so agents actually
 7. Never reuse an id. Keep removing shipped items as you do now.
 8. An item with `Comment:` has a person's comment under `#### Comments` (PM32): read it before going
    on, act on it, and remove `Comment:`. Reply under the same heading, signed
-   `**agent.<maker>.<family>, <date>:**`, and set `Reply:`.
+   `**agent.<maker>.<family>, <date>:**`, set `Reply:`, and set `For:` to the person whose
+   comment it answers (PM45).
 
 ## 6. Linking
 
@@ -1042,9 +1043,16 @@ project and the item, linking to both. With nothing: "Nothing in the last 14 day
   line that is a heading, a rule or setext underline, or starts `<`; a code fence left open is
   closed, and one that opens the text starts on the line below the signature. The meta line gets
   `Comment: <date>` (an item without one gets `Status: todo` first) and loses `Reply:`, and a built
-  or done item goes back to `todo` without its *Waiting*; `For:` is left alone. The commit is
+  or done item goes back to `todo` without its *Waiting*. A *For* select beside the **Comment**
+  button (PM45) sets `For:` in the same edit when it differs from the item's (*anyone* removes it;
+  a value that isn't a person or agent path is refused). It starts at the item's `For:`, or at
+  `agent` when that is the commenter, and offers the paths in use, `agent`, `person` and
+  `person.<login>` for the tenant's active members. The text's first `@agent…` path or `@<login>`
+  of a member, outside code, sets it as the person types; choosing another afterwards keeps the
+  choice. The commit is
   `Backlog: comment <ID> <title>`. Unless the edit is refused, the comment is also posted, as the
-  person, on each open PR linked to the item (not the edits PR), ending "— @<login> on [<id>](<item
+  person, on each open PR linked to the item (not the edits PR), with `@agent…` mentions put in
+  backticks so GitHub notifies no one, ending "— @<login> on [<id>](<item
   page>) in Project Magic. It is also in the backlog, with `Comment:` set."; a PR that can't take
   it is skipped. *Commenting…* shows until the response; a refusal shows its message under the box.
   **Mark read** (`?/read`) removes `Reply:`, as an edit of the meta line, and returns to the item.
@@ -2388,8 +2396,9 @@ The full version is [specs/conventions.md](DOCS/specs/conventions.md); the setti
 - **A person's comment for you is in the item**, under `#### Comments`, and the item has
   `**Comment:** <date>` (it is also posted on the item's open PR). Read the comments before you go
   on with the item, act on them, then remove `Comment:`. To reply, add a paragraph under
-  `#### Comments` starting `**agent.<maker>.<family>, <date>:**` and set `**Reply:** <date>`; the
-  person removes `Reply:` once they have read it.
+  `#### Comments` starting `**agent.<maker>.<family>, <date>:**`, set `**Reply:** <date>`, and
+  set `**For:**` to the person whose comment you answer; the person removes `Reply:` once they
+  have read it.
 - **Remove an item from the backlog when it ships.** Its completion is read from git history.
 - **Never use the branch name `projectmagic`.** It is reserved for Project Magic's own edits.
 ```

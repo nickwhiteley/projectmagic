@@ -1,3 +1,4 @@
+import { assigneeProblem, quoteAgentMentions } from '#lib/core/assignee.ts';
 import { assigneesInUse, epicsInUse } from '#lib/server/item-view.ts';
 import { settleEpic } from '#lib/server/epic-field.ts';
 import { bugsPosition } from '#lib/core/bugs.ts';
@@ -162,13 +163,19 @@ export const actions: Actions = {
 			return fail(400, { comment: text, message: 'Write a comment first.', reauth: false });
 		if (text.length > 4000)
 			return fail(400, { comment: text, message: 'Keep it under 4000 characters.', reauth: false });
+		// Who it is for afterwards (PM45): absent leaves `For:` alone, and '' is anyone's.
+		const raw = form.get('for');
+		const assignee = raw === null ? undefined : String(raw).trim();
+		const bad = assignee ? assigneeProblem(assignee) : null;
+		if (bad) return fail(400, { comment: text, message: `For ${bad}.`, reauth: false });
 		const { it } = await context(locals, params.id);
 		const op: Op = {
 			op: 'comment',
 			id: it.id,
 			by: locals.user!.githubLogin,
 			date: new Date().toISOString().slice(0, 10),
-			text
+			text,
+			...(assignee !== undefined && assignee !== (it.assignee ?? '') ? { assignee } : {})
 		};
 		try {
 			const result = await edits.edit(locals.user!, locals.project!, op, null, it.file);
@@ -178,7 +185,7 @@ export const actions: Actions = {
 					locals.project!,
 					it.prs,
 					{ id: it.id, url: `${url.origin}${back}` },
-					text
+					quoteAgentMentions(text)
 				);
 			return respond(result, back, { comment: text });
 		} catch (e) {

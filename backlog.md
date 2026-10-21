@@ -366,7 +366,7 @@ Built on 2026-10-19:
   Board is still one repository's. The epic's view across repositories is the board for now.
 
 ### PM45 Assign when commenting
-**Status:** todo · **Size:** S–M · **Type:** feature · **For:** agent
+**Status:** built · **Size:** S–M · **Branch:** `feat/pm45-comment-assign` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
 
 From Nick's check of PM32 on 2026-10-21: adding a comment usually needs an assignment too, and
 today that means a second trip through *Edit*.
@@ -384,6 +384,11 @@ today that means a second trip through *Edit*.
 - **The other way**: an agent replying under `#### Comments` sets `For:` to the person whose
   comment it answers, as well as `Reply:`. This goes into `specs/conventions.md`, the `AGENTS.md`
   section and spec.md beside PM32's rules.
+
+Built: the select sits beside **Comment** and saves with it (unchanged, it leaves `For:` alone;
+*anyone* removes it). Choices are the paths in use plus the tenant's active members. Mentions
+inside code, and email addresses, are ignored. The agents' rule is in `specs/conventions.md`, the
+scaffolded `AGENTS.md` section and spec.md §5, §10 and Appendix C.
 
 ### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent

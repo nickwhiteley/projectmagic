@@ -291,6 +291,23 @@ group('splice: comment (PM32)', () => {
 		);
 	});
 
+	it('sets For with the comment, changes it, or removes it (PM45)', () => {
+		const withFor = (t: string, assignee: string) =>
+			splice(t, { op: 'comment', id: 'NW9', by: 'nick', date: '2026-10-19', text: 'x', assignee });
+		const set = item(withFor(SAMPLE, 'agent.claude'), 'NW9');
+		expect(set.meta!.entries.map((e) => `${e.key}=${e.value}`)).toEqual([
+			'Status=todo',
+			'Size=M',
+			'For=agent.claude',
+			'Comment=2026-10-19'
+		]);
+		const moved = item(withFor(withFor(SAMPLE, 'agent.claude'), 'person.nick'), 'NW9');
+		expect(moved.meta!.for).toBe('person.nick');
+		const cleared = item(withFor(withFor(SAMPLE, 'agent'), ''), 'NW9');
+		expect(cleared.meta!.for).toBeUndefined();
+		expect(item(splice(SAMPLE, comment('NW9', 'x')), 'NW9').meta!.for).toBeUndefined();
+	});
+
 	it('leaves a todo item’s status alone, and gives an item without a meta line one', () => {
 		expect(item(splice(SAMPLE, comment('BP3', 'x')), 'BP3').meta!.entries).toEqual([
 			{ key: 'Status', value: 'todo' },

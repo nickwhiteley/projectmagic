@@ -4,6 +4,7 @@
 	import StatusPill from '#lib/components/StatusPill.svelte';
 	import { refreshAll } from '$app/navigation';
 	import { ago } from '#lib/format.ts';
+	import { firstMention } from '#lib/core/assignee.ts';
 
 	let { data } = $props();
 	// An item just added that the sync hasn't brought in yet: look again shortly (PM17).
@@ -37,6 +38,23 @@
 			commenting = false;
 		};
 	};
+	// Who the item is for after the comment (PM45). It starts at the item's For, and the comment's
+	// first @mention sets it as you type; choosing another afterwards keeps the choice.
+	let forValue = $state('');
+	let lastMention: string | null = null;
+	$effect.pre(() => {
+		forValue = data.item?.commentFor ?? '';
+		lastMention = null;
+	});
+	const mention = $derived(data.item ? firstMention(comment, data.item.logins) : null);
+	$effect(() => {
+		if (mention === lastMention) return;
+		lastMention = mention;
+		if (mention) forValue = mention;
+	});
+	const forOptions = $derived(
+		[...new Set([...(data.item?.forChoices ?? []), forValue].filter(Boolean))].sort()
+	);
 	const RULES: Record<number, string> = {
 		1: 'done in the backlog',
 		2: 'a linked pull request is open',
@@ -154,11 +172,22 @@
 						so the agents read it{#if it.status === 'built' || it.status === 'done'}, and {it.id} goes
 							back to todo{/if}.{#if openPrs.length}
 							It is also posted on {#each openPrs as p, i (p.number)}{i ? ' and ' : ''}PR #{p.number}{/each}.{/if}
+						Write <code>@agent</code> or a login, such as
+						<code>@{page.data.user?.login ?? 'nickwhiteley'}</code>, to say who it is for.
 					</p>
 					{#if commentError}<p class="error small" role="alert">{commentError}</p>{/if}
-					<button class="button" disabled={commenting || !comment.trim()} aria-busy={commenting}
-						>{commenting ? 'Commenting…' : 'Comment'}</button
-					>
+					<div class="comment-actions">
+						<label class="small"
+							>For
+							<select name="for" bind:value={forValue}>
+								<option value="">anyone</option>
+								{#each forOptions as a (a)}<option value={a}>{a}</option>{/each}
+							</select>
+						</label>
+						<button class="button" disabled={commenting || !comment.trim()} aria-busy={commenting}
+							>{commenting ? 'Commenting…' : 'Comment'}</button
+						>
+					</div>
 				</form>
 			{/if}
 
@@ -412,6 +441,12 @@
 		align-items: start;
 		gap: 0.4rem;
 		margin-top: 2rem;
+	}
+	.comment-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem;
 	}
 	.comment-form textarea {
 		border: 1px solid var(--line-strong);

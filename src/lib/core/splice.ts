@@ -38,7 +38,15 @@ export type Op =
 	| { op: 'move'; id: string; to: Position }
 	| { op: 'remove'; id: string }
 	/** A person's comment (PM32): appended under `#### Comments`, flagged for the agents. */
-	| { op: 'comment'; id: string; by: string; date: string; text: string };
+	| {
+			op: 'comment';
+			id: string;
+			by: string;
+			date: string;
+			text: string;
+			/** Who the item is for after the comment (PM45); undefined leaves `For:` alone, '' removes it. */
+			assignee?: string;
+	  };
 
 export class SpliceError extends Error {}
 
@@ -125,13 +133,18 @@ export function commentBlock(by: string, date: string, text: string): string {
  * `Comment:` set so the agents know to read it and `Reply:` cleared, since the person has seen the
  * agent's answer. A built or done item goes back to todo, without its waiting reason.
  */
-function commentItem(text: string, it: Item, op: { by: string; date: string; text: string }) {
+function commentItem(
+	text: string,
+	it: Item,
+	op: { by: string; date: string; text: string; assignee?: string }
+) {
 	const entries = it.meta?.entries ?? [{ key: 'Status', value: 'todo' }];
 	const reopen = it.meta?.status === 'built' || it.meta?.status === 'done';
 	const meta = updateMeta(entries, {
 		comment: op.date,
 		reply: '',
-		...(reopen ? { status: 'todo' as const, waiting: '' } : {})
+		...(reopen ? { status: 'todo' as const, waiting: '' } : {}),
+		...(op.assignee !== undefined ? { for: op.assignee } : {})
 	});
 	const has = new RegExp(`^${COMMENTS_HEADING}\\s*$`, 'm').test(it.body);
 	const block = commentBlock(op.by, op.date, op.text);

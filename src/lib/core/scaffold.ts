@@ -44,8 +44,9 @@ The full version is [specs/conventions.md](${DOCS}/specs/conventions.md); the se
 - **A person's comment for you is in the item**, under \`#### Comments\`, and the item has
   \`**Comment:** <date>\` (it is also posted on the item's open PR). Read the comments before you go
   on with the item, act on them, then remove \`Comment:\`. To reply, add a paragraph under
-  \`#### Comments\` starting \`**agent.<maker>.<family>, <date>:**\` and set \`**Reply:** <date>\`; the
-  person removes \`Reply:\` once they have read it.
+  \`#### Comments\` starting \`**agent.<maker>.<family>, <date>:**\`, set \`**Reply:** <date>\`, and
+  set \`**For:**\` to the person whose comment you answer; the person removes \`Reply:\` once they
+  have read it.
 - **Remove an item from the backlog when it ships.** Its completion is read from git history.
 - **Never use the branch name \`projectmagic\`.** It is reserved for Project Magic's own edits.
 `;
