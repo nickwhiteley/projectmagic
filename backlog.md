@@ -391,7 +391,7 @@ inside code, and email addresses, are ignored. The agents' rule is in `specs/con
 scaffolded `AGENTS.md` section and spec.md §5, §10 and Appendix C.
 
 ### PM39 Waiting on you: evidence on each built item, and a daily Slack digest
-**Status:** built · **Size:** M · **Branch:** `feat/pm39-waiting-on-you` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Type:** feature · **For:** person.nickwhiteley
 
 From the critical review of 2026-10-21. The queue of built items is the most useful thing
 Project Magic shows, but checking one still means opening GitHub and Vercel, and the queue only
@@ -416,7 +416,7 @@ compared with `HEAD^`, so a code commit pushed together with a backlog commit go
 compares with the branch's last deploy.
 
 ### PM40 Trust: catch stalled and drifting work
-**Status:** todo · **Size:** M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** M · **Branch:** `feat/pm40-trust` · **Type:** feature · **For:** agent
 
 From the critical review of 2026-10-21. Derived status is only as good as the agents' habits,
 and plan drift is a known failure of coding agents. Today a branch is stale only after 30 days
