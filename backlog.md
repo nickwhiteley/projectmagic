@@ -366,7 +366,7 @@ Built on 2026-10-19:
   Board is still one repository's. The epic's view across repositories is the board for now.
 
 ### PM45 Assign when commenting
-**Status:** todo · **Size:** S–M · **Type:** feature · **For:** agent
+**Status:** in progress · **Size:** S–M · **Branch:** `feat/pm45-comment-assign` · **Type:** feature · **For:** agent
 
 From Nick's check of PM32 on 2026-10-21: adding a comment usually needs an assignment too, and
 today that means a second trip through *Edit*.
