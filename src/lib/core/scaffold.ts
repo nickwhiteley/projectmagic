@@ -103,6 +103,7 @@ export function configTemplate(repo: string, defaultBranch: string): string {
 		...d.docs.map((p) => `#   - ${p}`),
 		`# main: ${d.main}`,
 		`# active_branch_days: ${d.activeBranchDays}`,
+		`# stall_hours: ${d.stallHours}`,
 		`# auto_merge: ${d.autoMerge}`,
 		`# batch_edits: ${d.batchEdits}`,
 		`# inference: ${d.inference}`,

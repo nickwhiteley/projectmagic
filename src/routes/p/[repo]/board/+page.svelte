@@ -174,6 +174,9 @@
 									</span>
 								</div>
 								<div class="title">{@html it.titleHtml}</div>
+								{#each it.drift as d (d.label)}
+									<div class="drift" title={d.text.replace(/`/g, '')}>{d.label}</div>
+								{/each}
 								{#if it.waitingHtml && (it.status === 'blocked' || it.status === 'built' || it.blocked)}
 									<div class="waiting {it.status}">{@html it.waitingHtml}</div>
 								{/if}
@@ -323,6 +326,10 @@
 	.tag.bug {
 		border-color: var(--danger);
 		color: var(--danger);
+	}
+	.drift {
+		font: 600 11px/1.4 var(--sans);
+		color: var(--warn);
 	}
 	.tag.pending {
 		border-color: var(--accent);

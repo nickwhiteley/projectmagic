@@ -1,12 +1,14 @@
 import { projectState } from '#lib/server/project-state.ts';
 import { assigneesInUse, epicsInUse, row, typesInUse } from '#lib/server/item-view.ts';
+import { loadDrift } from '#lib/server/delivery.ts';
 import type { PageServerLoad } from './$types';
 
 const COLUMNS = ['todo', 'in progress', 'blocked', 'in review', 'built', 'done'] as const;
 
 export const load: PageServerLoad = async ({ locals, params }) => {
 	const s = await projectState({ locals, params });
-	const rows = s.items.map((i) => row(s, i));
+	const drift = await loadDrift(s, locals.project!.id);
+	const rows = s.items.map((i) => row(s, i, false, drift[i.id]));
 	const lane = (section: number | null, title: string) => ({
 		title,
 		section,

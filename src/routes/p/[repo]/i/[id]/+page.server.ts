@@ -6,7 +6,8 @@ import { neighbours, projectState } from '#lib/server/project-state.ts';
 import { assigneesInUse, sourceText } from '#lib/server/item-view.ts';
 import { commentFor as initialFor } from '#lib/core/assignee.ts';
 import { listMembers } from '#lib/server/members.ts';
-import { loadEvents } from '#lib/server/delivery.ts';
+import { loadDrift, loadEvents } from '#lib/server/delivery.ts';
+import { driftAsk, driftText } from '#lib/core/drift.ts';
 import { evidenceFor } from '#lib/core/evidence.ts';
 import { inline, md } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
@@ -76,6 +77,11 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 					() => null
 				)
 			: null;
+	// What git says against the item's status (PM40), with a comment to ask the agent.
+	const drift = ((await loadDrift(s, here.id))[it.id] ?? []).map((d) => ({
+		html: inline(s, driftText(d)),
+		ask: driftAsk(it.id, d)
+	}));
 	const forChoices = [
 		...new Set([...assigneesInUse(s), ...logins.map((l) => `person.${l}`), commentFor])
 	]
@@ -96,6 +102,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			commentFor,
 			forChoices,
 			evidence,
+			drift,
 			logins,
 			epic: it.epic,
 			epicHref: epicRef

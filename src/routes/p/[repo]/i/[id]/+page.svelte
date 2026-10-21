@@ -53,6 +53,14 @@
 		lastMention = mention;
 		if (mention) forValue = mention;
 	});
+	// A drift notice's question for the agent (PM40): into the comment box, to edit and send.
+	function askAgent(text: string) {
+		comment = text;
+		forValue = 'agent';
+		const box = document.getElementById('comment');
+		box?.scrollIntoView({ block: 'center' });
+		box?.focus();
+	}
 	const forOptions = $derived(
 		[...new Set([...(data.item?.forChoices ?? []), forValue].filter(Boolean))].sort()
 	);
@@ -246,6 +254,19 @@
 						Proposed by {it.inferred.model} from this item’s text. Add a meta line to replace it.
 					</p>
 				{/if}
+				{#each it.drift as d (d.ask)}
+					<div class="drift small">
+						<p>{@html d.html}</p>
+						{#if page.data.project.canEdit}
+							<button
+								type="button"
+								class="button small"
+								title="Put a comment for the agent in the box below, to edit and send"
+								onclick={() => askAgent(d.ask)}>Ask the agent</button
+							>
+						{/if}
+					</div>
+				{/each}
 				{#if it.evidence}
 					<p class="small"><Evidence evidence={it.evidence} /></p>
 				{/if}
@@ -454,6 +475,15 @@
 		align-items: start;
 		gap: 0.4rem;
 		margin-top: 2rem;
+	}
+	.drift {
+		border-left: 3px solid var(--warn);
+		background: var(--warn-bg);
+		padding: 0.4rem 0.6rem;
+		margin: 0.5rem 0;
+	}
+	.drift p {
+		margin: 0 0 0.3rem;
 	}
 	.accept-row {
 		display: flex;

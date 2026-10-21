@@ -3,6 +3,7 @@
 // as no events.
 import { parseBacklog } from '#lib/core/backlog.ts';
 import { evidenceFor, type Evidence } from '#lib/core/evidence.ts';
+import { drift, type Drift } from '#lib/core/drift.ts';
 import {
 	delivery,
 	isoOf,
@@ -119,4 +120,26 @@ export function cardLine(d: DeliveryView) {
 		queue: d.founder.length,
 		evidence: d.evidence
 	};
+}
+
+/** Items whose status git disagrees with (PM40), from the merged PRs and status changes the
+ * delivery sync keeps. Empty before the events migration. */
+export async function loadDrift(
+	s: ProjectState,
+	projectId: string,
+	now = Date.now()
+): Promise<Record<string, Drift[]>> {
+	const { prs, changes } = await loadEvents(projectId).catch(() => ({ prs: [], changes: [] }));
+	return drift(
+		s.items.map((i) => ({
+			id: i.id,
+			status: i.status,
+			branches: i.branches,
+			openPr: i.prs.some((p) => p.state === 'OPEN')
+		})),
+		prs,
+		changes,
+		s.stallHours,
+		now
+	);
 }

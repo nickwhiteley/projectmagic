@@ -1,5 +1,6 @@
 // What a row or card shows for an item: its status, where the status came from, and its parts
 // rendered.
+import { driftLabel, driftText, type Drift } from '#lib/core/drift.ts';
 import type { ItemView, ProjectState } from '#lib/core/state.ts';
 import { ago } from '#lib/format.ts';
 import { inline, md } from './views.ts';
@@ -18,7 +19,7 @@ export function sourceText(it: ItemView, now = Date.now()): string {
 	return src.detail;
 }
 
-export function row(s: ProjectState, it: ItemView, withBody = false) {
+export function row(s: ProjectState, it: ItemView, withBody = false, drift: Drift[] = []) {
 	return {
 		id: it.id,
 		star: it.star,
@@ -37,7 +38,8 @@ export function row(s: ProjectState, it: ItemView, withBody = false) {
 		source: sourceText(it),
 		waitingHtml: it.waiting ? inline(s, it.waiting) : null,
 		noMeta: !it.meta,
-		bodyHtml: withBody ? md(s, it.body) : null
+		bodyHtml: withBody ? md(s, it.body) : null,
+		drift: drift.map((d) => ({ label: driftLabel(d), text: driftText(d) }))
 	};
 }
 
