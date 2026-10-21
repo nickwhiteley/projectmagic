@@ -3,7 +3,9 @@ import { edits } from '#lib/server/edits.ts';
 import { findRefs, parseRef } from '#lib/core/crossref.ts';
 import { itemLinks, resolve } from '#lib/server/cross.ts';
 import { neighbours, projectState } from '#lib/server/project-state.ts';
-import { sourceText } from '#lib/server/item-view.ts';
+import { assigneesInUse, sourceText } from '#lib/server/item-view.ts';
+import { commentFor as initialFor } from '#lib/core/assignee.ts';
+import { listMembers } from '#lib/server/members.ts';
 import { inline, md } from '#lib/server/views.ts';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -59,6 +61,16 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	const epicRef = it.epic ? parseRef(it.epic) : null;
 	const linked = new Set(it.branches.map((b) => b.name));
 	const deploy = new Set(s.branches.filter((b) => b.isDeploy).map((b) => b.name));
+	// The comment box's For (PM45): the tenant's people, for choices and @mentions.
+	const logins = (await listMembers(here.tenantId).catch(() => []))
+		.filter((m) => !m.disabled)
+		.map((m) => m.login);
+	const commentFor = initialFor(it.assignee, locals.user?.githubLogin ?? '');
+	const forChoices = [
+		...new Set([...assigneesInUse(s), ...logins.map((l) => `person.${l}`), commentFor])
+	]
+		.filter(Boolean)
+		.sort();
 	return {
 		adding: false,
 		deleted: null,
@@ -71,6 +83,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			job: it.job,
 			size: it.size,
 			assignee: it.assignee,
+			commentFor,
+			forChoices,
+			logins,
 			epic: it.epic,
 			epicHref: epicRef
 				? `/p/${ns.find((n) => n.project.param.toLowerCase() === epicRef.repo)?.project.param ?? epicRef.repo}/epics#${epicRef.id}`
