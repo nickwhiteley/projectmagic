@@ -285,7 +285,7 @@ links to the documentation, and a "Project Magic" section is added to `AGENTS.md
 (created if missing).
 
 ### PM32 Information for agents
-**Status:** built · **Size:** M · **Waiting:** Nick's check · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **For:** person.nickwhiteley
 
 WHen a person writes a comment in a ticket/backlog item there needs a way for that to get to the working agent. Either as some sort of comment box or a flag to say to agents to review teh backlog item prose. Then next time the agent reviews the backlog it will know there is something to look at.
 
@@ -319,7 +319,7 @@ since that repository has no PR. New repositories get the rule in their `AGENTS.
 ones need the bullet added from `specs/conventions.md`.
 
 ### PM36 Cross repo virtual backlog
-**Status:** built · **Size:** L · **Waiting:** Nick's check · **For:** person.nickwhiteley
+**Status:** done · **Size:** L · **For:** person.nickwhiteley
 
 Projects can affect multiple repos. Manage cross repo changes through a single board.
 
@@ -366,7 +366,7 @@ Built on 2026-10-19:
   Board is still one repository's. The epic's view across repositories is the board for now.
 
 ### PM45 Assign when commenting
-**Status:** built · **Size:** S–M · **Branch:** `feat/pm45-comment-assign` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** S–M · **Branch:** `feat/pm45-comment-assign` · **Type:** feature · **For:** person.nickwhiteley
 
 From Nick's check of PM32 on 2026-10-21: adding a comment usually needs an assignment too, and
 today that means a second trip through *Edit*.
@@ -416,7 +416,7 @@ compared with `HEAD^`, so a code commit pushed together with a backlog commit go
 compares with the branch's last deploy.
 
 ### PM40 Trust: catch stalled and drifting work
-**Status:** built · **Size:** M · **Branch:** `feat/pm40-trust` · **Waiting:** Nick's check · **Type:** feature · **For:** person.nickwhiteley
+**Status:** done · **Size:** M · **Branch:** `feat/pm40-trust` · **Type:** feature · **For:** person.nickwhiteley
 
 From the critical review of 2026-10-21. Derived status is only as good as the agents' habits,
 and plan drift is a known failure of coding agents. Today a branch is stale only after 30 days
