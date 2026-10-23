@@ -90,7 +90,7 @@
 							<li>
 								<a href="/p/{c.repo}/i/{w.id}"><code>{w.id}</code> {w.title}</a>
 								<StatusPill status={w.status} small />
-								{#if c.canEdit && w.status === 'built'}
+								{#if c.canEdit && (w.status === 'built' || w.status === 'in review')}
 									<form class="accept" method="POST" action="/p/{c.repo}/i/{w.id}/edit?/status">
 										<input type="hidden" name="status" value="done" />
 										<input type="hidden" name="back" value="/" />
@@ -98,7 +98,9 @@
 										<a
 											class="button small"
 											href="/p/{c.repo}/i/{w.id}#comment"
-											title="Say what is wrong, and {w.id} goes back to todo">Send back</a
+											title={w.status === 'built'
+												? `Say what is wrong, and ${w.id} goes back to todo`
+												: `Say what is wrong, for the agent working on ${w.id}`}>Send back</a
 										>
 									</form>
 								{/if}

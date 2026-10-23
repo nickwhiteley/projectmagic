@@ -270,7 +270,7 @@
 				{#if it.evidence}
 					<p class="small"><Evidence evidence={it.evidence} /></p>
 				{/if}
-				{#if page.data.project.canEdit && it.status === 'built'}
+				{#if page.data.project.canEdit && (it.status === 'built' || it.status === 'in review')}
 					<form
 						class="accept-row"
 						method="POST"
@@ -282,7 +282,9 @@
 						<a
 							class="button"
 							href="#comment"
-							title="Say what is wrong, and {it.id} goes back to todo">Send back</a
+							title={it.status === 'built'
+								? `Say what is wrong, and ${it.id} goes back to todo`
+								: `Say what is wrong, for the agent working on ${it.id}`}>Send back</a
 						>
 					</form>
 				{/if}

@@ -23,7 +23,10 @@ export function summarise(s: ProjectState, now = Date.now()) {
 	const waiting = [
 		...s.items.filter((i) => i.reply),
 		...s.items.filter(
-			(i) => !i.reply && (i.status === 'built' || i.status === 'blocked') && i.waiting
+			(i) =>
+				!i.reply &&
+				(i.status === 'built' || i.status === 'in review' || i.status === 'blocked') &&
+				i.waiting
 		)
 	];
 	return {
