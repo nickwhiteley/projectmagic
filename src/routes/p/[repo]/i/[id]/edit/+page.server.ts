@@ -152,7 +152,7 @@ export const actions: Actions = {
 	},
 
 	// A person's comment for the agents (PM32), from the item page. It goes in the item's body, sets
-	// `Comment:`, sends a built or done item back to todo, and is posted on the item's open PRs.
+	// `Comment:`, sends an in review, built or done item back to todo, and is posted on the item's open PRs.
 	comment: async ({ locals, params, request, url }) => {
 		const form = await request.formData();
 		const text = String(form.get('text') ?? '')

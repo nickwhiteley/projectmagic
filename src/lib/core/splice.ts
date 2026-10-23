@@ -131,7 +131,7 @@ export function commentBlock(by: string, date: string, text: string): string {
 /**
  * Adds a comment to an item (PM32): under its `#### Comments` heading, made if missing, with
  * `Comment:` set so the agents know to read it and `Reply:` cleared, since the person has seen the
- * agent's answer. A built or done item goes back to todo, without its waiting reason.
+ * agent's answer. An in review, built or done item goes back to todo, without its waiting reason.
  */
 function commentItem(
 	text: string,
@@ -139,7 +139,7 @@ function commentItem(
 	op: { by: string; date: string; text: string; assignee?: string }
 ) {
 	const entries = it.meta?.entries ?? [{ key: 'Status', value: 'todo' }];
-	const reopen = it.meta?.status === 'built' || it.meta?.status === 'done';
+	const reopen = ['in review', 'built', 'done'].includes(it.meta?.status ?? '');
 	const meta = updateMeta(entries, {
 		comment: op.date,
 		reply: '',

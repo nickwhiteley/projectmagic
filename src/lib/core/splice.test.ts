@@ -273,6 +273,14 @@ group('splice: comment (PM32)', () => {
 		);
 	});
 
+	it('sends an item its meta line says is in review back to todo (PM46)', () => {
+		const start = SAMPLE.replace(
+			'**Status:** built · **Size:** M',
+			'**Status:** in review · **Size:** M'
+		);
+		expect(item(splice(start, comment('NW9', 'Not yet.')), 'NW9').meta!.status).toBe('todo');
+	});
+
 	it('adds a second comment under the same heading, and clears Reply and Waiting', () => {
 		const start = SAMPLE.replace(
 			'**Status:** built · **Size:** M',
