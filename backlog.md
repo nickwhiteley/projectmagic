@@ -7,9 +7,15 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM46 In Review gets the Accept button
-**Status:** in progress · **Branch:** `feat/pm46-review-accept` · **Size:** S · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** agent
 
 When an item is "Built" it gets a quick accept botton to mark it as Done.  Some AIs put things "In Review" once they have finished.  I would like the same Accept button when an item is in review as we have then it is built.
+
+Built: an item in review, whether from an open PR or its meta line, gets Accept and Send back on
+its page and under *Waiting on you*, and an in review item with a *Waiting* reason is listed
+there. Accept marks it done on main, which counts over the open PR. Send back goes to the comment
+box: the comment is posted on the item's open PRs, and an item whose meta line says in review
+goes back to todo, as built and done items do.
 
 ### PM26 Hide Done
 **Status:** done · **Size:** S · **For:** person.nickwhiteley
