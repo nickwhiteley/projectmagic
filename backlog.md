@@ -7,7 +7,7 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM46 In Review gets the Accept button
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **For:** agent
+**Status:** done · **Size:** S · **For:** agent
 
 When an item is "Built" it gets a quick accept botton to mark it as Done.  Some AIs put things "In Review" once they have finished.  I would like the same Accept button when an item is in review as we have then it is built.
 
