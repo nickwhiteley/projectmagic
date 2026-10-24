@@ -3,7 +3,9 @@
 // takes no money. Reconcile is the one way state comes in, and it moves the tenant's tier.
 import { BILLING_PROVIDER, BILLING_STUB, VERCEL_ENV } from '$app/env/private';
 import { stubAvailable, tierFromSubscriptions, type SubscriptionStatus } from '#lib/core/plans.ts';
+import { errorText } from '#lib/core/ops.ts';
 import { db } from './db.ts';
+import { failed } from './ops.ts';
 import { forgetAiCache } from './plans.ts';
 import { applyProjectLimit, loadPlanData } from './plan-queries.ts';
 
@@ -193,7 +195,11 @@ export async function reconcile(tenantId: string): Promise<{ tierId: string; cha
 	for (const s of subs) {
 		if (!p || !s.provider_ref) continue;
 		const state = await p.fetch(s.provider_ref);
-		if (!state) continue;
+		if (!state) {
+			// Ours says there is a subscription and the provider has none: worth a look (PM49).
+			await failed('billing', { tenantId }, `The provider has no record of subscription ${s.id}`);
+			continue;
+		}
 		await db()`update subscription set status = ${state.status}, current_period_end = ${state.periodEnd},
 			cancel_at_period_end = ${state.cancelAtPeriodEnd} where id = ${s.id}`;
 	}
@@ -265,10 +271,22 @@ export async function cancelSubscription(tenantId: string, userId: string): Prom
 	return true;
 }
 
-/** The cron's pass: every tenant with a subscription is reconciled. */
-export async function reconcileAll(): Promise<number> {
+/** The cron's pass: every tenant with a subscription is reconciled. A failure is recorded and
+ * written to the tenant's audit log, and the rest go on (PM49). */
+export async function reconcileAll(): Promise<{ tenants: number; failed: number }> {
 	const ids = await db()<{ tenant_id: string }[]>`select distinct tenant_id from subscription`;
-	for (const t of ids)
-		await reconcile(String(t.tenant_id)).catch((e) => console.error('reconcile', t.tenant_id, e));
-	return ids.length;
+	let bad = 0;
+	for (const t of ids) {
+		const tenantId = String(t.tenant_id);
+		try {
+			await reconcile(tenantId);
+		} catch (e) {
+			bad++;
+			await failed('billing', { tenantId }, e);
+			await db()`insert into audit_log (tenant_id, actor_user_id, action, target, data_json)
+				values (${tenantId}, null, 'billing.reconcile_failed', ${`tenant:${tenantId}`},
+					${db().json({ error: errorText(e, 500) })})`.catch(() => {});
+		}
+	}
+	return { tenants: ids.length, failed: bad };
 }

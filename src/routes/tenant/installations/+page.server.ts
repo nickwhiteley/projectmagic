@@ -3,6 +3,7 @@ import { githubAccessFor } from '#lib/server/github-access.ts';
 import { asApp } from '#lib/server/github-app.ts';
 import { claimable, disconnect, tenantInstallations } from '#lib/server/installations.ts';
 import { ReauthRequired } from '#lib/server/user-token.ts';
+import { failed } from '#lib/server/ops.ts';
 import { applyProjectLimit } from '#lib/server/plan-queries.ts';
 import { db as database } from '#lib/server/db.ts';
 import { planOf } from '#lib/server/plans.ts';
@@ -21,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	} catch (e) {
 		// Their GitHub sign-in has lapsed, or GitHub is unreachable: the rest of the page still works.
 		reauth = e instanceof ReauthRequired;
-		if (!reauth) console.error('claimable:', e instanceof Error ? e.message : e);
+		if (!reauth) await failed('github access', { tenantId: t.id }, e, { step: 'claimable' });
 	}
 	const repos = await database()<
 		{ id: string; owner: string; repo: string; over_limit: boolean; pinned: boolean }[]

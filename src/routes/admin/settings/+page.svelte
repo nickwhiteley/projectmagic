@@ -24,6 +24,37 @@
 	<button class="button primary">Save</button>
 </form>
 
+<form method="POST" action="?/alerts" class="panel form" id="alerts">
+	<h2>Alerts</h2>
+	<p class="muted small">
+		A Slack channel told when something needs attention on the <a href="/admin/ops">Operations</a> tab:
+		one message when a problem starts and one when it clears, and a summary after each daily cron.
+	</p>
+	{#if form?.alertsDone}<p class="flash" role="status">{form.alertsDone}</p>{/if}
+	{#if form?.alertsReason}<p class="flash error" role="alert">{form.alertsReason}</p>{/if}
+	<p class="small">
+		{data.alerts.connected ? 'Alerts go to a Slack webhook.' : 'Alerts aren’t sent anywhere yet.'}
+		{#if data.alerts.connected && data.alerts.origin}Links point at <code>{data.alerts.origin}</code
+			>.{/if}
+	</p>
+	<label>
+		<span>{data.alerts.connected ? 'Replace the' : 'Slack'} incoming webhook URL</span>
+		<input
+			type="text"
+			name="webhook"
+			placeholder="https://hooks.slack.com/services/…"
+			autocomplete="off"
+		/>
+	</label>
+	<div class="buttons">
+		<button class="button primary">Save and test</button>
+		{#if data.alerts.connected}
+			<button class="button" formaction="?/testAlert">Send a test</button>
+			<button class="button danger" name="remove" value="1">Turn off</button>
+		{/if}
+	</div>
+</form>
+
 <form method="POST" action="?/tier" class="panel form">
 	<h2>Default tier</h2>
 	<p class="muted small">
@@ -39,3 +70,11 @@
 	</label>
 	<button class="button primary">Save</button>
 </form>
+
+<style>
+	.buttons {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+</style>

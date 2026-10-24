@@ -5,6 +5,7 @@ import { githubAccessFor } from '#lib/server/github-access.ts';
 import { audit, switchTenant } from '#lib/server/tenants.ts';
 import { claimInstallation, consumeSetupState } from '#lib/server/installations.ts';
 import { syncAfterClaim } from '#lib/server/sync-runner.ts';
+import { failed } from '#lib/server/ops.ts';
 import { ReauthRequired } from '#lib/server/user-token.ts';
 import { redirect } from '@sveltejs/kit';
 import { waitUntil } from '@vercel/functions';
@@ -54,6 +55,10 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		account: result.accountLogin,
 		action: url.searchParams.get('setup_action')
 	});
-	waitUntil(syncAfterClaim(result.installationId).catch((e) => console.error('claim sync', e)));
+	waitUntil(
+		syncAfterClaim(result.installationId).catch((e) =>
+			failed('project list', { tenantId: locals.tenant?.id ?? null, trigger: 'claim' }, e)
+		)
+	);
 	back('ok', `Connected ${result.accountLogin}. Its repositories are being added.`);
 };

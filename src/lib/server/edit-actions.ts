@@ -6,13 +6,16 @@ import type { EditResult } from './edits.ts';
 import { WriteError } from './write.ts';
 
 export function respond<E extends object>(result: EditResult, done: string, extra: E = {} as E) {
+	const and = (flag: string) => `${done}${done.includes('?') ? '&' : '?'}${flag}`;
 	switch (result.kind) {
 		case 'merged':
+			// The edit is on GitHub; this page may not show it for a few seconds (PM50).
+			return redirect(303, result.lagging ? and('lag=1') : done);
 		case 'unchanged':
 		case 'queued':
 			return redirect(303, done);
 		case 'pending':
-			return redirect(303, `${done}${done.includes('?') ? '&' : '?'}pending=1`);
+			return redirect(303, and(result.lagging ? 'pending=1&lag=1' : 'pending=1'));
 		case 'conflict':
 			return fail(409, {
 				...extra,

@@ -40,11 +40,50 @@
 		<h1>{p.name}</h1>
 	</div>
 	<div class="sync">
-		<span class="muted">synced {ago(p.lastSyncAt)}</span>
+		<!-- The last runs, for anyone wondering whether the page is current (PM50). -->
+		<details class="history">
+			<summary class="muted"
+				>synced {ago(p.lastSyncAt)}{p.sync.syncing ? ' · syncing now' : ''}</summary
+			>
+			<div class="runs small">
+				<p class="muted">
+					Last webhook {ago(p.sync.lastWebhookAt)}. A push or a PR on GitHub syncs within seconds;
+					the daily cron catches anything missed.
+				</p>
+				{#if p.sync.runs.length}
+					<table>
+						<thead><tr><th>When</th><th>Started by</th><th>Took</th><th>Result</th></tr></thead>
+						<tbody>
+							{#each p.sync.runs as r (r.at)}
+								<tr class:bad={r.outcome !== 'ok' && r.outcome !== 'running'}>
+									<td>{ago(r.at)}</td>
+									<td>{r.trigger ?? '—'}</td>
+									<td>{r.ms === null ? '—' : `${(r.ms / 1000).toFixed(1)} s`}</td>
+									<td title={r.error ?? ''}
+										>{r.outcome}{r.error ? `: ${r.error.slice(0, 80)}` : ''}</td
+									>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				{:else}
+					<p class="muted">No sync runs recorded yet.</p>
+				{/if}
+			</div>
+		</details>
 		<form method="POST" action="{base}/sync"><button class="button">Refresh</button></form>
 	</div>
 </div>
-{#if p.lastError}<p class="error" role="alert">Last sync failed: {p.lastError}</p>{/if}
+{#if p.syncFailure}<p class="error" role="alert">{p.syncFailure}</p>{/if}
+{#if page.url.searchParams.get('lag')}<p class="note" role="status">
+		Saved on GitHub. This page may be a few seconds behind; Refresh shows it.
+	</p>{/if}
+{#each p.sync.held as h (h.login)}
+	<p class="note" role="status">
+		{h.n} edit{h.n === 1 ? ' is' : 's are'} held: {h.login} must sign in to Project Magic again before
+		{h.n === 1 ? 'it' : 'they'} can be saved as them.
+	</p>
+{/each}
 {#if page.url.searchParams.get('merge')}<p class="note">
 		{page.url.searchParams.get('merge')}
 	</p>{/if}
@@ -314,5 +353,37 @@
 		border-radius: 999px;
 		padding: 0 0.4rem;
 		margin-left: 0.4rem;
+	}
+	.history {
+		position: relative;
+	}
+	.history summary {
+		cursor: pointer;
+		list-style: none;
+	}
+	.history .runs {
+		position: absolute;
+		right: 0;
+		top: 1.75rem;
+		z-index: 5;
+		width: min(34rem, calc(100vw - 2rem));
+		background: var(--card);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		padding: 0.75rem;
+		box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+	}
+	.runs table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.runs th,
+	.runs td {
+		text-align: left;
+		padding: 0.2rem 0.4rem 0.2rem 0;
+		vertical-align: top;
+	}
+	.runs tr.bad td {
+		color: var(--danger);
 	}
 </style>

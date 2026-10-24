@@ -4,7 +4,7 @@ import { redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ locals, request, url }) => {
-	await syncNow(locals.project!.id);
+	await syncNow(locals.project!.id, 'refresh');
 	// Back to the page the button was on, when the Referer is a well-formed URL on this site.
 	let to = '/';
 	try {

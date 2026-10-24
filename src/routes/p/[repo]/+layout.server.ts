@@ -6,6 +6,8 @@ import { waitUntil } from '@vercel/functions';
 import { projectState } from '#lib/server/project-state.ts';
 import type { LayoutServerLoad } from './$types';
 import { accessCtx } from '#lib/server/tenants.ts';
+import { projectSyncHealth } from '#lib/server/ops-view.ts';
+import { syncFailure } from '#lib/core/ops.ts';
 
 export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const project = locals.project!;
@@ -19,6 +21,7 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 	const times = waiting.map((e) => e.createdAt);
 	const now = Date.now();
 	const h = s.health;
+	const sh = await projectSyncHealth(project.id);
 	return {
 		project: {
 			repo: s.repo,
@@ -28,6 +31,14 @@ export const load: LayoutServerLoad = async ({ locals, params }) => {
 			main: s.main,
 			lastSyncAt: s.lastSyncAt,
 			lastError: h.lastError,
+			// "Failed 6 times in a row, for 2 days" rather than only the last message (PM50).
+			syncFailure: syncFailure({
+				lastError: h.lastError,
+				failingSince: sh.failingSince,
+				failCount: sh.failCount
+			}),
+			sync: sh,
+			overLimit: project.overLimit,
 			hasBacklog: s.hasBacklog,
 			hasPlan: !!s.plan,
 			canEdit: can(locals.user, 'edit', accessCtx(locals, project)),

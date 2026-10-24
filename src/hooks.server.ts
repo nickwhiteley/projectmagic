@@ -23,7 +23,11 @@ import { userClient } from '#lib/server/user-token.ts';
 import { waitUntil } from '@vercel/functions';
 import { sessionUser } from '#lib/server/users.ts';
 import { error, redirect } from '@sveltejs/kit';
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
+import { errorText } from '#lib/core/ops.ts';
+import { failed, recordError } from '#lib/server/ops.ts';
+// Registers the alerts' check after a recorded failure (PM55).
+import '#lib/server/alerts.ts';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.user = null;
@@ -60,7 +64,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 							.then(async (go) => {
 								if (go) await refreshGithubRoles(userClient(uid), uid, t.id);
 							})
-							.catch((e) => console.error('github roles:', e instanceof Error ? e.message : e))
+							.catch((e) => failed('github roles', { tenantId: t.id }, e))
 					);
 				waitUntil(
 					Promise.resolve(
@@ -116,4 +120,24 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 	return resolve(event);
+};
+
+/** An unexpected error (PM48): recorded with a reference the person can quote, which the error
+ * page shows. Errors the app means (`error(403, …)`) and SvelteKit's own, such as a 404, are not
+ * faults, and keep their status and message. */
+export const handleError: HandleServerError = async (caught) => {
+	if (caught.kind !== 'unknown') return;
+	const { error, event } = caught;
+	const ref = await recordError({
+		source: 'server',
+		route: event.route.id,
+		method: event.request.method,
+		status: 500,
+		message: errorText(error),
+		stack: error instanceof Error ? (error.stack ?? null) : null,
+		userId: event.locals.user?.id ?? null,
+		tenantId: event.locals.tenant?.id ?? null,
+		projectId: event.locals.project?.id ?? null
+	});
+	return { message: 'Something went wrong on our side.', ref };
 };

@@ -6,6 +6,7 @@ import { ciSummary, deploymentUrl, type PrEvidence } from '#lib/core/evidence.ts
 import { isProductionEnvironment, type Config } from '#lib/core/config.ts';
 import type postgres from 'postgres';
 import { GitHubError, type GitHubClient } from './github-client.ts';
+import { report } from './report.ts';
 
 type Sql = postgres.Sql;
 
@@ -206,7 +207,11 @@ export async function prEvidence(
 			preview
 		};
 	} catch (e) {
-		console.error(`evidence for PR #${p.number}:`, e instanceof Error ? e.message : e);
+		report('delivery', {}, e, {
+			step: 'PR evidence',
+			repo: base.replace('/repos/', ''),
+			pr: p.number
+		});
 		return null;
 	}
 }
@@ -380,7 +385,14 @@ export async function syncDelivery(
 		} catch (e) {
 			// Before the migration the table isn't there; that is not worth a log line each sync.
 			if ((e as { code?: string })?.code === '42P01') return;
-			console.error(deliveryError(what, `${project.owner}/${project.repo}`, e));
+			report(
+				'delivery',
+				{ projectId: project.id },
+				deliveryError(what, `${project.owner}/${project.repo}`, e),
+				{
+					step: what
+				}
+			);
 		}
 	}
 }

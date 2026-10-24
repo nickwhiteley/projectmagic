@@ -5,7 +5,7 @@
 
 export interface SettleDeps {
 	/** Runs a sync, or queues one behind a sync that is already running. */
-	sync: () => Promise<'ran' | 'queued'>;
+	sync: () => Promise<'ran' | 'queued' | 'failed'>;
 	/** Resolves when no sync is running for the project, or the time is up. */
 	idle: () => Promise<void>;
 	/** True once the cache holds the edit. */

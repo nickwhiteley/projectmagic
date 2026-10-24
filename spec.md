@@ -746,7 +746,11 @@ installations, audit log, `project.tenant_id` and `over_limit`, `membership.sour
 `ai`, "AI: inferred statuses and Ask"); `012_feedback`; `013_project_initialised`
 (`project.initialised_at`, set to now for every existing project); `014_blob_parse_epics` (widens
 `blob_parse.kind`'s check to allow `epics`, which migration 001's didn't); `015_slack_digest`
-(`tenant_setting.slack_webhook_enc`, `digest_origin` and `digest_sent_on`, PM39).
+(`tenant_setting.slack_webhook_enc`, `digest_origin` and `digest_sent_on`, PM39);
+`016_observability` (`error_group`, `app_error`, `job_run`, `cron_run`, `github_budget`,
+`ops_alert`, `project.failing_since` and `fail_count`, `webhook_delivery.outcome`, `detail` and `ms`,
+`installation.token_error`, `app_user.refresh_error`, `tenant_setting.digest_last_error` and
+`digest_failed_at`, §22).
 
 ## 9. The views
 
@@ -2296,6 +2300,135 @@ intent:
   the item form) merged straight away, whatever the project's `auto_merge` and the person's batch
   edits say (Appendix D).
 
+## 22. Observability (built, EP2: PM47–PM56)
+
+**Project Magic shows its own health in the app.** A support engineer learns of a problem from the
+*Operations* tab or an alert, with the evidence and the fix beside it, rather than from Vercel's
+logs or a user. Everything here is metadata (ids, counts, timings, error messages), never a tenant's
+content, so platform admins see it within the rule of §17.9. Every record is also one JSON line in
+the function's log with the same id, for a log search or a log drain. The rules for what needs
+attention are pure (`src/lib/core/ops.ts`); recording is `src/lib/server/ops.ts`, which never throws
+and records nothing before migration 016 (§2, *degrade, don't fail*).
+
+### 22.1 What is recorded
+
+- **Errors** (PM48). The server's `handleError` records each *unknown* error (not the app's own
+  `error(…)` nor SvelteKit's 404s) in `app_error` with a short reference, the route id (never the
+  URL, which can name items), method, status, message, stack, user, tenant, project and build. The
+  browser's uncaught errors and rejections, and a navigation's errors, are posted to
+  `/api/client-error` (at most five a page load, each message once; extensions' errors and the
+  ResizeObserver warning ignored; 30 a minute per caller) and recorded the same way as `client`.
+  Occurrences group by fingerprint: source, route and the message with numbers, shas, ids and quoted
+  values taken out. A group can be resolved, and reopens when it happens again. The error page
+  (`+error.svelte`) shows the reference and opens Feedback with it filled in.
+- **Background work** (PM49) is a `job_run` row: its kind, what started it, its project or tenant,
+  start and end, outcome (`running`, `ok`, `failed`, `skipped`, `capped`, `stuck`, `rate limited`),
+  error and details. Kinds: `sync`, `project list`, `inference` (asked, saved, unreadable replies,
+  tokens, time; `capped` when the allowance is spent), `ask`, `digest`, `billing` (also
+  `billing.reconcile_failed` in the tenant's audit log, and a subscription the provider has no
+  record of), `delivery` (each step, and PR evidence), `set up repository`, `pr comment`,
+  `pending save`, `github roles`, `github access`, `edit catch-up`, `webhook` and
+  `webhook signature`. The sync's own modules, which `scripts/sync.ts` runs outside SvelteKit,
+  report through `report.ts`, a log line there and a record in the app. A `skipped` record (a table
+  a migration hasn't added yet) is written once a day per kind and project.
+- **Syncs** (PM50): each run is a `sync` job with its trigger (`webhook`, `cron`, `edit`, `page`,
+  `claim`, `refresh`, `admin`), GitHub calls and summary. A failure also sets
+  `project.failing_since` (if unset) and adds one to `fail_count`; a success clears both. A run whose
+  function died is marked `stuck` when the next starts (or by the cron after 15 minutes). The cron
+  marks `missedWebhook` when main moved and no webhook came since the last sync. `syncNow()` returns
+  `failed` when its run failed. An edit whose sync didn't reach its commit in ten seconds is recorded
+  (`edit catch-up`), and the page it returns to says it may be a few seconds behind (`?lag=1`).
+- **Webhook deliveries** (PM52) record their outcome (`sync started`, `projects listed`, `ignored`
+  and why, including a repository with no project), detail and time. A bad signature is a
+  `webhook signature` failure; a body that isn't JSON answers 400 and is recorded.
+- **The cron** (PM47) is a `cron_run` with each step's outcome, time and counts, saved after each
+  step. Steps run on their own, so one that throws doesn't stop the rest: `sync` (ran, failed,
+  queued, deferred, and the deferred ids), `pending edits`, `tidy`, `billing`, `purge tenants`,
+  `digest`, `alerts`. A failed project or digest doesn't fail its step; each is its own problem. A
+  run with a failed step answers 500, so Vercel's cron log shows it too. The cron skips projects on
+  a suspended installation.
+- **GitHub** (PM53): every call has a 30 second timeout. A read (GET, or GraphQL, which Project Magic
+  only reads with) is retried up to twice after a 5xx, a network failure or a timeout (0.5 s, then
+  1.5 s), and after a 403 or 429 whose `retry-after` is at most ten seconds; never on the primary
+  limit (`x-ratelimit-remaining: 0`). The rate-limit headers are kept per token
+  (`installation:<id>`, `user:<id>`, `app`) and resource in `github_budget`, written at most every
+  30 seconds each, at once when under 20%. A token GitHub refuses for an installation (4xx) is kept
+  on `installation.token_error`, and cleared by a good sync or *Check again*.
+- **People and tenants** (PM54): a refresh token GitHub refuses sets `app_user.refresh_error`
+  (cleared by the next good refresh or a sign-in); a network error or GitHub 5xx is no longer taken
+  for an expired sign-in. A digest Slack refuses sets `tenant_setting.digest_last_error` and
+  `digest_failed_at`, cleared by the next one sent.
+
+Records are kept 90 days (the cron's `tidy`); webhook deliveries 14 days, as before.
+
+### 22.2 What needs attention
+
+`attention(snapshot)` turns a snapshot of the records into a list, critical first, each with a title,
+detail, remedy in words, a link, fixes and whether it is worth an alert:
+
+| Problem | Severity | Alert |
+| ------- | -------- | ----- |
+| The cron has never run / hasn't started for 26 h | warning / critical | yes |
+| The last cron run had a failed step | warning | yes |
+| Migrations the build ships aren't applied | critical | yes |
+| GitHub refuses an installation's token (its projects aren't listed again) | critical | yes |
+| An installation suspended, or unclaimed for a week | warning | no |
+| A sync stuck past `STUCK_MS` | warning | after 30 min |
+| A project failing to sync (remedy read from the error) | warning; critical after 1 h | after 1 h |
+| A project missing webhooks this week | warning | yes |
+| A project the cron deferred 3 runs in a row | warning | no |
+| Pending edits claimed 10 min and never saved | warning | after 30 min |
+| Pending edits held because their author must sign in again | warning | no |
+| A tenant's digest failing (last 3 days) | warning | yes |
+| A GitHub budget under 20% / 10% | warning / critical | under 10% |
+| An unresolved error group seen in the last day | warning | when new (first seen today) |
+| Other background work failing in the last day | warning | for billing, purge and project list, or 5 failures |
+| 3 bad webhook signatures today / a failed delivery | critical / warning | yes / from 3 |
+
+### 22.3 Where it is shown
+
+- **Admin → Operations** (`/admin/ops`, PM51): the attention list with its fixes; *Now* (the build,
+  the database's latency, migrations applied, configuration present, the last cron); the cron's
+  last seven runs step by step; error groups with counts for the hour, day and week, and a reference
+  lookup; background work by kind; webhook outcomes; GitHub budgets; AI today; open alerts. Drill-down
+  pages list errors (`/admin/ops/errors`, and one group with its occurrences and stacks), background
+  work (`/admin/ops/jobs`, by kind and outcome), deliveries (`/admin/ops/webhooks`) and one project
+  (`/admin/ops/project/[id]`: its runs, deliveries, held edits and edit log). The admin overview opens
+  with "n things need attention" or "All is well", and a tenant's admin page lists that tenant's
+  part.
+- **Fixes** post to `/admin/ops?/fix`, come back to the page with the outcome, and are written to the
+  audit log as `platform.ops.<action>`: *Sync now*, *Clear and sync* (a stuck claim), *Release*
+  (claimed pending edits, then saved if due), *Send it again* (a digest), *Run the cron now* (in the
+  background), *Resolve* (an error group), *Check again* (an installation's token), *List
+  installations again*, *Check now* (alerts).
+- **A project's pages** (PM50): the banner says how long the sync has failed ("Sync has failed 6
+  times in a row, for 2 days: …"); *synced … ago* opens the last ten runs and the last webhook; a
+  note names whose held edits wait for them to sign in again.
+- **Tenant → Overview → Health** (PM54): what the tenant can put right itself, with what to do: a
+  refused or suspended installation, a project not syncing, held edits, a failing digest (also on
+  the Slack settings), projects paused by the plan. Not the platform's problems, and no fix buttons.
+- **A person's failed edits** (PM54), from `edit_log.error`, on *Activity* and on the item's page,
+  until they edit the item again with success.
+- **`/api/health`** (PM56, public): 200 or 503 for an uptime check, with the problems: the database
+  unreachable, migrations not applied, no cron for 26 hours. It gives the build, the database's
+  latency, migration counts and which settings are present, never their values.
+
+### 22.4 Alerts (PM55)
+
+*Admin → Settings → Alerts* holds a Slack incoming webhook, encrypted like the tenants' (saving
+sends a test). The check keeps `ops_alert` rows: an alert-worthy problem not yet open opens, with one
+message; an open one no longer present closes, with one message; nothing is sent while a problem
+merely continues. It runs at the end of the cron (with a daily summary, which says all is well when
+it is, so silence isn't mistaken for health), after a failure is recorded (at most every five
+minutes per instance), and from *Check now*. Conditions are tracked with no webhook set, so the tab
+shows what is open and since when. Email is not built (PM44 would bring a sender).
+
+### 22.5 The build
+
+`VERCEL_GIT_COMMIT_SHA` (short, or `dev`) and the build time (`__BUILT_AT__`, from `vite.config.ts`)
+go on every error, job and cron record and on the *Now* panel. The migrations the build ships are
+listed at build time (`import.meta.glob`), as the files aren't deployed.
+
 ## Appendix A. Routes
 
 What each route needs (`src/lib/server/routes.ts`). *Project* routes resolve `{repo}` in the current
@@ -2306,6 +2439,7 @@ tenant and 404 for a project the person can't view.
 | `/` | public | home page signed out; overview signed in |
 | `/signin`, `/auth/github`, `/auth/github/callback`, `/auth/signout` | public | §11.1 |
 | `/api/github/webhook`, `/api/cron/sync` | machine | §7.4 |
+| `/api/client-error`, `/api/health` | public | §22 |
 | `/search`, `/activity`, `/ask` | signed in | §9, §13 |
 | `/settings`, `/settings/ai`, `/settings/batch` | signed in | §17.9, §13, §10.5 |
 | `/feedback` | signed in | §19 |
@@ -2319,7 +2453,8 @@ tenant and 404 for a project the person can't view.
 | `/tenant/audit` | `tenant.audit` | §17.9 |
 | `/tenant/delete` | `tenant.delete` | §17.8 |
 | `/admin`, `/admin/tenants`, `/admin/tenants/[id]`, `/admin/installations`, `/admin/audit`, `/admin/feedback` | `platform.tenants` | §17.9 |
-| `/admin/settings` | `platform.settings` | §17.8 |
+| `/admin/ops`, `/admin/ops/errors`, `/admin/ops/errors/[fingerprint]`, `/admin/ops/jobs`, `/admin/ops/webhooks`, `/admin/ops/project/[id]` | `platform.tenants` | §22 |
+| `/admin/settings` | `platform.settings` | §17.8, §22.4 |
 | `/admin/tiers` | `platform.tiers` | §17.6 |
 | `/admin/users` | `platform.users` | §17.9 |
 | `/admin/support/end` | `platform.support` | §17.5 |

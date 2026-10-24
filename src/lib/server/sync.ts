@@ -19,6 +19,7 @@ import type postgres from 'postgres';
 import type { GitHubClient } from './github-client.ts';
 import type { InitResult, NewRepo } from './init-repo.ts';
 import { applyProjectLimit } from './plan-queries.ts';
+import { report } from './report.ts';
 
 type Sql = postgres.Sql;
 
@@ -539,7 +540,8 @@ async function syncHistory(
 			}))
 		);
 	} catch (e) {
-		if ((e as { code?: string })?.code !== '42P01') console.error('delivery: status changes:', e);
+		if ((e as { code?: string })?.code !== '42P01')
+			report('delivery', { projectId: project.id }, e, { step: 'status changes' });
 	}
 	return { newCommits: line.length, done: state.done.size };
 }
@@ -623,7 +625,7 @@ export async function syncInstallations(
 							if (state === 'done')
 								await sql`update project set initialised_at = now() where github_repo_id = ${r.id}`;
 						} catch (e) {
-							console.error('set up repository', r.owner.login, r.name, e);
+							report('set up repository', { tenantId }, e, { repo: `${r.owner.login}/${r.name}` });
 						}
 					}
 				}

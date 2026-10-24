@@ -1,4 +1,5 @@
 <script lang="ts">
+	import AttentionList from '#lib/components/AttentionList.svelte';
 	import { ago } from '#lib/format.ts';
 
 	let { data, form } = $props();
@@ -90,6 +91,11 @@
 		<button class="button">Open as support</button>
 	</form>
 {/if}
+
+<section class="panel">
+	<h2>Health</h2>
+	<AttentionList items={data.attention} empty="Nothing needs attention for this tenant." />
+</section>
 
 <section class="panel">
 	<h2>Plan: {data.plan.tier ?? 'none'}</h2>

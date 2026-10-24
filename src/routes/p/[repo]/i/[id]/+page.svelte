@@ -146,6 +146,10 @@
 					{#if it.found}Found in {it.found}.{/if}
 					{#if it.raised}Raised {it.raised}.{/if}
 				</p>{/if}
+			{#if data.failed}<p class="error small" role="alert">
+					Your {data.failed.op} of {data.item.id}
+					{ago(data.failed.at)} didn’t save: {data.failed.error}
+				</p>{/if}
 			{#if page.url.searchParams.get('pending')}<p class="muted small">
 					Saved. It reaches {data.main} when the edits PR is merged.
 				</p>{/if}

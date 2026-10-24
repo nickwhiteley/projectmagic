@@ -6,6 +6,7 @@ import { db } from './db.ts';
 import { configured } from './inference.ts';
 import { aiAllowed, aiTokensLeft } from './plans.ts';
 import { completer } from './models.ts';
+import { failed, startJob } from './ops.ts';
 import type { ProjectState } from '#lib/core/state.ts';
 
 export type AskResult =
@@ -42,16 +43,26 @@ export async function ask(
 	if (!d.known.size) return { ok: false, reason: 'There are no items to ask about yet.' };
 	const p = askPrompt(q, d, login);
 	let reply;
+	const job = await startJob('ask', { tenantId });
+	const t0 = Date.now();
 	try {
 		reply = await completer(model)(p.system, p.user, { json: false, maxTokens: 1000 });
 	} catch (e) {
-		console.error('ask:', e instanceof Error ? e.message : e);
+		await job.end('failed', e, { ms: Date.now() - t0 });
 		return { ok: false, reason: 'The model did not answer. Try again in a moment.' };
 	}
+	await job.end(
+		reply.text.trim() ? 'ok' : 'failed',
+		reply.text.trim() ? undefined : 'empty answer',
+		{
+			ms: Date.now() - t0,
+			tokens: reply.tokens
+		}
+	);
 	const text = reply.text.trim();
 	await db()`insert into inference_usage (scope, day, tokens) values (${scope}, current_date, ${reply.tokens})
 		on conflict (scope, day) do update set tokens = inference_usage.tokens + excluded.tokens`.catch(
-		(e) => console.error('ask usage:', e instanceof Error ? e.message : e)
+		(e) => failed('ask', { tenantId }, e, { step: 'usage' })
 	);
 	if (!text) return { ok: false, reason: 'The model sent back an empty answer. Try asking again.' };
 	return {

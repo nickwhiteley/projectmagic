@@ -10,6 +10,8 @@ import {
 	tiersView
 } from '#lib/server/tiers.ts';
 import { startSupport } from '#lib/server/support.ts';
+import { attention } from '#lib/core/ops.ts';
+import { snapshot } from '#lib/server/ops-view.ts';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -23,6 +25,8 @@ export const load: PageServerLoad = async ({ params }) => {
 	]);
 	return {
 		tenant,
+		// This tenant's part of the Operations tab (PM51).
+		attention: attention(await snapshot(tenant.id)),
 		audit: await auditLog(tenant.id, 20),
 		plan: {
 			tier: report.plan.tier?.name ?? null,
