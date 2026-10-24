@@ -784,3 +784,198 @@ From the critical review of 2026-10-21. Low priority: it widens the market, not 
 Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into the same status
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
+
+### PM47 The daily cron can fail without anyone knowing
+**Status:** todo · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** agent
+
+The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
+failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
+`sync-runner.ts` still reports `'ran'`), so the cron's result calls a failed project a success.
+`syncAll()`, the pending-save loop and the `webhook_delivery` delete have no catch, so one throw
+skips billing, the tenant purge and the digest with nothing recorded. And the result exists only
+in the JSON returned to Vercel.
+
+- `syncNow()` returns `'failed'` when the run failed, and `syncAll()` counts it.
+- **Each step runs on its own** with its own catch, so a failure in one doesn't stop the rest.
+- **A `cron_run` row** records each step's outcome, duration and counts: projects synced, failed,
+  and deferred by the 40 second budget; edits saved; digests sent and failed.
+- The Operations tab (PM51) shows the last run, red when there has been none for 26 hours (a
+  removed `CRON_SECRET` or a Vercel plan change stops it silently), and lists projects deferred
+  on three runs in a row, as the budget is then too small.
+
+### PM48 Errors get a reference, a record and a page
+**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+An unexpected error in a request is a bare 500 today, recorded only in Vercel's logs, and the
+person who hit it can't say which one it was. There is no `handleError` hook and no
+`+error.svelte`.
+
+- **A `handleError` hook** writes each one to an `app_error` table: a short reference, the route
+  id (not the URL, which can name items), method, status, message, stack, user, tenant, project,
+  the deployed commit (PM56) and the time. It also logs one JSON line with the same reference, so
+  a log search can still find it.
+- **A `+error.svelte` page** says what happened in plain words, shows the reference, and offers
+  the Feedback button (PM35) with the reference and page already filled in.
+- **Errors in the browser too**: `window.onerror` and `unhandledrejection` post to a small
+  endpoint, rate limited per user, into the same table marked `client`.
+- **Grouped by fingerprint** (route and the message with ids stripped), with first seen, last
+  seen and a count, so one bug that happens a thousand times is one row.
+
+Kept for 90 days. Shown by PM51.
+
+### PM49 Background failures are recorded, not only logged
+**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
+are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
+project list, inference, Ask, digest, billing reconcile, tenant purge, delivery step, set up
+repository, PR comment, pending save, GitHub roles refresh), its project or tenant, when it
+started and ended, its outcome (`ok`, `failed`, `skipped`, `capped`) and the error. One helper,
+`track(kind, scope, fn)`, wraps each place that now catches and logs, and still logs a JSON line
+with the same id. No content goes in it, only ids, counts and error messages.
+
+Places that swallow an error today: `delivery-sync.ts` (each step, and PR evidence), `sync.ts`
+(setting up a repository, status changes), `inference.ts`, `ask.ts` (and its usage write),
+`digest.ts`, `billing.ts` `reconcileAll`, `edits.ts` (`commentOnPrs`, `savePending`),
+`project-state.ts` (pending edits), the roles refresh in `hooks.server.ts`, and the claim syncs
+in `tenant/installations`. Also:
+
+- **AI**: inference stops at the first failure and says nothing about the rest; a reply that
+  `parseInference` can't read isn't counted; reaching the daily allowance is silent. Record each,
+  with the call's latency and tokens.
+- **Billing**: a reconcile failure, or a subscription the provider has no record of (skipped
+  today), also goes in `audit_log` as `billing.reconcile_failed`, beside the tier changes already
+  there.
+
+Kept for 90 days, longer than the 14 days `webhook_delivery` keeps, so last month's evidence is
+still there. Shown by PM51.
+
+### PM50 Sync history, and how long a project has been failing
+**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+`project.last_error` is one string that the next good sync clears, so a project that fails every
+other sync looks healthy half the time, and nobody can tell when it started.
+
+- **Each sync run is a `job_run` row** (PM49) with what started it (webhook, cron, edit, page
+  load, claim), how long it took, its GitHub calls, the files it parsed, and whether it ran again
+  for a request that came in meanwhile.
+- **The project keeps `failing_since` and a count of failures in a row**, so the banner says
+  "Sync has failed 6 times since Tuesday 09:14: …" rather than only the last message.
+- **A sync left running** (older than `STUCK_MS`, which another may then replace) is recorded as
+  `stuck`, and shown as stuck until then, rather than the project quietly waiting five minutes.
+- **An edit whose sync didn't catch up** (`syncUntil` returning false, ignored at both calls in
+  `edits.ts`) is recorded, and the person is told the view may be a few seconds behind rather
+  than meeting the PM17 404.
+- **The project's Health panel gets a Sync section**: the last ten runs with outcome and
+  duration, and when the last webhook arrived (PM52).
+
+### PM51 An Operations tab for platform admins
+**Status:** todo · **Size:** M–L · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+The one place a support engineer looks first. The admin overview counts tenants and nothing
+else today. `/admin/ops`, metadata only, each line linking to the tenant or project and to its
+records:
+
+- **Now**: the deployed commit and the health check (PM56): database latency, migrations, what is
+  configured; and the last cron run (PM47).
+- **Needs attention**: projects whose sync is failing (PM50) or stuck; projects with no webhook
+  for a day while the cron finds new commits (PM52); pending edits claimed for over ten minutes,
+  in conflict, or held because their author must sign in again (PM54); suspended or unclaimed
+  installations and ones whose token GitHub refuses; tenants whose digest is failing; GitHub
+  budgets running low (PM53).
+- **Errors** (PM48), grouped, newest first, with counts for the last hour, day and week.
+- **Background work** (PM49) by kind: runs, failures and the slowest, last 24 hours.
+- **AI**: calls, failures, unreadable replies and tokens against each tenant's allowance, today.
+
+The admin overview gets a line above its counts, "3 things need attention", linking here, and the
+tenant page (`/admin/tenants/[id]`) shows the same lists for that tenant.
+
+### PM52 Webhook deliveries say what happened to them
+**Status:** todo · **Size:** S · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+`webhook_delivery` records that a delivery arrived, not what came of it. Add its outcome (sync
+started, duplicate, ignored and why, failed and the error), how long it took, and the sync run it
+started (PM50).
+
+- **A missed webhook is counted** when the cron's sync finds new commits on main that no delivery
+  announced, so a broken webhook (a changed secret, a disabled App hook) shows up the next
+  morning, not when someone notices stale data.
+- **Bad signatures are counted**, as they usually mean a misconfigured secret.
+- **A delivery for a repository with no project** is counted, not just answered "ignored".
+- **A body that isn't JSON** gets a 400 and a record, rather than an unhandled 500.
+
+Shown by PM51, with the last delivery per project on its Health panel.
+
+### PM53 GitHub calls: timeouts, retries and the API budget
+**Status:** todo · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+`github-client.ts` has no timeout on any call (the model client has one, `models.ts`), never reads
+GitHub's rate-limit headers, and fails the whole sync on one 5xx. A hung call holds the project's
+sync claim until the function dies, and a sync asked for meanwhile is lost.
+
+- **A timeout on every call** (`AbortSignal.timeout`), recorded as such.
+- **Retry** a 5xx, or a 403/429 with `retry-after`, a couple of times with backoff inside the
+  function's time.
+- **Read `x-ratelimit-remaining`, `-limit`, `-reset` and `-resource`** on each response and keep
+  the latest per installation and per user token. A sync that fails on the limit is recorded as
+  `rate limited` with when it resets, not as a raw GraphQL error.
+- **An installation token GitHub refuses** (401, 403 or 404 on `access_tokens`) is recorded on
+  the installation, not only as the project's sync error.
+
+PM51 shows each installation's remaining budget and warns below 20%.
+
+### PM54 Tenants see their own integration health
+**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+Much of what goes wrong is put right by the tenant, not support, if they are told. A *Health*
+section on the tenant's settings lists, for its own projects, each problem and what to do:
+
+- **An installation suspended**, or a repository the App can no longer read.
+- **A Slack digest failing**: add `digest_last_error` and `digest_failed_at` beside
+  `digest_sent_on`, shown on the Slack settings too, so a revoked webhook isn't missed for weeks.
+- **A member whose GitHub sign-in has expired**, and whose batched edits are therefore held.
+  Today a background save that meets `ReauthRequired` is deliberately silent, and
+  `user-token.ts` turns every refresh failure, a network error or a GitHub 5xx included, into
+  `ReauthRequired`. Store the real reason, retry the ones that aren't an expired token, and show
+  "edits held: <login> must sign in again" on the project.
+- **Projects paused by the plan** (`over_limit`), which drop out of lists and syncing today with no
+  sign: a banner "2 projects are paused by your plan", and an `audit_log` row when it happens.
+
+**Failed edits**, which `edit_log.error` records and nothing reads, are listed on the project's
+Activity and on the item's page ("Your edit of PM12 at 10:41 failed: GitHub said 409"), so a
+person isn't left wondering whether their change was saved.
+
+### PM55 Tell support when something breaks
+**Status:** todo · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+Nothing above helps if nobody opens the screen. A platform setting holds a Slack webhook (stored
+encrypted, sent with the digest's code) and/or an email address for alerts. A check, run by the
+cron and after each failed background run, sends one message when a condition starts and one when
+it clears, never one per failure:
+
+- a new error fingerprint (PM48);
+- a project failing sync for an hour (PM50);
+- no cron run for 26 hours, or a cron step failing (PM47);
+- no webhooks at all for six hours (PM52);
+- a GitHub budget below 10% (PM53);
+- migrations behind the code (PM56);
+- a tenant's digest failing two days running.
+
+Each message links to the record in PM51. A daily summary, sent after the cron, says all is well
+when it is, so silence isn't mistaken for health.
+
+### PM56 A health check, migration drift and the deployed version
+**Status:** todo · **Size:** S · **Type:** feature · **Epic:** EP2 · **For:** agent
+
+Seven places treat a missing table or column (`42P01`, `42703`) as "no data": `sync.ts`,
+`digest.ts`, `delivery-sync.ts`, `project-state.ts`, `batch.ts` and `delivery.ts`. That suits the
+moment between a deploy and its migration, but a deploy whose `npm run migrate` never ran just
+loses features quietly.
+
+- **`/api/health`** answers 200 or 503, for an outside uptime check, with: the database reachable
+  and its latency; the newest migration applied against the newest in `migrations/`; the required
+  environment set; and the cron's last run (PM47). No secrets and no tenant data.
+- **Migration drift is a red banner** in the admin area, and each swallowed `42P01` is recorded
+  as `skipped` once (PM49) rather than being silent.
+- **The deployed commit** (`VERCEL_GIT_COMMIT_SHA`) and deploy time show in the admin area and go
+  on every error and job record, so a fault can be matched to the deploy that brought it.
