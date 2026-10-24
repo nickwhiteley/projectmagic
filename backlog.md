@@ -786,7 +786,7 @@ engine, so a team sees value before adopting the conventions. Inferred status (P
 starting point for a repository with none.
 
 ### PM47 The daily cron can fail without anyone knowing
-**Status:** todo · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** bug · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
 failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
@@ -804,7 +804,7 @@ in the JSON returned to Vercel.
   on three runs in a row, as the budget is then too small.
 
 ### PM48 Errors get a reference, a record and a page
-**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 An unexpected error in a request is a bare 500 today, recorded only in Vercel's logs, and the
 person who hit it can't say which one it was. There is no `handleError` hook and no
@@ -824,7 +824,7 @@ person who hit it can't say which one it was. There is no `handleError` hook and
 Kept for 90 days. Shown by PM51.
 
 ### PM49 Background failures are recorded, not only logged
-**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
 are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
@@ -851,7 +851,7 @@ Kept for 90 days, longer than the 14 days `webhook_delivery` keeps, so last mont
 still there. Shown by PM51.
 
 ### PM50 Sync history, and how long a project has been failing
-**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 `project.last_error` is one string that the next good sync clears, so a project that fails every
 other sync looks healthy half the time, and nobody can tell when it started.
@@ -870,7 +870,7 @@ other sync looks healthy half the time, and nobody can tell when it started.
   duration, and when the last webhook arrived (PM52).
 
 ### PM51 An Operations tab for platform admins
-**Status:** todo · **Size:** M–L · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** M–L · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 The one place a support engineer looks first. The admin overview counts tenants and nothing
 else today. `/admin/ops`, metadata only, each line linking to the tenant or project and to its
@@ -891,7 +891,7 @@ The admin overview gets a line above its counts, "3 things need attention", link
 tenant page (`/admin/tenants/[id]`) shows the same lists for that tenant.
 
 ### PM52 Webhook deliveries say what happened to them
-**Status:** todo · **Size:** S · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 `webhook_delivery` records that a delivery arrived, not what came of it. Add its outcome (sync
 started, duplicate, ignored and why, failed and the error), how long it took, and the sync run it
@@ -907,7 +907,7 @@ started (PM50).
 Shown by PM51, with the last delivery per project on its Health panel.
 
 ### PM53 GitHub calls: timeouts, retries and the API budget
-**Status:** todo · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 `github-client.ts` has no timeout on any call (the model client has one, `models.ts`), never reads
 GitHub's rate-limit headers, and fails the whole sync on one 5xx. A hung call holds the project's
@@ -925,7 +925,7 @@ sync claim until the function dies, and a sync asked for meanwhile is lost.
 PM51 shows each installation's remaining budget and warns below 20%.
 
 ### PM54 Tenants see their own integration health
-**Status:** todo · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 Much of what goes wrong is put right by the tenant, not support, if they are told. A *Health*
 section on the tenant's settings lists, for its own projects, each problem and what to do:
@@ -946,7 +946,7 @@ Activity and on the item's page ("Your edit of PM12 at 10:41 failed: GitHub said
 person isn't left wondering whether their change was saved.
 
 ### PM55 Tell support when something breaks
-**Status:** todo · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** S–M · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 Nothing above helps if nobody opens the screen. A platform setting holds a Slack webhook (stored
 encrypted, sent with the digest's code) and/or an email address for alerts. A check, run by the
@@ -965,7 +965,7 @@ Each message links to the record in PM51. A daily summary, sent after the cron, 
 when it is, so silence isn't mistaken for health.
 
 ### PM56 A health check, migration drift and the deployed version
-**Status:** todo · **Size:** S · **Type:** feature · **Epic:** EP2 · **For:** agent
+**Status:** in progress · **Size:** S · **Type:** feature · **Epic:** EP2 · **Branch:** `feat/ep2-observability` · **For:** agent
 
 Seven places treat a missing table or column (`42P01`, `42703`) as "no data": `sync.ts`,
 `digest.ts`, `delivery-sync.ts`, `project-state.ts`, `batch.ts` and `delivery.ts`. That suits the
