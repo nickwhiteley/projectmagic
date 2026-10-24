@@ -1,13 +1,8 @@
-// The daily backstop (spec §7.4): re-sync everything, in case a webhook was missed. Vercel Cron
-// calls it with the project's CRON_SECRET as a bearer token.
+// The daily backstop (spec §7.4): re-sync everything, in case a webhook was missed, then the
+// housekeeping (#lib/server/cron). Vercel Cron calls it with the project's CRON_SECRET as a bearer
+// token.
 import { CRON_SECRET } from '$app/env/private';
-import { db } from '#lib/server/db.ts';
-import { edits } from '#lib/server/edits.ts';
-import { activeProjects } from '#lib/server/projects.ts';
-import { reconcileAll } from '#lib/server/billing.ts';
-import { purgeDeletedTenants } from '#lib/server/platform.ts';
-import { syncAll } from '#lib/server/sync-runner.ts';
-import { sendDigests } from '#lib/server/digest.ts';
+import { runCron } from '#lib/server/cron.ts';
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -17,22 +12,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	if (!CRON_SECRET) return json({ error: 'CRON_SECRET is not set' }, { status: 503 });
 	if (request.headers.get('authorization') !== `Bearer ${CRON_SECRET}`)
 		return json({ error: 'unauthorised' }, { status: 401 });
-	const result = await syncAll();
-	// The backstop for batch edits (PM25): saves any that page loads and webhooks didn't.
-	const held = await db()<
-		{ project_id: string }[]
-	>`select distinct project_id from pending_edit`.catch(() => []);
-	for (const p of await activeProjects())
-		if (held.some((h) => String(h.project_id) === p.id)) await edits.savePendingIfDue(p);
-	await db()`delete from blob_text where fetched_at < now() - interval '14 days'`.catch(() => []);
-	// The provider is the authority on subscriptions: copy its state, and move tenants to their tier (§7.3).
-	await reconcileAll().catch((e) => console.error('billing', e));
-	await purgeDeletedTenants().catch((e) => console.error('purge', e));
-	await db()`delete from webhook_delivery where received_at < now() - interval '14 days'`;
-	// The daily digest to Slack (PM39), after the sync so it is current.
-	const digests = await sendDigests().catch((e) => {
-		console.error('digest', e);
-		return null;
-	});
-	return json({ ok: true, result, digests });
+	const r = await runCron('cron');
+	// A run with a failed step answers 500, so Vercel's own cron log shows it too.
+	return json(r, { status: r.ok ? 200 : 500 });
 };

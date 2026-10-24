@@ -18,6 +18,7 @@ import { accessCtx } from './tenants.ts';
 import { db } from './db.ts';
 import { PARSER_VERSION, type Pr } from './sync.ts';
 import { aiAllowedCached } from './plans.ts';
+import { failed } from './ops.ts';
 
 interface ProjectRow {
 	id: string;
@@ -195,7 +196,7 @@ export async function loadProjectState(
 		const mine = pending.filter((e) => e.file === file);
 		return oid && mine.length
 			? overlayBacklog(installation, config.main, oid, mine).catch((e) => {
-					console.error(`pending edits ${p.owner}/${p.repo}:`, e);
+					void failed('pending save', { projectId: String(p.id) }, e, { step: 'overlay' });
 					return null;
 				})
 			: null;

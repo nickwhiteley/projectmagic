@@ -10,6 +10,7 @@ import { syncUntil } from './sync-runner.ts';
 import { userById, type SessionUser } from './users.ts';
 import type { ProjectRow } from './projects.ts';
 import { ReauthRequired, userClient } from './user-token.ts';
+import { failed } from './ops.ts';
 import {
 	applyChange,
 	applyEdit,
@@ -59,7 +60,19 @@ export async function batching(user: SessionUser, project: ProjectRow): Promise<
 }
 
 /** What an edit returns: a write's result, or `queued` when it is held for the next save (PM25). */
-export type EditResult = WriteResult | { kind: 'queued'; count: number };
+/** `lagging`: the edit is on GitHub, but the cache hadn't caught up when the wait ran out (PM50). */
+export type EditResult = (WriteResult & { lagging?: boolean }) | { kind: 'queued'; count: number };
+
+/** Waits for the cache to hold an edit's commit, and records it when it doesn't in time. */
+async function caughtUp(project: ProjectRow, ref: string, oid: string): Promise<boolean> {
+	if (await syncUntil(project.id, ref, oid)) return true;
+	await failed(
+		'edit catch-up',
+		{ projectId: project.id, trigger: 'edit' },
+		`The sync didn’t reach ${oid.slice(0, 7)} on ${ref} in 10 s`
+	);
+	return false;
+}
 
 export async function edit(
 	user: SessionUser,
@@ -127,7 +140,7 @@ async function perform(
 	run: (gh: ReturnType<typeof userClient>) => Promise<WriteResult>,
 	/** What to record: one edit, or (for a batch) the edits it applied, read after the write. */
 	log: LogEntry | (() => LogEntry[])
-): Promise<WriteResult> {
+): Promise<WriteResult & { lagging?: boolean }> {
 	const gh = userClient(user.id);
 	const entries = () => {
 		const list = typeof log === 'function' ? log() : [log];
@@ -182,8 +195,14 @@ async function perform(
 		await db()`update project set edit_state = ${state.state}, edit_detail = ${state.detail}, edit_pr = ${state.pr}
 			where id = ${project.id}`;
 	// Wait until the cache holds the commit, so the page the action redirects to shows the edit.
-	if (result.kind === 'merged') await syncUntil(project.id, t.main, result.commit);
-	else if (result.kind === 'pending') await syncUntil(project.id, EDIT_BRANCH, result.commit);
+	if (result.kind === 'merged' || result.kind === 'pending') {
+		const ok = await caughtUp(
+			project,
+			result.kind === 'merged' ? t.main : EDIT_BRANCH,
+			result.commit
+		);
+		if (!ok) return { ...result, lagging: true };
+	}
 	return result;
 }
 
@@ -209,7 +228,7 @@ export async function mergeEdits(
 		return { ok: false, detail: res.body?.message ?? `GitHub said ${res.status}` };
 	await gh.send('DELETE', `${repo}/git/refs/heads/${EDIT_BRANCH}`);
 	await db()`update project set edit_state = null, edit_detail = null, edit_pr = null where id = ${project.id}`;
-	if (res.body?.sha) await syncUntil(project.id, (await target(project)).main, res.body.sha);
+	if (res.body?.sha) await caughtUp(project, (await target(project)).main, res.body.sha);
 	return { ok: true, detail: `Merged PR #${row.edit_pr}.` };
 }
 
@@ -302,7 +321,7 @@ export async function savePending(
 			await release(ids);
 			out.detail = e instanceof Error ? e.message : String(e);
 			if (e instanceof ReauthRequired) throw e;
-			console.error(`save pending ${project.owner}/${project.repo}:`, e);
+			await failed('pending save', { projectId: project.id }, e);
 		}
 	}
 	return out;
@@ -320,7 +339,8 @@ export async function savePendingIfDue(project: ProjectRow): Promise<void> {
 		const pending = (await listPending(project.id)).filter((p) => !p.conflict && !p.claimed);
 		if (batchDue(pending, Date.now())) await savePending(project);
 	} catch (e) {
-		if (!(e instanceof ReauthRequired)) console.error(`pending save ${project.repo}:`, e);
+		// An expired sign-in is shown as held edits (PM54), not as a failure on every page load.
+		if (!(e instanceof ReauthRequired)) await failed('pending save', { projectId: project.id }, e);
 	}
 }
 
@@ -349,10 +369,13 @@ export async function commentOnPrs(
 				{ body }
 			);
 			if (res.status === 201) posted++;
-			else console.error(`comment on PR #${p.number}: GitHub said ${res.status}`);
+			else
+				await failed('pr comment', { projectId: project.id }, `GitHub said ${res.status}`, {
+					pr: p.number
+				});
 		} catch (e) {
 			if (e instanceof ReauthRequired) throw e;
-			console.error(`comment on PR #${p.number}:`, e);
+			await failed('pr comment', { projectId: project.id }, e, { pr: p.number });
 		}
 	}
 	return posted;

@@ -9,19 +9,36 @@ import { db } from './db.ts';
 import { loadEvents } from './delivery.ts';
 import { loadProjectState } from './project-state.ts';
 import { allProjects } from './projects.ts';
+import { errorText } from '#lib/core/ops.ts';
+import { failed } from './ops.ts';
 
 const missing = (e: unknown) => ['42P01', '42703'].includes((e as { code?: string })?.code ?? '');
 
-/** Whether the tenant has a webhook set, or null before the migration. */
-export async function slackDigest(tenantId: string): Promise<{ connected: boolean } | null> {
+/** Whether the tenant has a webhook set, and its last failure (PM54), or null before the migration. */
+export async function slackDigest(tenantId: string): Promise<{
+	connected: boolean;
+	lastError: string | null;
+	failedAt: string | null;
+} | null> {
+	let connected: boolean;
 	try {
 		const [r] = await db()<{ slack_webhook_enc: string | null }[]>`
 			select slack_webhook_enc from tenant_setting where tenant_id = ${tenantId}`;
-		return { connected: !!r?.slack_webhook_enc };
+		connected = !!r?.slack_webhook_enc;
 	} catch (e) {
 		if (missing(e)) return null;
 		throw e;
 	}
+	// The failure columns are migration 016's: without them, there is simply no failure to show.
+	const [f] = await db()<{ digest_last_error: string | null; digest_failed_at: Date | null }[]>`
+		select digest_last_error, digest_failed_at from tenant_setting where tenant_id = ${tenantId}`.catch(
+		() => []
+	);
+	return {
+		connected,
+		lastError: f?.digest_last_error ?? null,
+		failedAt: f?.digest_failed_at?.toISOString() ?? null
+	};
 }
 
 /** Sets the webhook (encrypted) and the origin for links, or removes it with null. */
@@ -87,7 +104,8 @@ export async function digestFor(tenantId: string, origin: string, now = Date.now
 	return digestMessage(projects);
 }
 
-async function post(webhook: string, message: { text: string }): Promise<void> {
+/** Posts to a Slack incoming webhook; the alerts (PM55) use it too. */
+export async function post(webhook: string, message: { text: string }): Promise<void> {
 	const res = await fetch(webhook, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -104,8 +122,34 @@ export async function sendDigestNow(tenantId: string, origin: string): Promise<b
 	if (!r?.slack_webhook_enc) throw new Error('No Slack webhook is set.');
 	const message = await digestFor(tenantId, origin);
 	if (!message) return false;
-	await post(decrypt(r.slack_webhook_enc, TOKEN_ENCRYPTION_KEY), message);
+	try {
+		await post(decrypt(r.slack_webhook_enc, TOKEN_ENCRYPTION_KEY), message);
+	} catch (e) {
+		await digestFailed(tenantId, e);
+		throw e;
+	}
+	await digestOk(tenantId);
 	return true;
+}
+
+/** Sends a tenant's digest again with the origin its admin set, from the Operations tab (PM51). */
+export async function resendDigest(tenantId: string): Promise<boolean> {
+	const [r] = await db()<{ digest_origin: string | null }[]>`
+		select digest_origin from tenant_setting where tenant_id = ${tenantId}`;
+	if (!r?.digest_origin) throw new Error('The tenant has no digest set up.');
+	return sendDigestNow(tenantId, r.digest_origin);
+}
+
+/** A digest Slack refused, kept for the tenant's settings and the Operations tab (PM54). */
+async function digestFailed(tenantId: string, e: unknown): Promise<void> {
+	await failed('digest', { tenantId }, e);
+	await db()`update tenant_setting set digest_last_error = ${errorText(e, 500)}, digest_failed_at = now()
+		where tenant_id = ${tenantId}`.catch(() => {});
+}
+
+async function digestOk(tenantId: string): Promise<void> {
+	await db()`update tenant_setting set digest_last_error = null, digest_failed_at = null
+		where tenant_id = ${tenantId} and digest_last_error is not null`.catch(() => {});
 }
 
 /** The daily cron: every active tenant with a webhook that hasn't had today's digest. */
@@ -122,7 +166,7 @@ export async function sendDigests(): Promise<{ sent: number; failed: number }> {
 		throw e;
 	}
 	let sent = 0;
-	let failed = 0;
+	let bad = 0;
 	for (const r of rows) {
 		try {
 			if (!r.digest_origin) continue;
@@ -131,10 +175,11 @@ export async function sendDigests(): Promise<{ sent: number; failed: number }> {
 			await db()`update tenant_setting set digest_sent_on = current_date
 				where tenant_id = ${r.tenant_id}`;
 			if (message) sent++;
+			await digestOk(String(r.tenant_id));
 		} catch (e) {
-			failed++;
-			console.error(`digest for tenant ${r.tenant_id}:`, e instanceof Error ? e.message : e);
+			bad++;
+			await digestFailed(String(r.tenant_id), e);
 		}
 	}
-	return { sent, failed };
+	return { sent, failed: bad };
 }

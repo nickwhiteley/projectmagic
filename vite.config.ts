@@ -3,6 +3,8 @@ import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// When this build was made, shown beside its commit in the admin area (PM56).
+	define: { __BUILT_AT__: JSON.stringify(new Date().toISOString()) },
 	plugins: [
 		sveltekit({
 			compilerOptions: {

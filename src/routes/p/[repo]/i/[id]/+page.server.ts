@@ -7,6 +7,7 @@ import { assigneesInUse, sourceText } from '#lib/server/item-view.ts';
 import { commentFor as initialFor } from '#lib/core/assignee.ts';
 import { listMembers } from '#lib/server/members.ts';
 import { loadDrift, loadEvents } from '#lib/server/delivery.ts';
+import { failedEdits } from '#lib/server/ops-view.ts';
 import { driftAsk, driftText } from '#lib/core/drift.ts';
 import { evidenceFor } from '#lib/core/evidence.ts';
 import { inline, md } from '#lib/server/views.ts';
@@ -91,6 +92,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		adding: false,
 		deleted: null,
 		done: null,
+		// Your own edit of this item that didn't reach GitHub (PM54).
+		failed: locals.user
+			? ((await failedEdits(locals.user.id, [locals.project!.id], it.id))[0] ?? null)
+			: null,
 		item: {
 			id: it.id,
 			star: it.star,

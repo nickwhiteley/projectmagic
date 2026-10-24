@@ -14,9 +14,47 @@ import {
 	appClient,
 	GitHubError,
 	installationToken as tokenFor,
+	observeRateLimits,
 	tokenClient,
 	type GitHubClient
 } from './github-client.ts';
+import { errorText, type RateLimit } from '#lib/core/ops.ts';
+import { db } from './db.ts';
+
+// GitHub's budget as last seen (PM53), written at most every 30 seconds per scope and resource,
+// and at once when it runs low, so the Operations tab is current without a write per call.
+const written = new Map<string, number>();
+observeRateLimits((scope, l: RateLimit) => {
+	const key = `${scope}|${l.resource}`;
+	const low = l.limit > 0 && l.remaining / l.limit < 0.2;
+	if (!low && Date.now() - (written.get(key) ?? 0) < 30_000) return;
+	written.set(key, Date.now());
+	void db()`insert into github_budget (scope, resource, remaining, "limit", reset_at)
+		values (${scope}, ${l.resource}, ${l.remaining}, ${l.limit}, ${l.resetAt})
+		on conflict (scope, resource) do update set remaining = excluded.remaining, "limit" = excluded."limit",
+			reset_at = excluded.reset_at, updated_at = now()`.catch(() => {});
+});
+
+/** Records whether GitHub gives the App a token for the installation (PM53): a refusal stops every
+ * one of its projects, so it is shown on the installation, not only as each project's error. */
+async function noteToken(installationId: number, error: string | null): Promise<void> {
+	await db()`update installation set token_error = ${error}, token_error_at = ${error ? new Date() : null}
+		where id = ${installationId} and token_error is distinct from ${error}`.catch(() => {});
+}
+
+/** Asks GitHub for the installation's token again, for the Operations tab's *Check again*. */
+export async function checkInstallationToken(installationId: number): Promise<string | null> {
+	try {
+		await tokenFor(GITHUB_APP_ID, privateKey(), installationId, true);
+		await noteToken(installationId, null);
+		return null;
+	} catch (e) {
+		const text = errorText(e, 500);
+		if (e instanceof GitHubError && e.status >= 400 && e.status < 500)
+			await noteToken(installationId, text);
+		return text;
+	}
+}
 
 export { GitHubError };
 const HEADERS = { accept: 'application/vnd.github+json', 'x-github-api-version': '2022-11-28' };
@@ -32,7 +70,17 @@ export function privateKey(): string {
 
 /** Reads for one installation, as the App. */
 export function installationClient(installationId: number): GitHubClient {
-	return tokenClient(() => tokenFor(GITHUB_APP_ID, privateKey(), installationId));
+	return tokenClient(async () => {
+		try {
+			const token = await tokenFor(GITHUB_APP_ID, privateKey(), installationId);
+			return token;
+		} catch (e) {
+			// 401, 403 or 404: the App's key is wrong, or the installation is gone or suspended.
+			if (e instanceof GitHubError && e.status >= 400 && e.status < 500)
+				await noteToken(installationId, errorText(e, 500));
+			throw e;
+		}
+	}, `installation:${installationId}`);
 }
 
 export function asApp(): GitHubClient {

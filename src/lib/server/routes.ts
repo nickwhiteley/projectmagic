@@ -54,12 +54,23 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/admin/support/end': { kind: 'platform', action: 'platform.support' },
 	'/admin/audit': { kind: 'platform', action: 'platform.tenants' },
 	'/admin/feedback': { kind: 'platform', action: 'platform.tenants' },
+	// Operations (PM51): Project Magic's own health, metadata only.
+	'/admin/ops': { kind: 'platform', action: 'platform.tenants' },
+	'/admin/ops/errors': { kind: 'platform', action: 'platform.tenants' },
+	'/admin/ops/errors/[fingerprint]': { kind: 'platform', action: 'platform.tenants' },
+	'/admin/ops/jobs': { kind: 'platform', action: 'platform.tenants' },
+	'/admin/ops/webhooks': { kind: 'platform', action: 'platform.tenants' },
+	'/admin/ops/project/[id]': { kind: 'platform', action: 'platform.tenants' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },
 	'/auth/signout': { kind: 'public' },
 	'/api/github/webhook': { kind: 'machine' },
 	'/api/cron/sync': { kind: 'machine' },
+	// Browser errors (PM48): from anyone, rate limited by the route itself.
+	'/api/client-error': { kind: 'public' },
+	// For an outside uptime check (PM56): no secrets and no tenant data.
+	'/api/health': { kind: 'public' },
 	'/p/[repo]': { kind: 'project', action: 'view' },
 	'/p/[repo]/board': { kind: 'project', action: 'view' },
 	'/p/[repo]/raw/[...path]': { kind: 'project', action: 'view' },

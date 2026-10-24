@@ -183,6 +183,14 @@ To check it: GitHub's *Advanced* tab on the App lists each webhook delivery and 
 (202 for a push), and the project's *synced* time on the overview should change within seconds
 of a push. Without a webhook, page loads, the *Refresh* button and the daily cron still sync.
 
+**Running it.** *Admin → Operations* shows Project Magic's own health: what needs attention, each
+with what it means and a button that fixes it where one can, then errors (with the reference a
+person sees on the error page), background work, the cron step by step, webhook deliveries,
+GitHub's rate-limit budget and AI use. Set a Slack webhook under *Admin → Settings → Alerts* to be
+told when a problem starts and clears, and point an uptime check at `/api/health` (503 when the
+database is down, a migration hasn't been run, or the cron has stopped). After an update, run
+`make migrate`: the tab says when the database is behind the code (`spec.md` §22).
+
 ### 6. Create your tenant and connect GitHub
 
 Sign in with the `BOOTSTRAP_ADMIN_GITHUB_LOGIN` account. You land on *Welcome*: create your tenant,

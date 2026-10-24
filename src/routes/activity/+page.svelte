@@ -12,6 +12,25 @@
 	each active branch, and items that shipped.
 </p>
 
+{#if data.failed.length}
+	<section class="failed" role="alert">
+		<h2>Your edits that didn’t save</h2>
+		<ul>
+			{#each data.failed as f (f.at + f.item)}
+				<li>
+					<span class="muted small">{ago(f.at, data.now)}</span>
+					{f.op}
+					<a href="/p/{f.repo}/i/{encodeURIComponent(f.item)}"><code>{f.item}</code></a>:
+					{f.error}
+				</li>
+			{/each}
+		</ul>
+		<p class="muted small">
+			Nothing of these reached GitHub. Make the edit again once the cause is put right.
+		</p>
+	</section>
+{/if}
+
 {#each data.groups as g (g.repo + (g.itemId ?? ''))}
 	<section>
 		<h2>
@@ -39,6 +58,12 @@
 {/each}
 
 <style>
+	.failed {
+		border-left: 4px solid var(--danger);
+		padding-left: 0.8rem;
+		overflow-wrap: anywhere;
+	}
+
 	section {
 		margin-bottom: 1.2rem;
 	}

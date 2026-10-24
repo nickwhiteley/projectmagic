@@ -79,31 +79,39 @@ export async function signIn(
 	admitted: () => Promise<boolean> = async () => false
 ): Promise<SignInResult> {
 	const sealed = tokens.refreshToken ? encrypt(tokens.refreshToken, TOKEN_ENCRYPTION_KEY) : null;
-	return db().begin(async (tx) => {
-		let [row] = await tx<UserRow[]>`
+	return db()
+		.begin(async (tx) => {
+			let [row] = await tx<UserRow[]>`
 			update app_user
 			set github_login = ${gh.login}, name = ${gh.name},
 				refresh_token_enc = coalesce(${sealed}, refresh_token_enc),
 				refresh_token_expires_at = coalesce(${tokens.refreshExpiresAt}, refresh_token_expires_at)
 			where github_id = ${gh.id}
 			returning id, github_id, github_login, name, platform_role, disabled_at`;
-		if (!row) {
-			const bootstrap = BOOTSTRAP_ADMIN_GITHUB_LOGIN?.toLowerCase() === gh.login.toLowerCase();
-			// Serialise concurrent first sign-ins, so only one bootstrap admin is made.
-			await tx`lock table app_user in share row exclusive mode`;
-			const [{ admins }] = await tx<{ admins: number }[]>`
+			if (!row) {
+				const bootstrap = BOOTSTRAP_ADMIN_GITHUB_LOGIN?.toLowerCase() === gh.login.toLowerCase();
+				// Serialise concurrent first sign-ins, so only one bootstrap admin is made.
+				await tx`lock table app_user in share row exclusive mode`;
+				const [{ admins }] = await tx<{ admins: number }[]>`
 				select count(*)::int as admins from app_user where platform_role = 'admin'`;
-			const first = bootstrap && admins === 0;
-			if (!first && signup === 'closed' && !(await admitted()))
-				return { ok: false, reason: 'not-invited' } as const;
-			[row] = await tx<UserRow[]>`
+				const first = bootstrap && admins === 0;
+				if (!first && signup === 'closed' && !(await admitted()))
+					return { ok: false, reason: 'not-invited' } as const;
+				[row] = await tx<UserRow[]>`
 				insert into app_user (github_id, github_login, name, platform_role, refresh_token_enc, refresh_token_expires_at)
 				values (${gh.id}, ${gh.login}, ${gh.name}, ${first ? 'admin' : 'none'}, ${sealed}, ${tokens.refreshExpiresAt})
 				returning id, github_id, github_login, name, platform_role, disabled_at`;
-		}
-		if (row.disabled_at) return { ok: false, reason: 'disabled' } as const;
-		return { ok: true, user: toUser(row) } as const;
-	});
+			}
+			if (row.disabled_at) return { ok: false, reason: 'disabled' } as const;
+			return { ok: true, user: toUser(row) } as const;
+		})
+		.then(async (r) => {
+			// A new sign-in mends a refused refresh (PM54); before migration 016 there is nothing to clear.
+			if (r.ok && sealed)
+				await db()`update app_user set refresh_error = null, refresh_error_at = null
+				where id = ${r.user.id} and refresh_error is not null`.catch(() => {});
+			return r;
+		});
 }
 
 export interface UserSummary {

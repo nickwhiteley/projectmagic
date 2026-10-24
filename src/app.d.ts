@@ -1,8 +1,13 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
 declare global {
+	/** When this build was made (vite.config.ts). */
+	const __BUILT_AT__: string;
 	namespace App {
-		// interface Error {}
+		interface Error {
+			/** The reference of a recorded error (PM48), for the person to quote. */
+			ref?: string;
+		}
 		interface Locals {
 			user: import('#lib/server/users.ts').SessionUser | null;
 			memberships: import('#lib/core/access.ts').Membership[];

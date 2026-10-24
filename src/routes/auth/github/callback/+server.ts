@@ -11,6 +11,7 @@ import { getSignup } from '#lib/server/platform.ts';
 import { setSession } from '#lib/server/session.ts';
 import { tenantsOf } from '#lib/server/tenants.ts';
 import { signIn } from '#lib/server/users.ts';
+import { failed } from '#lib/server/ops.ts';
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
@@ -42,7 +43,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 			if (t.access === 'github' && t.status === 'active')
 				await refreshGithubRoles(client, result.user.id, t.id);
 	} catch (e) {
-		console.error('sign-in: github access:', e instanceof Error ? e.message : e);
+		await failed('github roles', {}, e, { step: 'sign-in' });
 	}
 	setSession(cookies, result.user.id, SESSION_SECRET);
 	// A tenant at its member limit could not take them: say so.

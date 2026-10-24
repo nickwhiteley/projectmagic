@@ -13,9 +13,10 @@
 	// `trigger` false: no button of its own, for a menu item that calls `open()` (PM34).
 	let { trigger = true }: { trigger?: boolean } = $props();
 
-	export function open() {
+	/** Opens the dialog, with `note` already in the comment (the error page's reference, PM48). */
+	export function open(note = '') {
 		score = null;
-		comment = '';
+		comment = note;
 		error = '';
 		sent = false;
 		dialog?.showModal();
@@ -50,7 +51,8 @@
 	}
 </script>
 
-{#if trigger}<button type="button" class="button launch" onclick={open}>Feedback</button>{/if}
+{#if trigger}<button type="button" class="button launch" onclick={() => open()}>Feedback</button
+	>{/if}
 
 <!-- A <dialog>, so focus trapping and Escape-to-close come from the element. -->
 <dialog bind:this={dialog} class="sheet">

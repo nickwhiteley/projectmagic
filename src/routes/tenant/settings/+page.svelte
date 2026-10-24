@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ago } from '#lib/format.ts';
 	let { data, form } = $props();
 </script>
 
@@ -24,7 +25,7 @@
 </form>
 
 {#if data.slack}
-	<section class="panel form">
+	<section class="panel form" id="slack">
 		<h2>Daily digest to Slack</h2>
 		{#if form?.slackDone}<p class="flash" role="status">{form.slackDone}</p>{/if}
 		{#if form?.slackReason}<p class="flash error" role="alert">{form.slackReason}</p>{/if}
@@ -35,6 +36,14 @@
 		</p>
 		{#if data.slack.connected}
 			<p>A webhook is set.</p>
+			{#if data.slack.lastError}
+				<!-- A webhook Slack refuses fails every morning unseen without this (PM54). -->
+				<p class="flash error" role="alert">
+					The last digest failed{data.slack.failedAt ? ` ${ago(data.slack.failedAt)}` : ''}: {data
+						.slack.lastError}. Slack usually refuses a webhook that was removed; set a new one
+					below.
+				</p>
+			{/if}
 			<div class="row">
 				<form method="POST" action="?/digest">
 					<button class="button">Send now</button>
