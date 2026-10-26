@@ -2437,6 +2437,7 @@ tenant and 404 for a project the person can't view.
 | Route | Needs | What |
 | ----- | ----- | ---- |
 | `/` | public | home page signed out; overview signed in |
+| `/about`, `/privacy` | public | About and the privacy policy (PM59), framed like the home page |
 | `/signin`, `/auth/github`, `/auth/github/callback`, `/auth/signout` | public | §11.1 |
 | `/api/github/webhook`, `/api/cron/sync` | machine | §7.4 |
 | `/api/client-error`, `/api/health` | public | §22 |
