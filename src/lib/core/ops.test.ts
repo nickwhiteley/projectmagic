@@ -295,6 +295,15 @@ describe('attention', () => {
 		expect(out.map((a) => a.key)).toEqual(['digest:1']);
 	});
 
+	it('offers to dismiss failed background work', () => {
+		const [a] = attention(
+			empty({ jobs: [{ kind: 'github access', failed: 1, lastError: 'GitHub 401' }] })
+		);
+		expect(a.fixes).toEqual([
+			{ action: 'dismiss', label: 'Dismiss', params: { kind: 'github access' } }
+		]);
+	});
+
 	it('puts critical things first', () => {
 		const out = attention(
 			empty({

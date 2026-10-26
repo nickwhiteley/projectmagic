@@ -449,7 +449,7 @@ export function attention(s: OpsSnapshot): Attention[] {
 			detail: j.lastError ?? '',
 			remedy: JOB_REMEDY[j.kind] ?? 'Open Background work for each run and its error.',
 			href: `/admin/ops/jobs?kind=${encodeURIComponent(j.kind)}`,
-			fixes: [],
+			fixes: [{ action: 'dismiss', label: 'Dismiss', params: { kind: j.kind } }],
 			alert: ALERT_JOBS.has(j.kind) || j.failed >= 5
 		});
 	}
@@ -503,6 +503,8 @@ const JOB_REMEDY: Record<string, string> = {
 		'Batched edits couldn’t be saved. They are kept, and tried again on the next page load or webhook.',
 	delivery: 'Reading deploys, PRs or CI runs failed. Delivery figures may be stale.',
 	digest: 'See the tenant’s digest entry above.',
+	'github access':
+		'GitHub refused a person’s sign-in while listing their installations, usually a revoked or expired token. They sign in again; dismiss it once seen.',
 	'github roles': 'Refreshing people’s roles from GitHub failed; they keep their current roles.'
 };
 

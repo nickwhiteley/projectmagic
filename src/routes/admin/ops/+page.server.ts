@@ -64,7 +64,7 @@ export const actions: Actions = {
 		const action = String(form.get('action') ?? '') as OpsAction;
 		if (!OPS_ACTIONS.includes(action)) return fail(400, { message: 'Unknown action.' });
 		const params: Record<string, string> = {};
-		for (const k of ['project', 'tenant', 'installation', 'fingerprint']) {
+		for (const k of ['project', 'tenant', 'installation', 'fingerprint', 'kind']) {
 			const v = form.get(k);
 			if (typeof v === 'string' && v) params[k] = v;
 		}

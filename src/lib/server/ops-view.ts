@@ -229,6 +229,7 @@ export async function snapshot(tenantId: string | null = null): Promise<OpsSnaps
 			select kind, count(*)::int as failed,
 				(array_agg(error order by started_at desc))[1] as last_error
 			from job_run where outcome in ('failed', 'stuck') and started_at > now() - interval '1 day'
+			and detail_json->>'dismissedAt' is null
 			and kind not in ('sync', 'webhook', 'webhook signature')
 			and (${t}::bigint is null or tenant_id = ${t}::bigint
 				or project_id in (select id from project where tenant_id = ${t}::bigint))
