@@ -267,10 +267,7 @@
 
 	<section class="pricing">
 		<h2>Pricing</h2>
-		<p>
-			We intend to charge for larger hosted teams, with more people and more projects. Running your
-			own copy stays free.
-		</p>
+		<p>We intend to charge for larger hosted teams, with more people and more projects.</p>
 	</section>
 
 	<section class="setup" id="self-host">

@@ -2673,7 +2673,6 @@ the repository, versioned and branched with the code, and Project Magic reads ev
 - **How it works** (`#how`): *Connect GitHub*, *Your agents keep to a few conventions* (with the
   sample item), *You read, and decide*.
 - **What it reads, writes and keeps** (`#trust`): reads, writes, keeps, AI and its opt-outs.
-- **Pricing**: the intent to charge for larger hosted teams, with more people and projects; running
-  your own copy stays free.
+- **Pricing**: the intent to charge for larger hosted teams, with more people and projects.
 - **Or run your own copy** (`#self-host`): *Read the setup guide* and *Source on GitHub*.
 
