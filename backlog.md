@@ -837,6 +837,29 @@ Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into th
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
 
+### PM58 The home page sells the hosted service and what is built since v0.1
+**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+
+From a review of the home page on 2026-10-26. It still reads as v0.1 for one person running their
+own copy:
+
+- **The main call to action is self-hosting.** *Run it for your projects* goes to the README's
+  setup guide, while the hosted service has sign-up. Lead with *Sign in with GitHub*, worded for
+  the sign-up mode (open, approval, closed), and put self-hosting last.
+- **Most of what is built is missing:** teams (tenants, invitations, joining by GitHub access,
+  roles from GitHub permissions), Ask, Search, Activity, epics across repositories, bugs, batch
+  edits, Board drag, delivery measures, evidence on built items, the Slack digest, stalled and
+  drifting work, inferred status, setting up a new repository, mobile.
+- **Features, not outcomes**, and no word on who it is for or which agents it works with (Claude
+  Code, Codex, Cursor, anything that reads `AGENTS.md`).
+- **Trust is not answered:** what the App reads and writes, what is stored, what goes to a model
+  provider, and how to opt out.
+- **One picture.** Add the Board, Ask and *Waiting on you* when there are real screenshots.
+- **The README** has the same gaps, and still says inviting people is not built (PM7 is in PM20).
+
+**Questions for Nick:** pricing or *early access* on the page, and what it says? Links to terms and
+a privacy notice once they exist (`specs/tenants.md` §13)?
+
 ### PM57 Initial signup action direction
 **Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
 
