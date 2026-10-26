@@ -7,9 +7,15 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM57 Initial signup action direction
-**Status:** in progress · **Size:** S · **For:** agent
+**Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
 
 Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
+
+Built: a tenant with no projects gets a next step on its Overview in place of an empty page. A tenant
+admin sees *Next: connect GitHub*, which explains the App and has the *Install on a GitHub account*
+button, plus a link to connect an existing installation. Once GitHub is connected, while the first
+sync runs, it says the repositories are being added. A member is told to ask a tenant admin, and a
+tenant awaiting approval says so. On Installations, *Nothing is connected yet* points to *Connect GitHub*.
 
 ### PM46 In Review gets the Accept button
 **Status:** done · **Size:** S · **For:** agent
