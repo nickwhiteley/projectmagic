@@ -7,7 +7,7 @@ Magic can read its own backlog.
 ## After v0.1
 
 ### PM57 Initial signup action direction
-**Status:** todo
+**Status:** in progress · **Size:** S · **For:** agent
 
 Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
 
