@@ -6,7 +6,7 @@
 </script>
 
 {#if data.landing}
-	<Landing />
+	<Landing signup={data.signup} />
 {:else}
 	<Overview {data} />
 {/if}

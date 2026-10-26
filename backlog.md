@@ -837,6 +837,56 @@ Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into th
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
 
+### PM58 The home page sells the hosted service and what is built since v0.1
+**Status:** built · **Waiting:** Nick to read the draft and answer the questions · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+
+From a review of the home page on 2026-10-26. It still reads as v0.1 for one person running their
+own copy:
+
+- **The main call to action is self-hosting.** *Run it for your projects* goes to the README's
+  setup guide, while the hosted service has sign-up. Lead with *Sign in with GitHub*, worded for
+  the sign-up mode (open, approval, closed), and put self-hosting last.
+- **Most of what is built is missing:** teams (tenants, invitations, joining by GitHub access,
+  roles from GitHub permissions), Ask, Search, Activity, epics across repositories, bugs, batch
+  edits, Board drag, delivery measures, evidence on built items, the Slack digest, stalled and
+  drifting work, inferred status, setting up a new repository, mobile.
+- **Features, not outcomes**, and no word on who it is for or which agents it works with (Claude
+  Code, Codex, Cursor, anything that reads `AGENTS.md`).
+- **Trust is not answered:** what the App reads and writes, what is stored, what goes to a model
+  provider, and how to opt out.
+- **One picture.** Add the Board, Ask and *Waiting on you* when there are real screenshots.
+- **The README** has the same gaps, and still says inviting people is not built (PM7 is in PM20).
+
+**Questions for Nick:** pricing or *early access* on the page, and what it says? Links to terms and
+a privacy notice once they exist (`specs/tenants.md` §13)?
+**Nick, 2026-10-26:** none of the features above is unique; a spreadsheet or Jira gives the same
+view. The real benefit is that the backlog and the docs sit next to the code, so the current truth
+is versioned like the code, and Project Magic sees into the multi-branch backlog, reports on it and
+guides people and agents to delivery.
+
+Built (a draft, on that argument): the hero is "Your backlog belongs next to your code. Project
+Magic reads every version of it." with a GitHub sign-in worded for the sign-up mode. *Why the
+backlog lives in the repository* (versioned, branched, where the agents work, against a tracker's
+one copy kept elsewhere), *What Project Magic sees* (every branch, where versions disagree, what
+shipped), *It reports* and *It guides people and agents*, teams, how it works, what it reads, writes
+and keeps, then self-hosting. Spec Appendix F follows it. The README's status line no longer says
+invitations are missing; the rest of the README is unchanged.
+
+### PM59 An About page and a privacy policy
+**Status:** built · **Waiting:** Nick to read the privacy policy before it goes live · **Size:** S · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+
+Asked for on 2026-10-26, and needed before sign-up opens (`specs/tenants.md` §13). Decided with
+Nick: the controller is Nick Whiteley, in the UK; the contact is `contact@projectmagic.work`; the
+hosted service's models are Ollama's hosted ones; About is short and by name.
+
+Built: `/about` and `/privacy`, public, in a shared frame (`PublicPage.svelte`) with the home page,
+whose footer links About, Privacy, the source and the contact address. The policy says what is
+collected (GitHub account and encrypted token, teams, repository content, edits, feedback, the
+Slack webhook, fault records), the two cookies, the lawful bases, who else handles data (GitHub,
+Vercel, Neon in London, Ollama, a team's own Slack), transfers, how long each thing is kept (from
+the code: 14, 30 and 90 days), deleting an account, rights and the ICO, and changes. It is a draft
+written from the code, not legal advice; check the transfer safeguards each provider offers.
+
 ### PM57 Initial signup action direction
 **Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
 

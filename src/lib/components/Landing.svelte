@@ -1,40 +1,50 @@
 <script lang="ts">
+	import type { SignupMode } from '#lib/core/tenants.ts';
+	import { REPO } from '#lib/site.ts';
+	import PublicPage from './PublicPage.svelte';
 	import StatusPill from './StatusPill.svelte';
 
-	const REPO = 'https://github.com/nickwhiteley/projectmagic';
+	let { signup }: { signup: SignupMode } = $props();
+	const cta = $derived(
+		signup === 'open'
+			? {
+					label: 'Start with GitHub',
+					note: 'Sign in with GitHub, name your team, connect your repositories.'
+				}
+			: signup === 'approval'
+				? {
+						label: 'Request access with GitHub',
+						note: 'Project Magic is in early access: sign in with GitHub and name your team, and we switch it on.'
+					}
+				: {
+						label: 'Sign in with GitHub',
+						note: 'For people with a team on Project Magic, or an invitation to one.'
+					}
+	);
 </script>
 
 <svelte:head>
-	<title>Project Magic: see every project your agents are building</title>
+	<title>Project Magic: your backlog, versioned with your code</title>
 	<meta
 		name="description"
-		content="A dashboard over the backlogs, plans, branches and pull requests that AI agents keep in markdown in GitHub."
+		content="Keep the backlog, the plan and the docs in the repository, versioned and branched with the code. Project Magic reads every branch's copy across your repositories, reports what is really happening, and guides people and agents to delivery."
 	/>
 </svelte:head>
 
-<div class="page">
-	<header>
-		<a class="brand" href="/"><span class="mark">M</span><span>Project Magic</span></a>
-		<nav>
-			<a href="{REPO}#readme">Set it up</a>
-			<a href={REPO}>GitHub</a>
-			<a class="button" href="/signin">Sign in</a>
-		</nav>
-	</header>
-
+<PublicPage>
 	<section class="hero">
 		<div>
-			<h1>See every project your agents are building, without asking each one.</h1>
+			<h1>Your backlog belongs next to your code. Project Magic reads every version of it.</h1>
 			<p class="lede">
-				When AI agents build your software, they keep the backlog and the plan as markdown in each
-				repository. Project Magic reads those files, the branches and the pull requests across all
-				your repositories, and shows what is planned, what is in flight, what is done, and what is
-				waiting on you.
+				Keep the backlog, the plan and the docs as markdown in the repository, and the truth about
+				your product is versioned, branched, reviewed and merged just like the code. Project Magic
+				reads every branch’s copy across all your repositories, reports what is really happening,
+				and guides people and agents to delivery.
 			</p>
 			<p class="ctas">
-				<a class="button primary" href="{REPO}#setting-up">Run it for your projects</a>
-				<a class="button" href="#how">How it works</a>
+				<a class="button primary" href="/signin">{cta.label}</a>
 			</p>
+			<p class="note muted">{cta.note}</p>
 		</div>
 
 		<div class="sample" aria-label="An example project card">
@@ -71,30 +81,154 @@
 		</div>
 	</section>
 
-	<section class="why">
+	<section class="why" id="why">
+		<h2>Why the backlog lives in the repository</h2>
+		<p class="intro">
+			A spreadsheet or Jira can list the same items. But they hold one copy, kept somewhere else,
+			that someone has to remember to update, so it drifts from the code it describes.
+		</p>
+		<div class="grid">
+			<div>
+				<h3>Versioned with the code</h3>
+				<p>
+					Every change to an item, the plan or a doc is a commit. It has an author, a history and a
+					diff, and can be reverted. The backlog as it stood at a release is the backlog at that
+					tag.
+				</p>
+			</div>
+			<div>
+				<h3>Branched with the code</h3>
+				<p>
+					An agent claims an item and adds plan tasks on its own branch. That version of the truth
+					is reviewed in the same pull request as the work and merges with it. There is no ticket to
+					update separately, so none falls out of step.
+				</p>
+			</div>
+			<div>
+				<h3>Where the agents already work</h3>
+				<p>
+					Agents read <code>backlog.md</code> and the docs from their checkout, with no API, token or
+					integration to set up. People and agents read and write the same files.
+				</p>
+			</div>
+		</div>
+		<p class="catch">
+			The cost is that the truth is spread across repositories and branches, and no one can read it
+			all. Project Magic does.
+		</p>
+	</section>
+
+	<section class="sees" id="sees">
+		<h2>What Project Magic sees</h2>
+		<div class="grid">
+			<div>
+				<h3>Into every branch</h3>
+				<p>
+					It reads the backlog, bugs and plan on every active branch, not only on main. An item
+					marked in progress on a branch shows as in progress before anything merges, and plan tasks
+					a branch adds are counted. A branch that names no item is shown as work not in the
+					backlog.
+				</p>
+			</div>
+			<div>
+				<h3>Where the versions disagree</h3>
+				<p>
+					A backlog that says one thing and a plan that says another, a reference to a task that
+					doesn’t exist, merged work still marked in review, and work in progress with nothing
+					moving. Each is shown, never quietly resolved.
+				</p>
+			</div>
+			<div>
+				<h3>What shipped, from git</h3>
+				<p>
+					An item removed from main’s backlog is done, and the history says when and in which pull
+					request. Epics and references can span repositories, so work that depends on another
+					repository is visible from both.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section class="guides">
 		<div>
-			<h2>One place for every project</h2>
-			<p>
-				A card per repository: what is in progress and on which branch, what is in review, what is
-				blocked and why, and the plan’s next task. No more opening each repository, or asking each
-				agent, to find out where things are.
-			</p>
+			<h2>It reports</h2>
+			<ul>
+				<li>
+					An overview of every project: in flight, blocked and why, and how far the plan has got.
+				</li>
+				<li>
+					<em>Waiting on you</em>: built work with its preview, CI result and diff, to accept or
+					send back in one step, and a daily Slack digest.
+				</li>
+				<li>Delivery against each project’s own past: deployments, merged pull requests and CI.</li>
+				<li><em>Ask</em> in plain words across every backlog, plus search and an activity feed.</li>
+			</ul>
 		</div>
 		<div>
-			<h2>What is waiting on you</h2>
-			<p>
-				Agents can build and merge, but some things need a person: an acceptance check, a decision,
-				an account. Items marked <em>built</em> or <em>blocked</em> carry what they wait on, so your own
-				queue is on the front page.
-			</p>
+			<h2>It guides people and agents</h2>
+			<ul>
+				<li>
+					Each connected repository gets the conventions written into <code>AGENTS.md</code> and
+					<code>CLAUDE.md</code>, so Claude Code, Codex, Cursor and the rest know what to write.
+				</li>
+				<li>
+					A comment for the agents goes into the item and onto its open pull request, flagged for
+					the agent to act on. Agents reply in the same place.
+				</li>
+				<li>
+					When work stalls or drifts, <em>Ask the agent</em> writes the comment for you to send.
+				</li>
+				<li>
+					Edits made here, including dragging a card across the Board, are commits made as you, so
+					people change the truth the same way agents do.
+				</li>
+			</ul>
 		</div>
-		<div>
-			<h2>The files stay the record</h2>
-			<p>
-				Nothing is held anywhere else. Status comes from the backlog, the plan, branches and pull
-				requests, and an edit made here is an ordinary commit to the backlog, merged to main through
-				a pull request, as you. Agents and people read the same files.
-			</p>
+	</section>
+
+	<section class="teams">
+		<h2>For a team, not just you</h2>
+		<p>
+			Connect your organisation once. People who can see its repositories on GitHub join when they
+			sign in, and what they can do follows their GitHub permissions. Invite anyone else by their
+			GitHub login. One team can hold several organisations, and a person in several teams switches
+			between them.
+		</p>
+	</section>
+
+	<section class="ops" id="ops">
+		<h2>For the people who run it</h2>
+		<p class="intro">
+			When something goes wrong, a team’s admins see it first, with what to do. A service operations
+			team can answer “did my change save?” and “who changed that?” without opening a support
+			ticket.
+		</p>
+		<div class="grid">
+			<div>
+				<h3>Health</h3>
+				<p>
+					The team’s overview lists what has broken and how to put it right. That covers an
+					installation GitHub refuses or has suspended, a repository that has stopped syncing, edits
+					held because someone’s GitHub sign-in expired, a failing Slack digest, and projects paused
+					by the plan.
+				</p>
+			</div>
+			<div>
+				<h3>Errors your people meet</h3>
+				<p>
+					When someone’s edit fails, they are told on the item and in the project’s activity, with
+					GitHub’s reason, so no one is left wondering whether a change was saved. Edits held for a
+					person whose sign-in lapsed are named in Health, so an admin knows whom to ask.
+				</p>
+			</div>
+			<div>
+				<h3>An audit of changes</h3>
+				<p>
+					Each change a team admin makes to members, project access, installations, billing and
+					settings is recorded with who made it and when. So is every support session we open, which
+					is read-only, limited to an hour, and needs a reason.
+				</p>
+			</div>
 		</div>
 	</section>
 
@@ -102,127 +236,96 @@
 		<h2>How it works</h2>
 		<ol>
 			<li>
-				<h3>The agents follow a few conventions</h3>
+				<h3>Connect GitHub</h3>
 				<p>
-					Each backlog item is a <code>###</code> heading that starts with an id, with a status line
-					under it. Branches name the item they work on, and pull requests say what they build. A
-					block of instructions in each repository’s <code>CLAUDE.md</code> or
-					<code>AGENTS.md</code>
-					asks the agents to keep to them.
+					Sign in with GitHub, name your team, and install the Project Magic App on the account or
+					organisation, choosing the repositories to follow. A push or a pull request reaches
+					Project Magic within seconds.
+				</p>
+			</li>
+			<li>
+				<h3>Your agents keep to a few conventions</h3>
+				<p>
+					Each new repository gets a <code>backlog.md</code> and a section in
+					<code>AGENTS.md</code> and <code>CLAUDE.md</code> that tells agents what to write: an item
+					is a <code>###</code> heading with an id and a status line, and branches name the item they
+					work on.
 				</p>
 				<pre><code
-						>### OR12 Invoices as PDF — MONEY
+						>### OR12 Invoices as PDF
 **Status:** in progress · **Size:** M · **Branch:** `feat/or12-invoices`</code
 					></pre>
 			</li>
 			<li>
-				<h3>A GitHub App reads the repositories</h3>
+				<h3>You read, and decide</h3>
 				<p>
-					Install it on the repositories you want to follow. A push or a pull request reaches
-					Project Magic within seconds, and it re-reads only what changed: the branches, the backlog
-					and the plan, and the history that shows what shipped.
-				</p>
-			</li>
-			<li>
-				<h3>You read, and edit when you need to</h3>
-				<p>
-					An overview, then per project a list in priority order, a board, the plan, what is done,
-					the branches and the documents. Change an item’s status, add one, reorder or remove them;
-					each edit is a commit you made.
+					The overview shows every project and what waits on you. Accept what is built, answer what
+					is blocked, and leave the rest to the agents. An item with no status line gets one
+					proposed from its text, marked as inferred.
 				</p>
 			</li>
 		</ol>
 	</section>
 
-	<section class="setup">
-		<h2>Run it for your projects</h2>
-		<p>
-			Project Magic is open source and runs on your own accounts. You need a GitHub account, a
-			Postgres database (Neon’s free tier is enough) and somewhere to host a SvelteKit app (it is
-			set up for Vercel). Setting it up takes under an hour:
-		</p>
-		<ol class="steps">
-			<li>Register a GitHub App.</li>
-			<li>Create the database and deploy the app with its environment.</li>
-			<li>Sign in with GitHub and install the App on your repositories.</li>
-		</ol>
-		<p><a class="button primary" href="{REPO}#setting-up">Read the setup guide</a></p>
+	<section class="trust" id="trust">
+		<h2>What it reads, writes and keeps</h2>
+		<dl>
+			<dt>Reads</dt>
+			<dd>
+				Only the repositories you choose when you install the App: the backlog, the plan and the
+				docs, branches, pull requests, deployments and CI runs.
+			</dd>
+			<dt>Writes</dt>
+			<dd>
+				<p>
+					The edits you make, as you, with your own GitHub permissions, on a
+					<code>projectmagic</code> branch merged through a pull request. When a repository is first connected,
+					one pull request adds the starter files; nothing that exists is changed.
+				</p>
+				<p>
+					If your trunk branch does not allow merges from the user who created the pull request we
+					recommend a GitHub action to merge immediately. The trunk should not be allowed to get
+					stale.
+				</p>
+			</dd>
+			<dt>Keeps</dt>
+			<dd>
+				A cache of those files, which can be rebuilt from GitHub at any time, your GitHub login and
+				name, and your GitHub sign-in, encrypted.
+			</dd>
+			<dt>AI</dt>
+			<dd>
+				Ask, and the status proposed for an item with no status line, send item text to a model
+				provider. A project can turn proposals off, and each person can hide them and choose not to
+				use Ask.
+			</dd>
+		</dl>
 	</section>
 
-	<section class="setup" id="add">
-		<h2>Add a repository</h2>
-		<p>Once Project Magic is running, adding a repository takes a minute:</p>
-		<ol class="steps">
-			<li>
-				In Project Magic, open <strong>Tenant → Installations → Connect GitHub</strong> and choose
-				the repositories to follow, or use the App’s page on GitHub → <em>Configure</em> to add more to
-				an account already connected.
-			</li>
-			<li>
-				On the next sync Project Magic opens a pull request and merges it at once, adding
-				<code>backlog.md</code>, <code>bugs.md</code>, <code>.projectmagic.yml</code>,
-				<code>AGENTS.md</code> and <code>CLAUDE.md</code>. Nothing that exists is changed; the last
-				two gain a section that tells agents how to use Project Magic. An empty repository gets the
-				same files committed to its default branch.
-			</li>
-			<li>
-				Add items with <strong>Add</strong>, or ask your agents to. They follow the conventions
-				written into <code>AGENTS.md</code>.
-			</li>
-		</ol>
+	<section class="pricing">
+		<h2>Pricing</h2>
+		<p>We intend to charge for larger hosted teams, with more people and more projects.</p>
 		<p>
-			Choosing a repository in the App is consent for Project Magic to commit to it.
-			<a href="{REPO}#adding-a-repository">Details and settings</a>.
+			The Free tier allows 3 members and 3 projects. If you are hungry for more, use the feedback
+			under the user menu.
 		</p>
 	</section>
 
-	<footer class="muted">
-		<span>Project Magic</span>
-		<a href={REPO}>Source on GitHub</a>
-	</footer>
-</div>
+	<section class="setup" id="self-host">
+		<h2>Or run your own copy</h2>
+		<p>
+			Project Magic is open source. You need a GitHub App, a Postgres database (Neon’s free tier is
+			enough) and somewhere to host a SvelteKit app (it is set up for Vercel). Setting it up takes
+			under an hour.
+		</p>
+		<p>
+			<a class="button" href="{REPO}#setting-up">Read the setup guide</a>
+			<a class="button" href={REPO}>Source on GitHub</a>
+		</p>
+	</section>
+</PublicPage>
 
 <style>
-	.page {
-		max-width: 72rem;
-		margin: 0 auto;
-		padding: 0 1.5rem 3rem;
-	}
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 1.2rem 0;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-	.brand {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		font: 400 22px var(--serif);
-		text-decoration: none;
-	}
-	.mark {
-		display: grid;
-		place-items: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 6px;
-		background: var(--text);
-		color: var(--bg);
-		font: 700 19px var(--serif);
-	}
-	header nav {
-		display: flex;
-		align-items: center;
-		gap: 1.2rem;
-		font-size: 14px;
-	}
-	header nav a:not(.button) {
-		text-decoration: none;
-		color: var(--text-2);
-	}
 	.hero {
 		display: grid;
 		grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -323,17 +426,6 @@
 		font-size: 28px;
 		margin-bottom: 0.6rem;
 	}
-	.why {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 2.5rem;
-		padding: 3rem 0;
-		border-top: 1px solid var(--line);
-	}
-	.why h2 {
-		font-size: 24px;
-	}
-	.why p,
 	.how p,
 	.setup p {
 		font: 16.5px/1.65 var(--serif);
@@ -385,22 +477,94 @@
 	.setup .button {
 		font-family: var(--sans);
 	}
-	.steps {
-		font: 16.5px/1.9 var(--serif);
-		padding-left: 1.3rem;
+	.note {
+		font-size: 14px;
+		margin: 0.7rem 0 0;
 	}
-	footer {
-		display: flex;
-		justify-content: space-between;
+	.why,
+	.sees,
+	.ops,
+	.pricing,
+	.guides,
+	.teams,
+	.trust {
+		padding: 3rem 0;
 		border-top: 1px solid var(--line);
-		padding-top: 1.2rem;
-		font-size: 13px;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 2rem 2.5rem;
+		margin-top: 1.2rem;
+	}
+	.grid h3,
+	.trust dt {
+		font-size: 20px;
+		margin-bottom: 0.4rem;
+	}
+	.guides {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 2.5rem;
+	}
+	.guides ul {
+		padding-left: 1.1rem;
+		margin: 0;
+	}
+	.guides li {
+		margin-bottom: 0.6rem;
+	}
+	.pricing > *,
+	.teams > * {
+		max-width: 46rem;
+	}
+	.intro,
+	.catch {
+		max-width: 46rem;
+	}
+	.catch {
+		margin-top: 2rem;
+		font-style: italic;
+	}
+	.why p,
+	.sees p,
+	.ops p,
+	.guides li,
+	.teams p,
+	.pricing p,
+	.trust dd {
+		font: 16.5px/1.65 var(--serif);
+		color: var(--text-2);
+	}
+	.trust dl {
+		display: grid;
+		grid-template-columns: 8rem minmax(0, 1fr);
+		gap: 0.8rem 2rem;
+		max-width: 56rem;
+		margin: 1rem 0 0;
+	}
+	.trust dt {
+		font-family: var(--sans);
+		font-size: 15px;
+		font-weight: 600;
+		padding-top: 0.2rem;
+	}
+	.trust dd {
+		margin: 0;
+	}
+	.setup p .button + .button {
+		margin-left: 0.5rem;
 	}
 	@media (max-width: 900px) {
 		.hero,
-		.why,
+		.grid,
+		.guides,
 		.how ol {
 			grid-template-columns: 1fr;
+		}
+		.trust dl {
+			grid-template-columns: 1fr;
+			gap: 0.2rem;
 		}
 		.hero {
 			padding-top: 1.5rem;

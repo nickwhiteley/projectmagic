@@ -2437,6 +2437,7 @@ tenant and 404 for a project the person can't view.
 | Route | Needs | What |
 | ----- | ----- | ---- |
 | `/` | public | home page signed out; overview signed in |
+| `/about`, `/privacy` | public | About and the privacy policy (PM59), framed like the home page |
 | `/signin`, `/auth/github`, `/auth/github/callback`, `/auth/signout` | public | §11.1 |
 | `/api/github/webhook`, `/api/cron/sync` | machine | §7.4 |
 | `/api/client-error`, `/api/health` | public | §22 |
@@ -2646,56 +2647,33 @@ Newsreader optical sizes 6–72 at 400/500 and italic 400.
 
 ## Appendix F. The home page's text (§9)
 
-Header: brand; *Set it up* (`<repo>#readme`), *GitHub* (`<repo>`), *Sign in* (`/signin`), where
-`<repo>` is `https://github.com/nickwhiteley/projectmagic`. Meta description: "A dashboard over the
-backlogs, plans, branches and pull requests that AI agents keep in markdown in GitHub."
+`src/lib/components/Landing.svelte` holds the text; this is its argument, rewritten for PM58 on
+2026-10-26. **The difference from a tracker is the point**: the backlog, the plan and the docs live in
+the repository, versioned and branched with the code, and Project Magic reads every branch's copy.
 
-**Hero**: "See every project your agents are building, without asking each one." Lede: "When AI
-agents build your software, they keep the backlog and the plan as markdown in each repository.
-Project Magic reads those files, the branches and the pull requests across all your repositories,
-and shows what is planned, what is in flight, what is done, and what is waiting on you." Buttons:
-*Run it for your projects* (`<repo>#setting-up`) and *How it works* (`#how`). The sample card
-(made-up data): *Orchard*, "1 notice", "last commit 2 h ago on `feat/or12-invoices`", pills in
-progress 2, blocked 1, built 3, todo 14; "Waiting on you · 4": `OR7` Renewal reminders (built), "the
-email copy checked against the terms"; "In flight · 2": `feat/or12-invoices` → `OR12` Invoices as
-PDF, "3 ahead · PR #41 · “Number invoices per tenant”", and `spike/hosting` "not in the backlog";
-"Phase 3: billing", "6 of 9 done" and a two-thirds bar.
+- **Header:** brand; *Self-host* (`#self-host`) and *Sign in* (`/signin`). The page is short enough
+  to need no other links, and the hero has only the sign-in button.
+- **Hero:** "Your backlog belongs next to your code. Project Magic reads every version of it." The lede
+  says the truth about the product is versioned, branched, reviewed and merged like the code, and
+  that Project Magic reads every branch's copy, reports, and guides people and agents to delivery.
+  The button follows the sign-up mode (§17, tenants §8.1): *Start with GitHub* (open), *Request
+  access with GitHub* (approval), *Sign in with GitHub* (closed), each with a line under it. The
+  sample card is unchanged (made-up data, *Orchard*).
+- **Why the backlog lives in the repository** (`#why`): a spreadsheet or Jira holds one copy kept
+  elsewhere, which drifts. Three reasons: *Versioned with the code*, *Branched with the code*, *Where
+  the agents already work*. Then the catch: the truth is spread across repositories and branches,
+  and Project Magic reads it all.
+- **What Project Magic sees** (`#sees`): *Into every branch* (§7.1, §7.2 rule 3, unlinked branches),
+  *Where the versions disagree* (§7.2 disagreements and drift), *What shipped, from git* (§7.3,
+  cross-repository epics and references).
+- **It reports** (overview, *Waiting on you* with evidence and the Slack digest, delivery, Ask,
+  search, activity) and **It guides people and agents** (conventions written into `AGENTS.md` and
+  `CLAUDE.md`, comments to agents, *Ask the agent*, edits as commits made as you).
+- **For a team, not just you**: joining by GitHub access, roles from GitHub permissions, invitations,
+  several organisations, the switcher.
+- **How it works** (`#how`): *Connect GitHub*, *Your agents keep to a few conventions* (with the
+  sample item), *You read, and decide*.
+- **What it reads, writes and keeps** (`#trust`): reads, writes, keeps, AI and its opt-outs.
+- **Pricing**: the intent to charge for larger hosted teams, with more people and projects.
+- **Or run your own copy** (`#self-host`): *Read the setup guide* and *Source on GitHub*.
 
-**Three reasons**: *One place for every project* — "A card per repository: what is in progress and
-on which branch, what is in review, what is blocked and why, and the plan’s next task. No more
-opening each repository, or asking each agent, to find out where things are." *What is waiting on
-you* — "Agents can build and merge, but some things need a person: an acceptance check, a decision,
-an account. Items marked *built* or *blocked* carry what they wait on, so your own queue is on the
-front page." *The files stay the record* — "Nothing is held anywhere else. Status comes from the
-backlog, the plan, branches and pull requests, and an edit made here is an ordinary commit to the
-backlog, merged to main through a pull request, as you. Agents and people read the same files."
-
-**How it works** (`#how`): 1. *The agents follow a few conventions* — "Each backlog item is a `###`
-heading that starts with an id, with a status line under it. Branches name the item they work on,
-and pull requests say what they build. A block of instructions in each repository’s `CLAUDE.md` or
-`AGENTS.md` asks the agents to keep to them.", with the sample ``### OR12 Invoices as PDF — MONEY`` /
-``**Status:** in progress · **Size:** M · **Branch:** `feat/or12-invoices` ``. 2. *A GitHub App
-reads the repositories* — "Install it on the repositories you want to follow. A push or a pull
-request reaches Project Magic within seconds, and it re-reads only what changed: the branches, the
-backlog and the plan, and the history that shows what shipped." 3. *You read, and edit when you need
-to* — "An overview, then per project a list in priority order, a board, the plan, what is done, the
-branches and the documents. Change an item’s status, add one, reorder or remove them; each edit is a
-commit you made."
-
-**Run it for your projects**: "Project Magic is open source and runs on your own accounts. You need
-a GitHub account, a Postgres database (Neon’s free tier is enough) and somewhere to host a SvelteKit
-app (it is set up for Vercel). Setting it up takes under an hour:" 1. "Register a GitHub App." 2.
-"Create the database and deploy the app with its environment." 3. "Sign in with GitHub and install
-the App on your repositories." *Read the setup guide* (`<repo>#setting-up`).
-
-**Add a repository** (`#add`): "Once Project Magic is running, adding a repository takes a minute:"
-1. "In Project Magic, open **Tenant → Installations → Connect GitHub** and choose the repositories to
-follow, or use the App’s page on GitHub → *Configure* to add more to an account already connected."
-2. "On the next sync Project Magic opens a pull request and merges it at once, adding `backlog.md`,
-`bugs.md`, `.projectmagic.yml`, `AGENTS.md` and `CLAUDE.md`. Nothing that exists is changed; the last
-two gain a section that tells agents how to use Project Magic. An empty repository gets the same
-files committed to its default branch." 3. "Add items with **Add**, or ask your agents to. They
-follow the conventions written into `AGENTS.md`." Then "Choosing a repository in the App is consent
-for Project Magic to commit to it." and *Details and settings* (`<repo>#adding-a-repository`).
-
-Footer: "Project Magic" and *Source on GitHub*.

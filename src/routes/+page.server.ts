@@ -8,9 +8,11 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { accessCtx } from '#lib/server/tenants.ts';
 import { tenantInstallations } from '#lib/server/installations.ts';
+import { getSignup } from '#lib/server/platform.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) return { landing: true as const };
+	// Signed out: the home page, whose call to action follows the sign-up mode (PM58).
+	if (!locals.user) return { landing: true as const, signup: await getSignup() };
 	// Signed in but in no tenant yet: create one, or wait to be invited.
 	if (!locals.tenant) redirect(303, '/welcome');
 	const projects = visibleProjects(locals.user, await projectsFor(locals), accessCtx(locals));
