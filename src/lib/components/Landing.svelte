@@ -196,6 +196,42 @@
 		</p>
 	</section>
 
+	<section class="ops" id="ops">
+		<h2>For the people who run it</h2>
+		<p class="intro">
+			When something goes wrong, a team’s admins see it first, with what to do. A service operations
+			team can answer “did my change save?” and “who changed that?” without opening a support
+			ticket.
+		</p>
+		<div class="grid">
+			<div>
+				<h3>Health</h3>
+				<p>
+					The team’s overview lists what has broken and how to put it right. That covers an
+					installation GitHub refuses or has suspended, a repository that has stopped syncing, edits
+					held because someone’s GitHub sign-in expired, a failing Slack digest, and projects paused
+					by the plan.
+				</p>
+			</div>
+			<div>
+				<h3>Errors your people meet</h3>
+				<p>
+					When someone’s edit fails, they are told on the item and in the project’s activity, with
+					GitHub’s reason, so no one is left wondering whether a change was saved. Edits held for a
+					person whose sign-in lapsed are named in Health, so an admin knows whom to ask.
+				</p>
+			</div>
+			<div>
+				<h3>An audit of changes</h3>
+				<p>
+					Each change a team admin makes to members, project access, installations, billing and
+					settings is recorded with who made it and when. So is every support session we open, which
+					is read-only, limited to an hour, and needs a reason.
+				</p>
+			</div>
+		</div>
+	</section>
+
 	<section class="how" id="how">
 		<h2>How it works</h2>
 		<ol>
@@ -241,9 +277,16 @@
 			</dd>
 			<dt>Writes</dt>
 			<dd>
-				The edits you make, as you, with your own GitHub permissions, on a
-				<code>projectmagic</code> branch merged through a pull request. When a repository is first connected,
-				one pull request adds the starter files; nothing that exists is changed.
+				<p>
+					The edits you make, as you, with your own GitHub permissions, on a
+					<code>projectmagic</code> branch merged through a pull request. When a repository is first connected,
+					one pull request adds the starter files; nothing that exists is changed.
+				</p>
+				<p>
+					If your trunk branch does not allow merges from the user who created the pull request we
+					recommend a GitHub action to merge immediately. The trunk should not be allowed to get
+					stale.
+				</p>
 			</dd>
 			<dt>Keeps</dt>
 			<dd>
@@ -262,6 +305,10 @@
 	<section class="pricing">
 		<h2>Pricing</h2>
 		<p>We intend to charge for larger hosted teams, with more people and more projects.</p>
+		<p>
+			The Free tier allows 3 members and 3 projects. If you are hungry for more, use the feedback
+			under the user menu.
+		</p>
 	</section>
 
 	<section class="setup" id="self-host">
@@ -436,6 +483,7 @@
 	}
 	.why,
 	.sees,
+	.ops,
 	.pricing,
 	.guides,
 	.teams,
@@ -480,6 +528,7 @@
 	}
 	.why p,
 	.sees p,
+	.ops p,
 	.guides li,
 	.teams p,
 	.pricing p,
