@@ -24,9 +24,8 @@ commit to the backlog, made as you.
 It runs on your own accounts: a GitHub App, a Postgres database and a host for a SvelteKit app.
 [Setting up](#setting-up) takes under an hour.
 
-**Status:** v0.1, in use by its author on two projects. It is built for one person or a small
-team; the roles and permissions exist, but inviting people is not built yet
-([`backlog.md`](backlog.md), PM7).
+**Status:** in use by its author. Teams are built: tenants, invitations, and roles that follow
+GitHub permissions ([`specs/tenants.md`](specs/tenants.md), PM20).
 
 ## Contents
 

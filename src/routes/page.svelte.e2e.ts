@@ -5,7 +5,7 @@ test('signed out, the home page explains Project Magic', async ({ page }) => {
 	await expect(page.locator('h1')).toHaveText(
 		'See every project your agents are building, without asking each one.'
 	);
-	await expect(page.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/signin');
+	await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toHaveAttribute('href', '/signin');
 });
 
 test('the sign-in page starts the GitHub sign-in, and project pages need it', async ({ page }) => {
