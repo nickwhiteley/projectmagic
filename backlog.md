@@ -451,6 +451,58 @@ five items or fewer (a backlog tidy citing 25 flagged Bloomprint's F9 and C2 unt
 Bloomprint today: BP12 and BP14 merged but still in review; F9 and C2 in progress for 7 days
 with no branch.
 
+### PM49 Background failures are recorded, not only logged
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
+
+Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
+are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
+project list, inference, Ask, digest, billing reconcile, tenant purge, delivery step, set up
+repository, PR comment, pending save, GitHub roles refresh), its project or tenant, when it
+started and ended, its outcome (`ok`, `failed`, `skipped`, `capped`) and the error. One helper,
+`track(kind, scope, fn)`, wraps each place that now catches and logs, and still logs a JSON line
+with the same id. No content goes in it, only ids, counts and error messages.
+
+Places that swallow an error today: `delivery-sync.ts` (each step, and PR evidence), `sync.ts`
+(setting up a repository, status changes), `inference.ts`, `ask.ts` (and its usage write),
+`digest.ts`, `billing.ts` `reconcileAll`, `edits.ts` (`commentOnPrs`, `savePending`),
+`project-state.ts` (pending edits), the roles refresh in `hooks.server.ts`, and the claim syncs
+in `tenant/installations`. Also:
+
+- **AI**: inference stops at the first failure and says nothing about the rest; a reply that
+  `parseInference` can't read isn't counted; reaching the daily allowance is silent. Record each,
+  with the call's latency and tokens.
+- **Billing**: a reconcile failure, or a subscription the provider has no record of (skipped
+  today), also goes in `audit_log` as `billing.reconcile_failed`, beside the tier changes already
+  there.
+
+Kept for 90 days, longer than the 14 days `webhook_delivery` keeps, so last month's evidence is
+still there. Shown by PM51.
+
+Built, with `report.ts` for the sync's own modules (they run from `scripts/sync.ts` too, where a report is a log line). Also recorded: `github access`, `edit catch-up`, `webhook`. Records are kept 90 days.
+
+### PM47 The daily cron can fail without anyone knowing
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person.nickwhiteley
+
+The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
+failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
+`sync-runner.ts` still reports `'ran'`), so the cron's result calls a failed project a success.
+`syncAll()`, the pending-save loop and the `webhook_delivery` delete have no catch, so one throw
+skips billing, the tenant purge and the digest with nothing recorded. And the result exists only
+in the JSON returned to Vercel.
+
+- `syncNow()` returns `'failed'` when the run failed, and `syncAll()` counts it.
+- **Each step runs on its own** with its own catch, so a failure in one doesn't stop the rest.
+- **A `cron_run` row** records each step's outcome, duration and counts: projects synced, failed,
+  and deferred by the 40 second budget; edits saved; digests sent and failed.
+- The Operations tab (PM51) shows the last run, red when there has been none for 26 hours (a
+  removed `CRON_SECRET` or a Vercel plan change stops it silently), and lists projects deferred
+  on three runs in a row, as the budget is then too small.
+
+Built: each step runs on its own and is saved to `cron_run` as it ends, so a run that dies says how
+far it got; `syncNow()` returns `failed`; a run with a failed step answers 500 for Vercel's log. A
+failed project or digest is its own problem (PM50, PM54) rather than failing its step, so nothing is
+reported twice. Suspended installations are skipped. *Run the cron now* is on the Operations tab.
+
 ### PM41 A read-only MCP server for agents
 **Status:** todo · **Size:** M · **Type:** feature · **For:** agent
 
@@ -478,6 +530,11 @@ Follows PM39, for people who don't use Slack. Project Magic doesn't know anyone'
 today: the GitHub App needs the *Email addresses* account permission, and people re-authorise.
 Then a sending provider (Resend or Postmark), SPF and DKIM on projectmagic.work, and an
 unsubscribe link. Same content as PM39's digest.
+
+### PM30 Alternate Git suppliers
+**Status:** todo · **Size:** M–L
+
+Such as BitBucket
 
 ### PM22 Make the item form explain itself, and add Type
 **Status:** todo · **Size:** S · **Type:** feature · **For:** agent
@@ -760,11 +817,6 @@ So Nick can see what to work on, and agents can see what is theirs. Answers from
     person (`person`, or `person.<login>` when you know who).
 - **`spec.md`** §5.1 (the key) and §9 (the filter).
 
-### PM30 Alternate Git suppliers
-**Status:** todo · **Size:** M–L
-
-Such as BitBucket
-
 ### PM37 Branch switcher
 **Status:** todo · **For:** agent
 
@@ -784,29 +836,6 @@ From the critical review of 2026-10-21. Low priority: it widens the market, not 
 Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into the same status
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
-
-### PM47 The daily cron can fail without anyone knowing
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person.nickwhiteley
-
-The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
-failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
-`sync-runner.ts` still reports `'ran'`), so the cron's result calls a failed project a success.
-`syncAll()`, the pending-save loop and the `webhook_delivery` delete have no catch, so one throw
-skips billing, the tenant purge and the digest with nothing recorded. And the result exists only
-in the JSON returned to Vercel.
-
-- `syncNow()` returns `'failed'` when the run failed, and `syncAll()` counts it.
-- **Each step runs on its own** with its own catch, so a failure in one doesn't stop the rest.
-- **A `cron_run` row** records each step's outcome, duration and counts: projects synced, failed,
-  and deferred by the 40 second budget; edits saved; digests sent and failed.
-- The Operations tab (PM51) shows the last run, red when there has been none for 26 hours (a
-  removed `CRON_SECRET` or a Vercel plan change stops it silently), and lists projects deferred
-  on three runs in a row, as the budget is then too small.
-
-Built: each step runs on its own and is saved to `cron_run` as it ends, so a run that dies says how
-far it got; `syncNow()` returns `failed`; a run with a failed step answers 500 for Vercel's log. A
-failed project or digest is its own problem (PM50, PM54) rather than failing its step, so nothing is
-reported twice. Suspended installations are skipped. *Run the cron now* is on the Operations tab.
 
 ### PM48 Errors get a reference, a record and a page
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
@@ -829,35 +858,6 @@ person who hit it can't say which one it was. There is no `handleError` hook and
 Kept for 90 days. Shown by PM51.
 
 Built as written. Only SvelteKit's *unknown* errors are recorded: `error(403, …)` and 404s aren't faults. The Operations tab finds an error by the reference a person quotes.
-
-### PM49 Background failures are recorded, not only logged
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
-
-Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
-are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
-project list, inference, Ask, digest, billing reconcile, tenant purge, delivery step, set up
-repository, PR comment, pending save, GitHub roles refresh), its project or tenant, when it
-started and ended, its outcome (`ok`, `failed`, `skipped`, `capped`) and the error. One helper,
-`track(kind, scope, fn)`, wraps each place that now catches and logs, and still logs a JSON line
-with the same id. No content goes in it, only ids, counts and error messages.
-
-Places that swallow an error today: `delivery-sync.ts` (each step, and PR evidence), `sync.ts`
-(setting up a repository, status changes), `inference.ts`, `ask.ts` (and its usage write),
-`digest.ts`, `billing.ts` `reconcileAll`, `edits.ts` (`commentOnPrs`, `savePending`),
-`project-state.ts` (pending edits), the roles refresh in `hooks.server.ts`, and the claim syncs
-in `tenant/installations`. Also:
-
-- **AI**: inference stops at the first failure and says nothing about the rest; a reply that
-  `parseInference` can't read isn't counted; reaching the daily allowance is silent. Record each,
-  with the call's latency and tokens.
-- **Billing**: a reconcile failure, or a subscription the provider has no record of (skipped
-  today), also goes in `audit_log` as `billing.reconcile_failed`, beside the tier changes already
-  there.
-
-Kept for 90 days, longer than the 14 days `webhook_delivery` keeps, so last month's evidence is
-still there. Shown by PM51.
-
-Built, with `report.ts` for the sync's own modules (they run from `scripts/sync.ts` too, where a report is a log line). Also recorded: `github access`, `edit catch-up`, `webhook`. Records are kept 90 days.
 
 ### PM50 Sync history, and how long a project has been failing
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
