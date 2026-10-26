@@ -838,9 +838,15 @@ engine, so a team sees value before adopting the conventions. Inferred status (P
 starting point for a repository with none.
 
 ### PM57 Initial signup action direction
-**Status:** todo
+**Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
 
 Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
+
+Built: a tenant with no projects gets a next step on its Overview in place of an empty page. A tenant
+admin sees *Next: connect GitHub*, which explains the App and has the *Install on a GitHub account*
+button, plus a link to connect an existing installation. Once GitHub is connected, while the first
+sync runs, it says the repositories are being added. A member is told to ask a tenant admin, and a
+tenant awaiting approval says so. On Installations, *Nothing is connected yet* points to *Connect GitHub*.
 
 ### PM48 Errors get a reference, a record and a page
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley

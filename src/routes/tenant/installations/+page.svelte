@@ -47,7 +47,7 @@
 		</tbody>
 	</table>
 {:else}
-	<p class="muted">Nothing is connected yet.</p>
+	<p><strong>Nothing is connected yet.</strong> Start with <em>Connect GitHub</em> below.</p>
 {/if}
 
 {#if data.repos.length}
