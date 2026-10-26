@@ -838,7 +838,7 @@ engine, so a team sees value before adopting the conventions. Inferred status (P
 starting point for a repository with none.
 
 ### PM58 The home page sells the hosted service and what is built since v0.1
-**Status:** in progress · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+**Status:** built · **Waiting:** Nick to read the draft and answer the questions · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
 
 From a review of the home page on 2026-10-26. It still reads as v0.1 for one person running their
 own copy:
@@ -859,6 +859,11 @@ own copy:
 
 **Questions for Nick:** pricing or *early access* on the page, and what it says? Links to terms and
 a privacy notice once they exist (`specs/tenants.md` §13)?
+Built (a draft): the home page leads with a GitHub sign-in whose words follow the sign-up mode
+(*Start with GitHub*, *Request access with GitHub* or *Sign in with GitHub*). It says which agents
+it suits, has six outcome-led features, *For a team, not just you*, how it works, and *What it reads,
+writes and keeps*, with self-hosting last. Pricing, terms and new screenshots wait on the questions.
+The README's status line no longer says invitations are missing. The rest of the README is unchanged.
 
 ### PM57 Initial signup action direction
 **Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
