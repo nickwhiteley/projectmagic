@@ -6,11 +6,6 @@ Magic can read its own backlog.
 
 ## After v0.1
 
-### PM57 Initial signup action direction
-**Status:** todo
-
-Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
-
 ### PM46 In Review gets the Accept button
 **Status:** done · **Size:** S · **For:** agent
 
@@ -841,6 +836,11 @@ From the critical review of 2026-10-21. Low priority: it widens the market, not 
 Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into the same status
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
+
+### PM57 Initial signup action direction
+**Status:** todo
+
+Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
 
 ### PM48 Errors get a reference, a record and a page
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
