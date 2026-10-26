@@ -2,9 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('signed out, the home page explains Project Magic', async ({ page }) => {
 	await page.goto('/');
-	await expect(page.locator('h1')).toHaveText(
-		'Your backlog belongs next to your code. Project Magic reads every version of it.'
-	);
+	await expect(page.locator('h1')).toHaveText('One version of the truth, for software products');
 	await expect(page.getByRole('link', { name: 'Sign in', exact: true })).toHaveAttribute(
 		'href',
 		'/signin'

@@ -34,7 +34,7 @@
 <PublicPage>
 	<section class="hero">
 		<div>
-			<h1>Your backlog belongs next to your code. Project Magic reads every version of it.</h1>
+			<h1>One version of the truth, for software products</h1>
 			<p class="lede">
 				Keep the backlog, the plan and the docs as markdown in the repository, and the truth about
 				your product is versioned, branched, reviewed and merged just like the code. Project Magic
