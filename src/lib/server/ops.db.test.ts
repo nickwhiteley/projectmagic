@@ -209,6 +209,13 @@ describe.skipIf(!sql)('observability on a database', () => {
 				ok: false,
 				message: 'Which error?'
 			});
+			// A failed job's run is kept under Background work, but leaves the attention list.
+			expect(await actions.runAction('dismiss', { kind: 'digest' }, ids.user)).toEqual({
+				ok: true,
+				message: 'Dismissed 1 failure.'
+			});
+			expect(attention(await view.snapshot()).map((a) => a.key)).not.toContain('job:digest');
+			expect(await view.jobs({ kind: 'digest' })).toHaveLength(1);
 			const audit = await sql!`select action from audit_log order by id`;
 			expect(audit.map((a) => a.action)).toEqual(
 				expect.arrayContaining(['platform.ops.unstick', 'platform.ops.release'])

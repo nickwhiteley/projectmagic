@@ -20,6 +20,7 @@ export type OpsAction =
 	| 'digest'
 	| 'cron'
 	| 'resolve'
+	| 'dismiss'
 	| 'checkToken'
 	| 'projects'
 	| 'alerts'
@@ -32,6 +33,7 @@ export const OPS_ACTIONS: OpsAction[] = [
 	'digest',
 	'cron',
 	'resolve',
+	'dismiss',
 	'checkToken',
 	'projects',
 	'alerts',
@@ -65,6 +67,7 @@ function target(action: OpsAction, p: Record<string, string>): string | null {
 	if (p.tenant) return `tenant:${p.tenant}`;
 	if (p.installation) return `installation:${p.installation}`;
 	if (p.fingerprint) return `error:${p.fingerprint}`;
+	if (p.kind) return `job:${p.kind}`;
 	return action === 'cron' ? 'cron' : null;
 }
 
@@ -125,6 +128,16 @@ async function perform(
 			await db()`update error_group set resolved_at = now(), resolved_by = ${actorId}
 				where fingerprint = ${p.fingerprint}`;
 			return { ok: true, message: 'Resolved. It reopens if it happens again.' };
+		}
+		case 'dismiss': {
+			if (!p.kind) return { ok: false, message: 'Which kind of work?' };
+			// Kept under Background work; only taken off the attention list. A new failure lists it again.
+			const r = await db()`update job_run
+				set detail_json = coalesce(detail_json, '{}'::jsonb)
+					|| jsonb_build_object('dismissedAt', now(), 'dismissedBy', ${actorId}::text)
+				where kind = ${p.kind} and outcome in ('failed', 'stuck')
+					and started_at > now() - interval '1 day' and detail_json->>'dismissedAt' is null`;
+			return { ok: true, message: `Dismissed ${r.count} failure${r.count === 1 ? '' : 's'}.` };
 		}
 		case 'checkToken': {
 			const inst = id(p.installation);
