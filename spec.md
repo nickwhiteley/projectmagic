@@ -2650,8 +2650,8 @@ Newsreader optical sizes 6–72 at 400/500 and italic 400.
 2026-10-26. **The difference from a tracker is the point**: the backlog, the plan and the docs live in
 the repository, versioned and branched with the code, and Project Magic reads every branch's copy.
 
-- **Header:** brand; *Why in the repository* (`#why`), *What it sees* (`#sees`), *What it touches*
-  (`#trust`), *Self-host* (`#self-host`), *Sign in* (`/signin`).
+- **Header:** brand; *Self-host* (`#self-host`) and *Sign in* (`/signin`). The page is short enough
+  to need no other links, and the hero has only the sign-in button.
 - **Hero:** "Your backlog belongs next to your code. Project Magic reads every version of it." The lede
   says the truth about the product is versioned, branched, reviewed and merged like the code, and
   that Project Magic reads every branch's copy, reports, and guides people and agents to delivery.
@@ -2673,5 +2673,7 @@ the repository, versioned and branched with the code, and Project Magic reads ev
 - **How it works** (`#how`): *Connect GitHub*, *Your agents keep to a few conventions* (with the
   sample item), *You read, and decide*.
 - **What it reads, writes and keeps** (`#trust`): reads, writes, keeps, AI and its opt-outs.
+- **Pricing**: the intent to charge for larger hosted teams, with more people and projects; running
+  your own copy stays free.
 - **Or run your own copy** (`#self-host`): *Read the setup guide* and *Source on GitHub*.
 

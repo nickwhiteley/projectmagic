@@ -34,9 +34,6 @@
 	<header>
 		<a class="brand" href="/"><span class="mark">M</span><span>Project Magic</span></a>
 		<nav>
-			<a href="#why">Why in the repository</a>
-			<a href="#sees">What it sees</a>
-			<a href="#trust">What it touches</a>
 			<a href="#self-host">Self-host</a>
 			<a class="button" href="/signin">Sign in</a>
 		</nav>
@@ -53,7 +50,6 @@
 			</p>
 			<p class="ctas">
 				<a class="button primary" href="/signin">{cta.label}</a>
-				<a class="button" href="#how">How it works</a>
 			</p>
 			<p class="note muted">{cta.note}</p>
 		</div>
@@ -267,6 +263,14 @@
 				provider. A project can turn proposals off, and each person can turn AI off for themselves.
 			</dd>
 		</dl>
+	</section>
+
+	<section class="pricing">
+		<h2>Pricing</h2>
+		<p>
+			We intend to charge for larger hosted teams, with more people and more projects. Running your
+			own copy stays free.
+		</p>
 	</section>
 
 	<section class="setup" id="self-host">
@@ -493,6 +497,7 @@
 	}
 	.why,
 	.sees,
+	.pricing,
 	.guides,
 	.teams,
 	.trust {
@@ -522,6 +527,7 @@
 	.guides li {
 		margin-bottom: 0.6rem;
 	}
+	.pricing > *,
 	.teams > * {
 		max-width: 46rem;
 	}
@@ -537,6 +543,7 @@
 	.sees p,
 	.guides li,
 	.teams p,
+	.pricing p,
 	.trust dd {
 		font: 16.5px/1.65 var(--serif);
 		color: var(--text-2);
