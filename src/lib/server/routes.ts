@@ -61,6 +61,8 @@ export const ROUTES: Record<string, RouteAccess> = {
 	'/admin/ops/jobs': { kind: 'platform', action: 'platform.tenants' },
 	'/admin/ops/webhooks': { kind: 'platform', action: 'platform.tenants' },
 	'/admin/ops/project/[id]': { kind: 'platform', action: 'platform.tenants' },
+	'/about': { kind: 'public' },
+	'/privacy': { kind: 'public' },
 	'/signin': { kind: 'public' },
 	'/auth/github': { kind: 'public' },
 	'/auth/github/callback': { kind: 'public' },

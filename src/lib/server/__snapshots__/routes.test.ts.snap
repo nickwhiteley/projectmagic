@@ -3,6 +3,7 @@
 exports[`every route has an access rule (spec §11.2) > lists what each route checks 1`] = `
 {
   "/": "public",
+  "/about": "public",
   "/activity": "signed-in",
   "/admin": "platform: platform.tenants",
   "/admin/audit": "platform: platform.tenants",
@@ -47,6 +48,7 @@ exports[`every route has an access rule (spec §11.2) > lists what each route ch
   "/p/[repo]/plan": "project: view",
   "/p/[repo]/raw/[...path]": "project: view",
   "/p/[repo]/sync": "project: view",
+  "/privacy": "public",
   "/search": "signed-in",
   "/settings": "signed-in",
   "/settings/ai": "signed-in",

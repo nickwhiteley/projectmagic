@@ -872,6 +872,21 @@ shipped), *It reports* and *It guides people and agents*, teams, how it works, w
 and keeps, then self-hosting. Spec Appendix F follows it. The README's status line no longer says
 invitations are missing; the rest of the README is unchanged.
 
+### PM59 An About page and a privacy policy
+**Status:** built · **Waiting:** Nick to read the privacy policy before it goes live · **Size:** S · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+
+Asked for on 2026-10-26, and needed before sign-up opens (`specs/tenants.md` §13). Decided with
+Nick: the controller is Nick Whiteley, in the UK; the contact is `contact@projectmagic.work`; the
+hosted service's models are Ollama's hosted ones; About is short and by name.
+
+Built: `/about` and `/privacy`, public, in a shared frame (`PublicPage.svelte`) with the home page,
+whose footer links About, Privacy, the source and the contact address. The policy says what is
+collected (GitHub account and encrypted token, teams, repository content, edits, feedback, the
+Slack webhook, fault records), the two cookies, the lawful bases, who else handles data (GitHub,
+Vercel, Neon in London, Ollama, a team's own Slack), transfers, how long each thing is kept (from
+the code: 14, 30 and 90 days), deleting an account, rights and the ICO, and changes. It is a draft
+written from the code, not legal advice; check the transfer safeguards each provider offers.
+
 ### PM57 Initial signup action direction
 **Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
 

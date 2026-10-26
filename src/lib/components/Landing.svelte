@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { SignupMode } from '#lib/core/tenants.ts';
+	import { REPO } from '#lib/site.ts';
+	import PublicPage from './PublicPage.svelte';
 	import StatusPill from './StatusPill.svelte';
 
 	let { signup }: { signup: SignupMode } = $props();
-	const REPO = 'https://github.com/nickwhiteley/projectmagic';
 	const cta = $derived(
 		signup === 'open'
 			? {
@@ -30,15 +31,7 @@
 	/>
 </svelte:head>
 
-<div class="page">
-	<header>
-		<a class="brand" href="/"><span class="mark">M</span><span>Project Magic</span></a>
-		<nav>
-			<a href="#self-host">Self-host</a>
-			<a class="button" href="/signin">Sign in</a>
-		</nav>
-	</header>
-
+<PublicPage>
 	<section class="hero">
 		<div>
 			<h1>Your backlog belongs next to your code. Project Magic reads every version of it.</h1>
@@ -260,7 +253,8 @@
 			<dt>AI</dt>
 			<dd>
 				Ask, and the status proposed for an item with no status line, send item text to a model
-				provider. A project can turn proposals off, and each person can turn AI off for themselves.
+				provider. A project can turn proposals off, and each person can hide them and choose not to
+				use Ask.
 			</dd>
 		</dl>
 	</section>
@@ -282,54 +276,9 @@
 			<a class="button" href={REPO}>Source on GitHub</a>
 		</p>
 	</section>
-
-	<footer class="muted">
-		<span>Project Magic</span>
-		<a href={REPO}>Source on GitHub</a>
-	</footer>
-</div>
+</PublicPage>
 
 <style>
-	.page {
-		max-width: 72rem;
-		margin: 0 auto;
-		padding: 0 1.5rem 3rem;
-	}
-	header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 1.2rem 0;
-		gap: 1rem;
-		flex-wrap: wrap;
-	}
-	.brand {
-		display: flex;
-		align-items: center;
-		gap: 0.55rem;
-		font: 400 22px var(--serif);
-		text-decoration: none;
-	}
-	.mark {
-		display: grid;
-		place-items: center;
-		width: 30px;
-		height: 30px;
-		border-radius: 6px;
-		background: var(--text);
-		color: var(--bg);
-		font: 700 19px var(--serif);
-	}
-	header nav {
-		display: flex;
-		align-items: center;
-		gap: 1.2rem;
-		font-size: 14px;
-	}
-	header nav a:not(.button) {
-		text-decoration: none;
-		color: var(--text-2);
-	}
 	.hero {
 		display: grid;
 		grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
@@ -480,13 +429,6 @@
 	}
 	.setup .button {
 		font-family: var(--sans);
-	}
-	footer {
-		display: flex;
-		justify-content: space-between;
-		border-top: 1px solid var(--line);
-		padding-top: 1.2rem;
-		font-size: 13px;
 	}
 	.note {
 		font-size: 14px;
