@@ -6,17 +6,6 @@ Magic can read its own backlog.
 
 ## After v0.1
 
-### PM57 Initial signup action direction
-**Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
-
-Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
-
-Built: a tenant with no projects gets a next step on its Overview in place of an empty page. A tenant
-admin sees *Next: connect GitHub*, which explains the App and has the *Install on a GitHub account*
-button, plus a link to connect an existing installation. Once GitHub is connected, while the first
-sync runs, it says the repositories are being added. A member is told to ask a tenant admin, and a
-tenant awaiting approval says so. On Installations, *Nothing is connected yet* points to *Connect GitHub*.
-
 ### PM46 In Review gets the Accept button
 **Status:** done · **Size:** S · **For:** agent
 
@@ -463,7 +452,7 @@ Bloomprint today: BP12 and BP14 merged but still in review; F9 and C2 in progres
 with no branch.
 
 ### PM49 Background failures are recorded, not only logged
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person
 
 Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
 are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
@@ -492,7 +481,7 @@ still there. Shown by PM51.
 Built, with `report.ts` for the sync's own modules (they run from `scripts/sync.ts` too, where a report is a log line). Also recorded: `github access`, `edit catch-up`, `webhook`. Records are kept 90 days.
 
 ### PM47 The daily cron can fail without anyone knowing
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person
 
 The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
 failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
@@ -847,6 +836,17 @@ From the critical review of 2026-10-21. Low priority: it widens the market, not 
 Read a Backlog.md folder, Spec Kit or Kiro `tasks.md`, and GitHub Issues into the same status
 engine, so a team sees value before adopting the conventions. Inferred status (PM3) is the
 starting point for a repository with none.
+
+### PM57 Initial signup action direction
+**Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
+
+Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
+
+Built: a tenant with no projects gets a next step on its Overview in place of an empty page. A tenant
+admin sees *Next: connect GitHub*, which explains the App and has the *Install on a GitHub account*
+button, plus a link to connect an existing installation. Once GitHub is connected, while the first
+sync runs, it says the repositories are being added. A member is told to ask a tenant admin, and a
+tenant awaiting approval says so. On Installations, *Nothing is connected yet* points to *Connect GitHub*.
 
 ### PM48 Errors get a reference, a record and a page
 **Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
