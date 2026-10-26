@@ -452,7 +452,7 @@ Bloomprint today: BP12 and BP14 merged but still in review; F9 and C2 in progres
 with no branch.
 
 ### PM49 Background failures are recorded, not only logged
-**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** M · **Type:** feature · **Epic:** EP2 · **For:** person
 
 Most work happens after the response, in `waitUntil` or the cron, and about 30 of its failures
 are only `console.error` lines. A `job_run` table records each background task: its kind (sync,
@@ -481,7 +481,7 @@ still there. Shown by PM51.
 Built, with `report.ts` for the sync's own modules (they run from `scripts/sync.ts` too, where a report is a log line). Also recorded: `github access`, `edit catch-up`, `webhook`. Records are kept 90 days.
 
 ### PM47 The daily cron can fail without anyone knowing
-**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person.nickwhiteley
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** bug · **Epic:** EP2 · **For:** person
 
 The cron (`api/cron/sync`) is the backstop for missed webhooks, and three things hide its
 failures. `syncNow()` returns `'ran'` when the sync failed (`runOnce` returns null, and
