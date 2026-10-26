@@ -859,11 +859,18 @@ own copy:
 
 **Questions for Nick:** pricing or *early access* on the page, and what it says? Links to terms and
 a privacy notice once they exist (`specs/tenants.md` §13)?
-Built (a draft): the home page leads with a GitHub sign-in whose words follow the sign-up mode
-(*Start with GitHub*, *Request access with GitHub* or *Sign in with GitHub*). It says which agents
-it suits, has six outcome-led features, *For a team, not just you*, how it works, and *What it reads,
-writes and keeps*, with self-hosting last. Pricing, terms and new screenshots wait on the questions.
-The README's status line no longer says invitations are missing. The rest of the README is unchanged.
+**Nick, 2026-10-26:** none of the features above is unique; a spreadsheet or Jira gives the same
+view. The real benefit is that the backlog and the docs sit next to the code, so the current truth
+is versioned like the code, and Project Magic sees into the multi-branch backlog, reports on it and
+guides people and agents to delivery.
+
+Built (a draft, on that argument): the hero is "Your backlog belongs next to your code. Project
+Magic reads every version of it." with a GitHub sign-in worded for the sign-up mode. *Why the
+backlog lives in the repository* (versioned, branched, where the agents work, against a tracker's
+one copy kept elsewhere), *What Project Magic sees* (every branch, where versions disagree, what
+shipped), *It reports* and *It guides people and agents*, teams, how it works, what it reads, writes
+and keeps, then self-hosting. Spec Appendix F follows it. The README's status line no longer says
+invitations are missing; the rest of the README is unchanged.
 
 ### PM57 Initial signup action direction
 **Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
