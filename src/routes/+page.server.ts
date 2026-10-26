@@ -7,6 +7,7 @@ import { revalidate } from '#lib/server/sync-runner.ts';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { accessCtx } from '#lib/server/tenants.ts';
+import { tenantInstallations } from '#lib/server/installations.ts';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) return { landing: true as const };
@@ -29,5 +30,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 			delivery: lines[i]
 		}))
 		.sort((a, b) => Number(b.hasBacklog) - Number(a.hasBacklog));
-	return { landing: false as const, cards, now: Date.now() };
+	// No projects yet (PM57): say what to do next, which depends on how far the tenant has got.
+	const t = locals.tenant;
+	const start = cards.length
+		? null
+		: {
+				pending: t.status === 'pending',
+				admin: t.role === 'admin',
+				connected: (await tenantInstallations(t.id)).length > 0
+			};
+	return { landing: false as const, cards, start, now: Date.now() };
 };

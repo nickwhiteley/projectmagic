@@ -11,6 +11,7 @@
 	}: {
 		data: {
 			cards: (Summary & { canEdit: boolean; delivery: ReturnType<typeof cardLine> | null })[];
+			start: { pending: boolean; admin: boolean; connected: boolean } | null;
 			now: number;
 		};
 	} = $props();
@@ -32,6 +33,44 @@
 		<strong>{waiting} waiting on you</strong>
 	</p>
 </div>
+
+{#if data.start}
+	<section class="panel start">
+		{#if data.start.pending}
+			<h2>Waiting for approval</h2>
+			<p>
+				This tenant is waiting for a Project Magic administrator to approve it. Once it is approved,
+				you can connect GitHub here.
+			</p>
+		{:else if data.start.connected}
+			<h2>Adding your repositories</h2>
+			<p>
+				GitHub is connected. Its repositories appear here once their first sync has finished, which
+				usually takes a minute. If none appear, check which repositories the App can see on
+				<a href="/tenant/installations">Installations</a>.
+			</p>
+		{:else if data.start.admin}
+			<h2>Next: connect GitHub</h2>
+			<p>
+				Project Magic reads your projects from GitHub. Install the Project Magic App on your own
+				account or on an organisation you own, and choose the repositories it can see. GitHub then
+				brings you back here.
+			</p>
+			<form method="POST" action="/tenant/installations/connect">
+				<button class="button primary">Install on a GitHub account</button>
+			</form>
+			<p class="muted small">
+				Already installed it? <a href="/tenant/installations">Connect an existing installation</a>.
+			</p>
+		{:else}
+			<h2>No projects yet</h2>
+			<p>
+				This tenant has not connected GitHub yet. Only a tenant admin can do that, so ask one of
+				them.
+			</p>
+		{/if}
+	</section>
+{/if}
 
 <div class="cards">
 	{#each tracked as c (c.repo)}
@@ -187,6 +226,9 @@
 {/if}
 
 <style>
+	.start {
+		max-width: 40rem;
+	}
 	.delivery {
 		margin: 0.4rem 0 0;
 		color: var(--muted);
