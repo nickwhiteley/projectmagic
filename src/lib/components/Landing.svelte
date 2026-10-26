@@ -23,10 +23,10 @@
 </script>
 
 <svelte:head>
-	<title>Project Magic: see every project your agents are building</title>
+	<title>Project Magic: your backlog, versioned with your code</title>
 	<meta
 		name="description"
-		content="One view over the backlogs, plans, branches and pull requests your AI agents keep in GitHub: what is in flight, what has stalled, and what is waiting on you."
+		content="Keep the backlog, the plan and the docs in the repository, versioned and branched with the code. Project Magic reads every branch's copy across your repositories, reports what is really happening, and guides people and agents to delivery."
 	/>
 </svelte:head>
 
@@ -34,7 +34,8 @@
 	<header>
 		<a class="brand" href="/"><span class="mark">M</span><span>Project Magic</span></a>
 		<nav>
-			<a href="#features">Features</a>
+			<a href="#why">Why in the repository</a>
+			<a href="#sees">What it sees</a>
 			<a href="#trust">What it touches</a>
 			<a href="#self-host">Self-host</a>
 			<a class="button" href="/signin">Sign in</a>
@@ -43,22 +44,18 @@
 
 	<section class="hero">
 		<div>
-			<h1>See every project your agents are building, without asking each one.</h1>
+			<h1>Your backlog belongs next to your code. Project Magic reads every version of it.</h1>
 			<p class="lede">
-				When AI agents build your software, the backlog and the plan live as markdown in each
-				repository. Project Magic reads them, with the branches and pull requests, across every
-				repository you choose, and shows what is planned, what is in flight, what has stalled, and
-				what is waiting on you.
+				Keep the backlog, the plan and the docs as markdown in the repository, and the truth about
+				your product is versioned, branched, reviewed and merged just like the code. Project Magic
+				reads every branch’s copy across all your repositories, reports what is really happening,
+				and guides people and agents to delivery.
 			</p>
 			<p class="ctas">
 				<a class="button primary" href="/signin">{cta.label}</a>
 				<a class="button" href="#how">How it works</a>
 			</p>
 			<p class="note muted">{cta.note}</p>
-			<p class="agents muted">
-				For anyone running several repositories with Claude Code, Codex, Cursor or any agent that
-				reads <code>AGENTS.md</code>.
-			</p>
 		</div>
 
 		<div class="sample" aria-label="An example project card">
@@ -95,75 +92,119 @@
 		</div>
 	</section>
 
-	<section class="features" id="features">
-		<h2>What you get</h2>
+	<section class="why" id="why">
+		<h2>Why the backlog lives in the repository</h2>
+		<p class="intro">
+			A spreadsheet or Jira can list the same items. But they hold one copy, kept somewhere else,
+			that someone has to remember to update, so it drifts from the code it describes.
+		</p>
 		<div class="grid">
 			<div>
-				<h3>Know where everything is</h3>
+				<h3>Versioned with the code</h3>
 				<p>
-					A card per repository: what is in progress and on which branch, what is in review, what is
-					blocked and why, and how far the plan has got. A Board, a list in priority order and the
-					plan for each project, and an Activity feed of the last two weeks across all of them.
+					Every change to an item, the plan or a doc is a commit. It has an author, a history and a
+					diff, and can be reverted. The backlog as it stood at a release is the backlog at that
+					tag.
 				</p>
 			</div>
 			<div>
-				<h3>Accept finished work in one step</h3>
+				<h3>Branched with the code</h3>
 				<p>
-					Built items wait on you with their evidence beside them: the preview deployment, the CI
-					result, the size of the diff and the acceptance criteria. <em>Accept</em> or
-					<em>Send back</em> with a comment, and get a daily Slack digest of what is waiting.
+					An agent claims an item and adds plan tasks on its own branch. That version of the truth
+					is reviewed in the same pull request as the work and merges with it. There is no ticket to
+					update separately, so none falls out of step.
 				</p>
 			</div>
 			<div>
-				<h3>Catch work that has stalled or drifted</h3>
+				<h3>Where the agents already work</h3>
 				<p>
-					Items in progress with nothing moving, merged work still marked in review, and a plan that
-					disagrees with the backlog are flagged, never silently resolved. <em>Ask the agent</em> writes
-					the comment for you to send.
+					Agents read <code>backlog.md</code> and the docs from their checkout, with no API, token or
+					integration to set up. People and agents read and write the same files.
+				</p>
+			</div>
+		</div>
+		<p class="catch">
+			The cost is that the truth is spread across repositories and branches, and no one can read it
+			all. Project Magic does.
+		</p>
+	</section>
+
+	<section class="sees" id="sees">
+		<h2>What Project Magic sees</h2>
+		<div class="grid">
+			<div>
+				<h3>Into every branch</h3>
+				<p>
+					It reads the backlog, bugs and plan on every active branch, not only on main. An item
+					marked in progress on a branch shows as in progress before anything merges, and plan tasks
+					a branch adds are counted. A branch that names no item is shown as work not in the
+					backlog.
 				</p>
 			</div>
 			<div>
-				<h3>Ask across every project</h3>
+				<h3>Where the versions disagree</h3>
 				<p>
-					“What is blocked on me?” “What shipped this week?” Ask in plain words and get an answer
-					from the backlogs, linking to the items, or search every item at once.
+					A backlog that says one thing and a plan that says another, a reference to a task that
+					doesn’t exist, merged work still marked in review, and work in progress with nothing
+					moving. Each is shown, never quietly resolved.
 				</p>
 			</div>
 			<div>
-				<h3>Plan across repositories</h3>
+				<h3>What shipped, from git</h3>
 				<p>
-					Epics that group items in several repositories, bugs in their own lane, and how each
-					project delivers against its own past: deployments, merged pull requests and CI.
-				</p>
-			</div>
-			<div>
-				<h3>Edit without leaving git</h3>
-				<p>
-					Add, change, reorder or remove items, or drag a card across the Board. Each edit is an
-					ordinary commit to the backlog, made as you, and several can be saved as one.
+					An item removed from main’s backlog is done, and the history says when and in which pull
+					request. Epics and references can span repositories, so work that depends on another
+					repository is visible from both.
 				</p>
 			</div>
 		</div>
 	</section>
 
+	<section class="guides">
+		<div>
+			<h2>It reports</h2>
+			<ul>
+				<li>
+					An overview of every project: in flight, blocked and why, and how far the plan has got.
+				</li>
+				<li>
+					<em>Waiting on you</em>: built work with its preview, CI result and diff, to accept or
+					send back in one step, and a daily Slack digest.
+				</li>
+				<li>Delivery against each project’s own past: deployments, merged pull requests and CI.</li>
+				<li><em>Ask</em> in plain words across every backlog, plus search and an activity feed.</li>
+			</ul>
+		</div>
+		<div>
+			<h2>It guides people and agents</h2>
+			<ul>
+				<li>
+					Each connected repository gets the conventions written into <code>AGENTS.md</code> and
+					<code>CLAUDE.md</code>, so Claude Code, Codex, Cursor and the rest know what to write.
+				</li>
+				<li>
+					A comment for the agents goes into the item and onto its open pull request, flagged for
+					the agent to act on. Agents reply in the same place.
+				</li>
+				<li>
+					When work stalls or drifts, <em>Ask the agent</em> writes the comment for you to send.
+				</li>
+				<li>
+					Edits made here, including dragging a card across the Board, are commits made as you, so
+					people change the truth the same way agents do.
+				</li>
+			</ul>
+		</div>
+	</section>
+
 	<section class="teams">
-		<div>
-			<h2>For a team, not just you</h2>
-			<p>
-				Connect your organisation once. People who can see its repositories on GitHub join when they
-				sign in, and what they can do follows their GitHub permissions: read, edit or maintain.
-				Invite anyone else by their GitHub login. One team can hold several organisations, and a
-				person in several teams switches between them.
-			</p>
-		</div>
-		<div>
-			<h2>The files stay the record</h2>
-			<p>
-				Status comes from the backlog, the plan, branches and pull requests, not from a second
-				database to keep in step. Agents and people read and write the same files, and if you stop
-				using Project Magic, your backlog is still in your repositories.
-			</p>
-		</div>
+		<h2>For a team, not just you</h2>
+		<p>
+			Connect your organisation once. People who can see its repositories on GitHub join when they
+			sign in, and what they can do follows their GitHub permissions. Invite anyone else by their
+			GitHub login. One team can hold several organisations, and a person in several teams switches
+			between them.
+		</p>
 	</section>
 
 	<section class="how" id="how">
@@ -450,11 +491,9 @@
 		font-size: 14px;
 		margin: 0.7rem 0 0;
 	}
-	.agents {
-		font-size: 14px;
-		margin: 1.2rem 0 0;
-	}
-	.features,
+	.why,
+	.sees,
+	.guides,
 	.teams,
 	.trust {
 		padding: 3rem 0;
@@ -471,12 +510,32 @@
 		font-size: 20px;
 		margin-bottom: 0.4rem;
 	}
-	.teams {
+	.guides {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 2.5rem;
 	}
-	.features p,
+	.guides ul {
+		padding-left: 1.1rem;
+		margin: 0;
+	}
+	.guides li {
+		margin-bottom: 0.6rem;
+	}
+	.teams > * {
+		max-width: 46rem;
+	}
+	.intro,
+	.catch {
+		max-width: 46rem;
+	}
+	.catch {
+		margin-top: 2rem;
+		font-style: italic;
+	}
+	.why p,
+	.sees p,
+	.guides li,
 	.teams p,
 	.trust dd {
 		font: 16.5px/1.65 var(--serif);
@@ -504,7 +563,7 @@
 	@media (max-width: 900px) {
 		.hero,
 		.grid,
-		.teams,
+		.guides,
 		.how ol {
 			grid-template-columns: 1fr;
 		}
