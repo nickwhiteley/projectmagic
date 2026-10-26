@@ -80,6 +80,45 @@ async function refreshed(userId: string): Promise<string> {
 		});
 }
 
+const RETRY_MS = 1000;
+
+/** GitHub can refuse an access token before it expires (one just issued, before it reaches every
+ * GitHub server, or one revoked while another instance had it cached), so a 401 drops the cached
+ * token and, after a moment, the call is made once more with a fresh one. A second 401 means
+ * GitHub no longer accepts this sign-in: only a new one mends that. */
+async function retried<T>(
+	userId: string,
+	go: () => Promise<T>,
+	refused: (r: T) => boolean
+): Promise<T> {
+	for (let attempt = 0; ; attempt++) {
+		try {
+			const r = await go();
+			if (!refused(r)) return r;
+		} catch (e) {
+			if (!(e instanceof GitHubError && e.status === 401)) throw e;
+		}
+		access.delete(userId);
+		if (attempt) {
+			await noteRefresh(userId, 'GitHub refused a fresh access token (401)');
+			throw new ReauthRequired();
+		}
+		await new Promise((r) => setTimeout(r, RETRY_MS));
+	}
+}
+
 export function userClient(userId: string): GitHubClient {
-	return tokenClient(() => accessToken(userId), `user:${userId}`);
+	const c = tokenClient(() => accessToken(userId), `user:${userId}`);
+	const no = () => false;
+	return {
+		graphql: <T>(query: string, variables?: Record<string, unknown>) =>
+			retried(userId, () => c.graphql<T>(query, variables), no),
+		rest: <T>(path: string) => retried(userId, () => c.rest<T>(path), no),
+		send: <T>(method: string, path: string, body?: unknown) =>
+			retried(
+				userId,
+				() => c.send<T>(method, path, body),
+				(r) => r.status === 401
+			)
+	};
 }
