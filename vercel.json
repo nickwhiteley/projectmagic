@@ -1,5 +1,5 @@
 {
 	"crons": [{ "path": "/api/cron/sync", "schedule": "0 5 * * *" }],
 	"git": { "deploymentEnabled": { "projectmagic": false } },
-	"ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- ':(top)' ':(top,exclude)backlog.md'"
+	"ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- ':(top)' ':(top,exclude)backlog.md' || exit 1"
 }

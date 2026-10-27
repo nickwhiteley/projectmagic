@@ -1127,3 +1127,13 @@ Left from PM63; until they move, the PR review's H003 check fails on them.
   Node 24, and the Vercel adapter takes the function runtime from the build's Node. Types for 26
   would let code use APIs that production doesn't have. Moving means running on Node 26: the
   project's Node version in Vercel, `node-version` in CI, then the types.
+### PM62 A Feedback button in the header
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** agent
+
+Asked for on 2026-10-27, as part of pre-launch. Feedback sits in the user menu, where nobody will
+find it. A *Feedback* button goes in the header, beside the user menu, opening the same dialog;
+the menu item stays too.
+
+Built: the header shows *Feedback* beside the user menu, opening the same dialog as the menu
+item. On a phone the project picker shrinks to make room, so the name stays on one line, and below
+about 360px the picker gets its own row. Seen in light, dark, at 390px and at 320px.
