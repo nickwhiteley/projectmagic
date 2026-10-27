@@ -103,7 +103,8 @@
 					/>
 				</form>
 				<div class="who">
-					<FeedbackButton bind:this={feedback} trigger={false} />
+					<!-- In the header for pre-launch (PM62), and in the user menu as well. -->
+					<FeedbackButton bind:this={feedback} />
 					<div class="usermenu">
 						<button
 							type="button"
@@ -459,14 +460,15 @@
 		header form[role='search'] {
 			display: none;
 		}
+		/* The picker takes what Feedback and the user menu leave, so the name stays on one line. */
 		.project-select {
 			display: block;
-			flex: 0 0 calc(50% - 0.25rem);
+			flex: 1 1 8rem;
 			width: auto;
 			min-width: 0;
 		}
 		header {
-			flex: 1 1 0;
+			flex: 0 0 auto;
 			min-width: 0;
 			position: static;
 			padding: 0;
@@ -476,6 +478,7 @@
 		}
 		.who {
 			gap: 0.5rem;
+			white-space: nowrap;
 		}
 		.notice {
 			flex: 1 1 100%;

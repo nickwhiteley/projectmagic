@@ -1103,8 +1103,12 @@ copy (`closed`) and an `open` service read as before. Seen in light, dark and at
 a database at each mode.
 
 ### PM62 A Feedback button in the header
-**Status:** in progress · **Branch:** feat/pm62-feedback-header · **Size:** S · **Type:** feature · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** feature · **For:** agent
 
 Asked for on 2026-10-27, as part of pre-launch. Feedback sits in the user menu, where nobody will
 find it. A *Feedback* button goes in the header, beside the user menu, opening the same dialog;
 the menu item stays too.
+
+Built: the header shows *Feedback* beside the user menu, opening the same dialog as the menu
+item. On a phone the project picker shrinks to make room, so the name stays on one line, and below
+about 360px the picker gets its own row. Seen in light, dark, at 390px and at 320px.
