@@ -17,10 +17,14 @@
 		(async () => {
 			const { default: mermaid } = await import('mermaid');
 			const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+			// Mermaid 12's default look adds shadows and squared edges; classic with dagre draws as 11
+			// did, flat and bordered like the rest of the page (PM63).
 			mermaid.initialize({
 				startOnLoad: false,
 				securityLevel: 'strict',
-				theme: dark ? 'dark' : 'neutral'
+				theme: dark ? 'dark' : 'neutral',
+				look: 'classic',
+				layout: 'dagre'
 			});
 			let n = 0;
 			for (const code of blocks) {
