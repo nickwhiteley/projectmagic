@@ -19,7 +19,7 @@
 			<p class="muted small">
 				This instance is for the people its owner has invited. To follow your own projects, run your
 				own:
-				<a href="https://github.com/nickwhiteley/projectmagic#setting-up">the setup guide</a>.
+				<a href="https://github.com/seethespark/projectmagic#setting-up">the setup guide</a>.
 			</p>
 		{/if}
 	</div>

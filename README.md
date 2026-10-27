@@ -102,7 +102,7 @@ You need:
 ### 1. Get the code
 
 ```sh
-git clone https://github.com/nickwhiteley/projectmagic.git
+git clone https://github.com/seethespark/projectmagic.git
 cd projectmagic
 npm ci
 cp .env.example .env
@@ -260,6 +260,10 @@ make test       # unit tests, type check and lint
 make test-e2e   # Playwright
 make build      # a production build
 ```
+
+On GitHub, `.github/workflows/ci.yml` runs all of these on every pull request and push to main,
+the database tests included, and `pr-review.yml` reviews every pull request with
+[pr-reviewer](https://github.com/seethespark/pr-reviewer), configured in `PR-REVIEW.md`.
 
 SvelteKit 3 with Svelte 5 and TypeScript, Vitest and Playwright, Postgres through `postgres`, and
 the markdown parsed with remark. The unit tests run against real backlogs and plans, frozen in

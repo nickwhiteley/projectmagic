@@ -1069,3 +1069,22 @@ loses features quietly.
 Built: `/api/health` is 503 when the database is down, a migration isn't applied or the cron has
 stopped. The migrations a build ships are listed at build time, as the files aren't deployed.
 
+### PM60 CI: tests and an automated review on every pull request
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** chore · **For:** agent
+
+Nothing runs the tests but the person who remembers to. Add GitHub Actions, as bloomprint has:
+
+- **CI** (`.github/workflows/ci.yml`) on every push to main and pull request: lint, type check,
+  the unit tests with Postgres so the `*.db.test.ts` and tenancy suites run rather than skip, a
+  production build, and the Playwright suite.
+- **PR review** (`.github/workflows/pr-review.yml`) by
+  [pr-reviewer](https://github.com/seethespark/pr-reviewer), configured in `PR-REVIEW.md`. A
+  verified critical or high finding fails the check.
+- Project Magic's own backlog edits arrive on a branch named `projectmagic` and change only the
+  backlog, so neither workflow runs for them.
+
+Needs the `OLLAMA_API_KEY` secret on the repository for the review.
+
+Built: CI runs with placeholder values for the variables `src/env.ts` requires, since sync, build
+and server imports all validate them; none reaches a real service. With Postgres 17 as a service,
+all 606 unit tests run and none skip.

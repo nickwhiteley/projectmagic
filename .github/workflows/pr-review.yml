@@ -1,0 +1,62 @@
+# Automated review of every pull request into main, by seethespark/pr-reviewer (PM60).
+#
+# What it reviews and how hard is configured in PR-REVIEW.md at the repository root, not here: the
+# agents, the deterministic hygiene checks, and the context the agents are given about what this
+# repository is. A non-zero exit fails the check, which happens when a verified finding is critical
+# or high severity.
+#
+# Configure once, in the repository's settings:
+#   secret   OLLAMA_API_KEY   the key for the model the review runs on
+name: PR Quality Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    # Only PRs into main; PRs between feature branches are not reviewed.
+    branches: [main]
+
+permissions:
+  contents: read
+  # The review is posted as a comment per agent, plus inline comments on the lines findings map to,
+  # so write on pull-requests is required.
+  pull-requests: write
+
+jobs:
+  review:
+    name: Automated PR review
+    # Project Magic's backlog edits arrive on a branch named projectmagic and are not reviewed.
+    # A job skipped by `if` reports success, so it never blocks a required check.
+    if: github.head_ref != 'projectmagic'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history: the tool diffs base against head itself.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      # Pinned, so a new pr-reviewer release can't change what fails this check with nothing here
+      # having changed. Raise it deliberately.
+      - name: Install pr-reviewer
+        run: go install github.com/seethespark/pr-reviewer/cmd/review@v0.1.14
+
+      - name: Run PR review
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+        run: |
+          # --review-timeout defaults to 600s, and a review that runs out of time fails closed, so a
+          # large PR was marked red without its code having been read (bloomprint). 1500s stays
+          # inside the job's 30 minutes.
+          review \
+            --pr ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --base ${{ github.event.pull_request.base.sha }} \
+            --head ${{ github.event.pull_request.head.sha }} \
+            --review-timeout 1500

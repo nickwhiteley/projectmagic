@@ -1,0 +1,114 @@
+# What `make test` and `make test-e2e` do locally, run on every push and pull request (PM60).
+#
+# Two jobs, independent and in parallel: the unit tests, type check, lint and build, and the
+# Playwright suite, so a vitest failure doesn't hide a browser one or wait on it.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    # Project Magic's edits change only backlog.md, and are merged straight to main. Nothing to test
+    # (spec.md §10.4).
+    paths-ignore: [backlog.md]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# src/env.ts validates the environment on `svelte-kit sync`, on build and when a server module is
+# imported, so a run without these fails before any test does. None of them reaches a real service:
+# the database tests use TEST_DATABASE_URL, and the e2e suite stays on signed-out pages.
+env:
+  DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+  GITHUB_APP_ID: '1'
+  GITHUB_CLIENT_ID: ci
+  GITHUB_CLIENT_SECRET: ci
+  GITHUB_WEBHOOK_SECRET: ci
+  SESSION_SECRET: ci
+  # 32 zero bytes, base64: the schema wants exactly 32.
+  TOKEN_ENCRYPTION_KEY: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+
+jobs:
+  test:
+    # Project Magic's backlog edits (head branch projectmagic) are not tested.
+    # A job skipped by `if` reports success, so it never blocks a required check.
+    if: github.head_ref != 'projectmagic'
+    name: Unit tests, type check, lint and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The same image the database tests name in their header comments.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: pm
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run check
+
+      - name: Unit tests
+        # TEST_DATABASE_URL turns on tenancy.test.ts and ops.db.test.ts. Without it they skip and
+        # the run still passes, which is the gap CI is here to close. Both wipe what they use.
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:pm@localhost:54329/postgres
+        run: npx vitest --run
+
+      - name: Build
+        run: npm run build
+
+  e2e:
+    # Project Magic's backlog edits (head branch projectmagic) are not tested.
+    if: github.head_ref != 'projectmagic'
+    name: Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # `npm run test:e2e` installs every browser; the suite only uses Chromium.
+      - name: Install Playwright's Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests
+        # playwright.config.ts builds and previews the app itself. navigation.e2e.ts needs .env and
+        # a synced database, so it skips here.
+        run: npx playwright test
+
+      # A failed browser run is otherwise opaque: the report carries the trace for every failure.
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
