@@ -1101,3 +1101,10 @@ to a team gets in at once.
 Built: a *Preview* notice above the button, shown only with sign-up at `approval`, so a self-hosted
 copy (`closed`) and an `open` service read as before. Seen in light, dark and at phone width against
 a database at each mode.
+
+### PM63 The major dependency updates
+**Status:** in progress · **Branch:** chore/pm63-major-dependency-bumps · **Size:** S–M · **Type:** chore · **For:** agent
+
+Asked for on 2026-10-27. With pr-reviewer v0.1.15 the PR review's H003 check reads versions
+correctly, and four packages are a major version behind: TypeScript 7, vitest 5, mermaid 12 and
+@types/node 26. Move each one, changing the code where its new version needs it.
