@@ -36,10 +36,10 @@
 		<div>
 			<h1>One version of the truth, for software products</h1>
 			<p class="lede">
-				Keep the backlog, the plan and the docs as markdown in the repository, and the truth about
-				your product is versioned, branched, reviewed and merged just like the code. Project Magic
-				reads every branch’s copy across all your repositories, reports what is really happening,
-				and guides people and agents to delivery.
+				Keep the backlog, the plan, the documentation and the code together in the repository. The
+				truth about your product is versioned, branched, reviewed and merged just like the code.
+				Project Magic reads every branch’s copy across all your repositories, reports what is really
+				happening, and guides people and agents to delivery.
 			</p>
 			<p class="ctas">
 				<a class="button primary" href="/signin">{cta.label}</a>
@@ -50,10 +50,10 @@
 		<div class="sample" aria-label="An example project card">
 			<div class="card">
 				<div class="top">
-					<h3>Orchard</h3>
+					<h3>Acme website</h3>
 					<span class="badge">1 notice</span>
 				</div>
-				<p class="muted small">last commit 2 h ago on <code>feat/or12-invoices</code></p>
+				<p class="muted small">last commit 2 h ago on <code>feat/aw12-invoices</code></p>
 				<p class="counts">
 					<span><StatusPill status="in progress" /> 2</span>
 					<span><StatusPill status="blocked" /> 1</span>
@@ -62,12 +62,12 @@
 				</p>
 				<div class="block">
 					<div class="label">Waiting on you · 4</div>
-					<p class="row"><code>OR7</code> Renewal reminders <StatusPill status="built" small /></p>
+					<p class="row"><code>AW7</code> Renewal reminders <StatusPill status="built" small /></p>
 					<p class="muted small">the email copy checked against the terms</p>
 				</div>
 				<div class="block">
 					<div class="label">In flight · 2</div>
-					<p class="row"><code>feat/or12-invoices</code> → <code>OR12</code> Invoices as PDF</p>
+					<p class="row"><code>feat/aw12-invoices</code> → <code>AW12</code> Invoices as PDF</p>
 					<p class="muted small">3 ahead · PR #41 · “Number invoices per tenant”</p>
 					<p class="row"><code>spike/hosting</code> <span class="warn">not in the backlog</span></p>
 				</div>
@@ -84,8 +84,9 @@
 	<section class="why" id="why">
 		<h2>Why the backlog lives in the repository</h2>
 		<p class="intro">
-			A spreadsheet or Jira can list the same items. But they hold one copy, kept somewhere else,
-			that someone has to remember to update, so it drifts from the code it describes.
+			A spreadsheet or project management tool can list the same items. But they hold one copy, kept
+			somewhere else, that someone or something has to remember to update. So it drifts from the
+			code it describes. The context switch costs time and thought flow.
 		</p>
 		<div class="grid">
 			<div>
@@ -252,8 +253,8 @@
 					work on.
 				</p>
 				<pre><code
-						>### OR12 Invoices as PDF
-**Status:** in progress · **Size:** M · **Branch:** `feat/or12-invoices`</code
+						>### AW12 Invoices as PDF
+**Status:** in progress · **Size:** M · **Branch:** `feat/aw12-invoices`</code
 					></pre>
 			</li>
 			<li>
