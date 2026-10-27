@@ -302,6 +302,21 @@
 		</dl>
 	</section>
 
+	<section class="founder" id="founder">
+		<h2>Why we built it</h2>
+		<figure>
+			<blockquote>
+				<p>
+					I found that legacy backlog management tools just couldn’t keep up with the pace of change
+					from the AI agents working. I started managing task ordering and design detail inside the
+					repo more and more. This seemed to suit the agents as they didn’t need to connect to an
+					MCP server to update tickets or read the priority of upcoming tasks.
+				</p>
+			</blockquote>
+			<figcaption>Nick Whiteley, founder</figcaption>
+		</figure>
+	</section>
+
 	<section class="pricing">
 		<h2>Pricing</h2>
 		<p>We intend to charge for larger hosted teams, with more people and more projects.</p>
@@ -484,6 +499,7 @@
 	.why,
 	.sees,
 	.ops,
+	.founder,
 	.pricing,
 	.guides,
 	.teams,
@@ -551,6 +567,26 @@
 	}
 	.trust dd {
 		margin: 0;
+	}
+	.founder figure {
+		margin: 1rem 0 0;
+		max-width: 46rem;
+	}
+	.founder blockquote {
+		margin: 0;
+		padding-left: 1.2rem;
+		border-left: 3px solid var(--line-strong);
+	}
+	.founder blockquote p {
+		font: italic 19px/1.6 var(--serif);
+		color: var(--text-2);
+		margin: 0;
+	}
+	.founder figcaption {
+		margin-top: 0.8rem;
+		padding-left: 1.2rem;
+		font-size: 14px;
+		color: var(--text-3);
 	}
 	.setup p .button + .button {
 		margin-left: 0.5rem;
