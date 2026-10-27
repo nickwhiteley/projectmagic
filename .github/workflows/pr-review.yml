@@ -1,4 +1,4 @@
-# Automated review of every pull request into main, by nickwhiteley/pr-reviewer (PM60).
+# Automated review of every pull request into main, by seethespark/pr-reviewer (PM60).
 #
 # What it reviews and how hard is configured in PR-REVIEW.md at the repository root, not here: the
 # agents, the deterministic hygiene checks, and the context the agents are given about what this
@@ -42,7 +42,7 @@ jobs:
           go-version: stable
 
       - name: Install pr-reviewer
-        run: go install github.com/nickwhiteley/pr-reviewer/cmd/review@latest
+        run: go install github.com/seethespark/pr-reviewer/cmd/review@latest
 
       - name: Run PR review
         env:

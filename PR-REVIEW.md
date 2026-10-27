@@ -1,7 +1,7 @@
 # PR-REVIEW.md
 
 Configuration for the automated PR review workflow powered by
-[pr-reviewer](https://github.com/nickwhiteley/pr-reviewer)
+[pr-reviewer](https://github.com/seethespark/pr-reviewer)
 (`.github/workflows/pr-review.yml`). Each `##` section below is read by the
 tool — do not rename them.
 
@@ -98,7 +98,7 @@ plans and build state rather than design or behaviour.
 Install the tool once:
 
 ```sh
-go install github.com/nickwhiteley/pr-reviewer/cmd/review@latest
+go install github.com/seethespark/pr-reviewer/cmd/review@latest
 ```
 
 Run against the current branch (compares to `main`):

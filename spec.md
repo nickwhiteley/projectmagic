@@ -46,7 +46,7 @@ questions across projects (*Ask*).
 allows, create a tenant, connect their GitHub accounts and bring in colleagues. Users, tenants,
 project roles and tiers are in the data model, and every route asks one permission function
 (§11). A self-hosted copy with one owner is one tenant with sign-up closed. The hosted service is
-`https://www.projectmagic.work`; the source is `https://github.com/nickwhiteley/projectmagic`
+`https://www.projectmagic.work`; the source is `https://github.com/seethespark/projectmagic`
 (MIT licence).
 
 ### What it is not
@@ -2507,7 +2507,7 @@ some items were left out.)`.
 
 ## Appendix C. New repository templates (§7.3a)
 
-`DOCS` is `https://github.com/nickwhiteley/projectmagic/blob/main`; `<P>` is the repository's id
+`DOCS` is `https://github.com/seethespark/projectmagic/blob/main`; `<P>` is the repository's id
 prefix and `<p>` it in lower case.
 
 **`backlog.md`:**

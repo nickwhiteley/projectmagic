@@ -1078,7 +1078,7 @@ Nothing runs the tests but the person who remembers to. Add GitHub Actions, as b
   the unit tests with Postgres so the `*.db.test.ts` and tenancy suites run rather than skip, a
   production build, and the Playwright suite.
 - **PR review** (`.github/workflows/pr-review.yml`) by
-  [pr-reviewer](https://github.com/nickwhiteley/pr-reviewer), configured in `PR-REVIEW.md`. A
+  [pr-reviewer](https://github.com/seethespark/pr-reviewer), configured in `PR-REVIEW.md`. A
   verified critical or high finding fails the check.
 - Project Magic's own backlog edits arrive on a branch named `projectmagic` and change only the
   backlog, so neither workflow runs for them.

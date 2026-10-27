@@ -4,7 +4,7 @@ import { defaults } from './config.ts';
 
 export const SCAFFOLD_PR_TITLE = 'Set up Project Magic';
 
-const DOCS = 'https://github.com/nickwhiteley/projectmagic/blob/main';
+const DOCS = 'https://github.com/seethespark/projectmagic/blob/main';
 /** Text in an agent file that says it already has the section, so it is not added twice. */
 export const AGENT_MARKER = '## Project Magic';
 
