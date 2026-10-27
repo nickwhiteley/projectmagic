@@ -261,7 +261,7 @@ make test-e2e   # Playwright
 make build      # a production build
 ```
 
-On GitHub, `.github/workflows/ci.yml` runs all of these on every pull request and push to main,
+On GitHub, `.github/workflows/ci.yml` runs all of these on every pull request,
 the database tests included, and `pr-review.yml` reviews every pull request with
 [pr-reviewer](https://github.com/seethespark/pr-reviewer), configured in `PR-REVIEW.md`.
 
