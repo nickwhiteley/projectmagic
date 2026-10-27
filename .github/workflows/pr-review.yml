@@ -44,7 +44,7 @@ jobs:
       # Pinned, so a new pr-reviewer release can't change what fails this check with nothing here
       # having changed. Raise it deliberately.
       - name: Install pr-reviewer
-        run: go install github.com/seethespark/pr-reviewer/cmd/review@v0.1.14
+        run: go install github.com/seethespark/pr-reviewer/cmd/review@v0.1.15
 
       - name: Run PR review
         env:
