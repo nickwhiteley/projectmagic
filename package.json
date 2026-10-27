@@ -38,7 +38,7 @@
 		"typescript": "^6.0.3",
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.3.0",
-		"vitest": "^4.1.12"
+		"vitest": "^5.0.5"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.js",
@@ -47,7 +47,7 @@
 	"dependencies": {
 		"@vercel/functions": "^3.10.1",
 		"hast-util-sanitize": "^5.0.2",
-		"mermaid": "11.17.2",
+		"mermaid": "^12.2.0",
 		"postgres": "^3.4.9",
 		"rehype-sanitize": "^6.0.0",
 		"rehype-stringify": "^10.0.1",
