@@ -1088,3 +1088,12 @@ Needs the `OLLAMA_API_KEY` secret on the repository for the review.
 Built: CI runs with placeholder values for the variables `src/env.ts` requires, since sync, build
 and server imports all validate them; none reaches a real service. With Postgres 17 as a service,
 all 606 unit tests run and none skip.
+
+### PM61 The sign-in page says Project Magic is in preview
+**Status:** in progress · **Size:** S · **Type:** feature · **Branch:** `feat/pm61-signin-preview` · **For:** agent
+
+Asked for on 2026-10-27. The sign-in page reads the same whether anyone can start a team (`open`) or
+a new team waits for approval (`approval`), so someone signing in to the hosted service isn't told
+that they can't use it straight away. With sign-up at `approval`, the page says Project Magic is in
+preview and a new team needs the developer's approval before it can connect GitHub; someone invited
+to a team gets in at once.
