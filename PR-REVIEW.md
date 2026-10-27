@@ -98,7 +98,7 @@ plans and build state rather than design or behaviour.
 Install the tool once:
 
 ```sh
-go install github.com/seethespark/pr-reviewer/cmd/review@latest
+go install github.com/seethespark/pr-reviewer/cmd/review@v0.1.14
 ```
 
 Run against the current branch (compares to `main`):
