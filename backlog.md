@@ -1069,9 +1069,8 @@ loses features quietly.
 Built: `/api/health` is 503 when the database is down, a migration isn't applied or the cron has
 stopped. The migrations a build ships are listed at build time, as the files aren't deployed.
 
-
 ### PM60 CI: tests and an automated review on every pull request
-**Status:** in progress · **Size:** S · **Type:** chore · **Branch:** `ci/pm60-actions` · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S · **Type:** chore · **For:** agent
 
 Nothing runs the tests but the person who remembers to. Add GitHub Actions, as bloomprint has:
 
@@ -1085,3 +1084,7 @@ Nothing runs the tests but the person who remembers to. Add GitHub Actions, as b
   backlog, so neither workflow runs for them.
 
 Needs the `OLLAMA_API_KEY` secret on the repository for the review.
+
+Built: CI runs with placeholder values for the variables `src/env.ts` requires, since sync, build
+and server imports all validate them; none reaches a real service. With Postgres 17 as a service,
+all 606 unit tests run and none skip.
