@@ -1340,10 +1340,14 @@ batch bar, `POST /settings/batch`, stored in `user_pref.batch_edits`, default on
   after 30 days. The user is re-read on every request (with their memberships, in one query), so
   disabling takes effect at once; a session for a missing or disabled user is cleared. *Sign out*
   (`POST /auth/signout`) clears it and goes to `/signin`.
-- **The sign-in page** (`/signin`; signed in, it redirects to `/`) has *Sign in with GitHub*, and
-  either "Sign in with GitHub to create a tenant for your team, or to join one you have been invited
-  to." (sign-up not closed) or "This instance is for the people its owner has invited. To follow your
-  own projects, run your own: the setup guide.".
+- **The sign-in page** (`/signin`; signed in, it redirects to `/`) has *Sign in with GitHub*, and a
+  line under it that follows the sign-up mode (§17.8): "Sign in with GitHub to create a tenant for your
+  team, or to join one you have been invited to." (open); "Sign in with GitHub to request a team, or to
+  join one you have been invited to." (approval); or "This instance is for the people its owner has
+  invited. To follow your own projects, run your own: the setup guide." (closed). With `approval` a
+  *Preview* notice above the button (PM61) says: "Project Magic is in preview. A new team needs the
+  developer's approval before it can connect GitHub, so you won't see your projects straight away. If
+  you have been invited to a team, you can use it as soon as you sign in."
 - **Tokens.** The user's refresh token is stored **encrypted** (AES-256-GCM with a fresh 12-byte IV,
   `iv.tag.ciphertext` in base64url, key `TOKEN_ENCRYPTION_KEY`) and used only for that user's writes
   and their own GitHub checks. It buys a short-lived access token, cached in memory until five minutes

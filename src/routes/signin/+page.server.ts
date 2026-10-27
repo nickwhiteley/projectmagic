@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	if (locals.user) redirect(303, '/');
 	const next = url.searchParams.get('next');
 	return {
-		open: (await getSignup()) !== 'closed',
+		signup: await getSignup(),
 		message: MESSAGES[url.searchParams.get('error') ?? ''] ?? null,
 		href: `/auth/github${next ? `?next=${encodeURIComponent(next)}` : ''}`
 	};
