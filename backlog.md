@@ -1103,8 +1103,27 @@ copy (`closed`) and an `open` service read as before. Seen in light, dark and at
 a database at each mode.
 
 ### PM63 The major dependency updates
-**Status:** in progress · **Branch:** chore/pm63-major-dependency-bumps · **Size:** S–M · **Type:** chore · **For:** agent
+**Status:** built · **Waiting:** Nick's check · **Size:** S–M · **Type:** chore · **For:** agent
 
 Asked for on 2026-10-27. With pr-reviewer v0.1.15 the PR review's H003 check reads versions
 correctly, and four packages are a major version behind: TypeScript 7, vitest 5, mermaid 12 and
 @types/node 26. Move each one, changing the code where its new version needs it.
+
+Built: vitest 5 needs no changes. Mermaid 12 draws diagrams with shadows and squared edges by
+default, so the docs page asks for `look: classic` and `layout: dagre`, which draw as 11 did, flat
+and bordered like the page; compared side by side with 11 in light and dark. TypeScript 7 and
+@types/node 26 can't move yet: PM64.
+
+### PM64 TypeScript 7 and Node 26
+**Status:** blocked · **Waiting:** TypeScript 7 support in SvelteKit, svelte-check and typescript-eslint; Nick's choice of Node 26 · **Size:** S · **Type:** chore · **For:** agent
+
+Left from PM63; until they move, the PR review's H003 check fails on them.
+
+- **TypeScript 7.** Every tool that reads our TypeScript stops at 6: SvelteKit 3.1 (`^6.0.0`),
+  svelte-check 4.7.7 and svelte2tsx (`^5 || ^6`), and typescript-eslint 8.72 (`<6.1.0`), with
+  nothing newer in their `next` or canary releases. Forcing it would break `npm run check` and
+  lint. Move when they support it.
+- **@types/node 26.** The types should match the Node that runs the app, and that is 24: CI sets
+  Node 24, and the Vercel adapter takes the function runtime from the build's Node. Types for 26
+  would let code use APIs that production doesn't have. Moving means running on Node 26: the
+  project's Node version in Vercel, `node-version` in CI, then the types.
