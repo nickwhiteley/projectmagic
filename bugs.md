@@ -22,7 +22,7 @@ todo", with no space after the comma. The `{#if i},{/if}` in the counts' `{#each
 Write the separator as `{#if i}, {/if}` or `{i ? ', ' : ''}`.
 
 ### BUG3 Connecting GitHub fails with a 500 when GitHub refuses the person's access token
-**Status:** built, waiting on Nick's check · **Size:** S · **Type:** bug · **Found:** production · **Raised:** 2026-10-26 12:00
+**Status:** done · **Size:** S · **Type:** bug · **Found:** production · **Raised:** 2026-10-26 12:00
 
 Seen on 2026-10-26 (version 4420630, ref `ugysapee`): a new user, signed in from an incognito window,
 installed the App on a different GitHub org. On the way back, `/tenant/installations/setup` returned a
