@@ -9,8 +9,22 @@
 	<div class="card">
 		<h1>Sign in</h1>
 		{#if data.message}<p class="error" role="alert">{data.message}</p>{/if}
+		{#if data.signup === 'approval'}
+			<div class="preview">
+				<span class="tag">Preview</span>
+				<p>
+					Project Magic is in preview. A new team needs the developer's approval before it can
+					connect GitHub, so you won't see your projects straight away. If you have been invited to
+					a team, you can use it as soon as you sign in.
+				</p>
+			</div>
+		{/if}
 		<a class="button primary" href={data.href}>Sign in with GitHub</a>
-		{#if data.open}
+		{#if data.signup === 'approval'}
+			<p class="muted small">
+				Sign in with GitHub to request a team, or to join one you have been invited to.
+			</p>
+		{:else if data.signup === 'open'}
 			<p class="muted small">
 				Sign in with GitHub to create a tenant for your team, or to join one you have been invited
 				to.
@@ -70,6 +84,28 @@
 	.button {
 		padding: 0.55rem 1rem;
 		font-size: 14px;
+	}
+	.preview {
+		background: var(--warn-bg);
+		color: var(--warn);
+		border-radius: 8px;
+		padding: 0.75rem 0.9rem;
+		display: flex;
+		flex-direction: column;
+		align-items: start;
+		gap: 0.4rem;
+		font-size: 14px;
+	}
+	.preview p {
+		margin: 0;
+	}
+	.tag {
+		font: 600 10.5px/16px var(--sans);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		border: 1px solid var(--warn);
+		border-radius: 4px;
+		padding: 0 0.35rem;
 	}
 	.error {
 		color: var(--danger);
