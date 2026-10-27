@@ -6,7 +6,7 @@ Configuration for the automated PR review workflow powered by
 tool — do not rename them.
 
 ## Who owns the repo
-Nick Whiteley — solo developer.
+SeeTheSpark.
 
 ## Context and intent
 Project Magic shows what AI coding agents are building across a set of
@@ -64,7 +64,7 @@ is rendered, so it is sanitised.
 ## PR Hygiene
 - [x] H001 README.md is present and up to date
 - [ ] H002 CODEOWNERS exists
-- [ ] H003 All runtime and dependency versions are up to date
+- [x] H003 All runtime and dependency versions are up to date
 - [ ] H006 Dev container definitions exist and are appropriate
 
 ## Code Reviews
