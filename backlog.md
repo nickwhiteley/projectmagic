@@ -838,7 +838,7 @@ engine, so a team sees value before adopting the conventions. Inferred status (P
 starting point for a repository with none.
 
 ### PM58 The home page sells the hosted service and what is built since v0.1
-**Status:** built · **Waiting:** Nick to read the draft and answer the questions · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+**Status:** done · **Size:** M · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
 
 From a review of the home page on 2026-10-26. It still reads as v0.1 for one person running their
 own copy:
@@ -873,7 +873,7 @@ and keeps, then self-hosting. Spec Appendix F follows it. The README's status li
 invitations are missing; the rest of the README is unchanged.
 
 ### PM59 An About page and a privacy policy
-**Status:** built · **Waiting:** Nick to read the privacy policy before it goes live · **Size:** S · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
+**Status:** done · **Size:** S · **Type:** feature · **Branch:** `feat/pm58-home-page` · **For:** agent
 
 Asked for on 2026-10-26, and needed before sign-up opens (`specs/tenants.md` §13). Decided with
 Nick: the controller is Nick Whiteley, in the UK; the contact is `contact@projectmagic.work`; the
@@ -888,7 +888,7 @@ the code: 14, 30 and 90 days), deleting an account, rights and the ICO, and chan
 written from the code, not legal advice; check the transfer safeguards each provider offers.
 
 ### PM57 Initial signup action direction
-**Status:** built · **Waiting:** Nick to try it on a new tenant · **Size:** S · **For:** agent
+**Status:** done · **Size:** S · **For:** agent
 
 Once I have signed up for a new tenant it is not clear what I have to do.  Add a call to action when the Github action has not been installed in the user's account.
 
