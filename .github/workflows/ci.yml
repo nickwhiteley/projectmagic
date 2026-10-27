@@ -1,15 +1,13 @@
-# What `make test` and `make test-e2e` do locally, run on every push and pull request (PM60).
+# What `make test` and `make test-e2e` do locally, run on every pull request into main (PM60).
+#
+# Not on the push a merge makes to main: the same code already passed on the pull request, and
+# running it again only spends Actions minutes. Run it by hand from the Actions tab if needed.
 #
 # Two jobs, independent and in parallel: the unit tests, type check, lint and build, and the
 # Playwright suite, so a vitest failure doesn't hide a browser one or wait on it.
 name: CI
 
 on:
-  push:
-    branches: [main]
-    # Project Magic's edits change only backlog.md, and are merged straight to main. Nothing to test
-    # (spec.md §10.4).
-    paths-ignore: [backlog.md]
   pull_request:
     branches: [main]
   workflow_dispatch:

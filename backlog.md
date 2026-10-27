@@ -1074,7 +1074,7 @@ stopped. The migrations a build ships are listed at build time, as the files are
 
 Nothing runs the tests but the person who remembers to. Add GitHub Actions, as bloomprint has:
 
-- **CI** (`.github/workflows/ci.yml`) on every push to main and pull request: lint, type check,
+- **CI** (`.github/workflows/ci.yml`) on every pull request: lint, type check,
   the unit tests with Postgres so the `*.db.test.ts` and tenancy suites run rather than skip, a
   production build, and the Playwright suite.
 - **PR review** (`.github/workflows/pr-review.yml`) by
