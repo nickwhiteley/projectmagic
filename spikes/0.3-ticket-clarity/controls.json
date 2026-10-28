@@ -1,0 +1,47 @@
+[
+	{
+		"id": "C1",
+		"expect": "green",
+		"title": "Toggle colour on the settings page",
+		"size": "XS",
+		"type": "chore",
+		"for": "agent",
+		"body": "Change the button with id `toggle_foo` on `/settings` to the hex colour #00DD11."
+	},
+	{
+		"id": "C2",
+		"expect": "red",
+		"title": "Improve the settings experience",
+		"size": "M",
+		"type": "feature",
+		"for": "agent",
+		"body": "The settings area has grown over time and it no longer feels as coherent as the rest of the app. People have mentioned that it can be hard to find things, and some of the options are probably not that useful any more. We should take a good look at it and make it better, tidying up the layout and making sure that the most important things are easy to get to. It would also be nice if it felt more modern and in line with the newer pages, perhaps with some better grouping or a cleaner look. We could consider removing some options, or moving some of them elsewhere if that makes more sense. The aim is for it to be a more pleasant and intuitive experience overall, so that people feel more confident when they change things."
+	},
+	{
+		"id": "C3",
+		"expect": "red",
+		"title": "Fix login",
+		"size": "S",
+		"type": "bug",
+		"for": "agent",
+		"body": "Login is broken sometimes."
+	},
+	{
+		"id": "C4",
+		"expect": "green",
+		"title": "Hide done items on the Board by default",
+		"size": "S",
+		"type": "feature",
+		"for": "agent",
+		"body": "The Board's Done column grows without limit, so on a long-lived project it is most of the page and the work in flight is below the fold. Hide the Done column by default, with a *Show done* toggle in the Board's toolbar beside the epic filter. The choice is kept in the URL as `?done=1`, the same as the List, so a link to the Board with done items showing keeps working.\n\nChecks: `/p/{repo}/board` shows no Done column; `/p/{repo}/board?done=1` shows it; the toggle switches between the two and the URL follows."
+	},
+	{
+		"id": "C5",
+		"expect": "amber",
+		"title": "Make the Board faster",
+		"size": "S",
+		"type": "chore",
+		"for": "agent",
+		"body": "Dragging a card on the Board of a project with 200 items lags noticeably. Make it smooth."
+	}
+]
