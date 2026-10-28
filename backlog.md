@@ -1137,3 +1137,44 @@ the menu item stays too.
 Built: the header shows *Feedback* beside the user menu, opening the same dialog as the menu
 item. On a phone the project picker shrinks to make room, so the name stays on one line, and below
 about 360px the picker gets its own row. Seen in light, dark, at 390px and at 320px.
+
+### PM65 A light on each item: is it clear enough to build and check?
+**Status:** blocked · **Waiting:** Nick's lights in the spike's sheet, and three choices below · **Size:** M · **Type:** feature · **For:** agent
+
+Asked for on 2026-10-28. An agent builds what an item says, and a reviewer checks the change
+against it, so an item that leaves the important decisions open gets a change its writer didn't
+mean, and no way to tell. Length is no guide: "change the button `toggle_foo` on `/settings` to
+#00DD11" is short and nearly exact, and a long paragraph can settle nothing.
+
+A model reads each open item the way its builder would, as PM3 reads items for a status: it
+writes what it would build (the *restatement*), the checks a reviewer would run, and the
+decisions it would have to guess, each one *blocking* (another reasonable reading gives a
+different change) or minor. A fixed rule turns those into a light: red for two or more blocking
+guesses or no concrete check, amber for one, or for a missing reason on an item bigger than an S
+bug or chore, else green. [`spikes/0.3-ticket-clarity/RESULT.md`](spikes/0.3-ticket-clarity/RESULT.md)
+has the prompt, the rule and how it did on this backlog.
+
+- **When**: an item's text is reviewed when it changes, however it changed (the edit form, an
+  agent's commit), for items that are todo or blocked. The review is cached against the text, as
+  `item_inference` is, within the same daily token limit, `ai` flag and opt-outs.
+- **Where**: a dot on List rows and Board cards, with the light's name for screen readers; on the
+  item page, the restatement, the blocking and minor guesses, and the checks. *Add these checks
+  to the item* writes the checks into the item as an ordinary edit. The light never blocks a
+  save or a status change.
+- **Context**: the model sees the project's other item ids and titles and the spec's headings,
+  so a reference such as PM51 isn't counted as a guess.
+
+Checks: an item whose only text is "Login is broken sometimes." is red, and its page lists the
+guesses; one written as precisely as PM46 is green; editing an item changes its light at the next
+sync and leaves every other item's cached review in place; with inference off, no dot and no
+panel appear.
+
+Before building:
+
+1. **Labels.** Fill in *Yours* in [`spikes/0.3-ticket-clarity/sheet.md`](spikes/0.3-ticket-clarity/sheet.md)
+   for 20–30 items and run `node spikes/0.3-ticket-clarity/compare.ts`. Build only if the model
+   mostly agrees, and almost never puts green against your red.
+2. **Steadiness.** Half the items didn't get the same light on three runs. Choose between the
+   majority of three runs (three times the tokens), a stronger model, or showing the guesses with
+   the light in the background.
+3. **For: person and For: agent**: one bar for both, or a stricter one for agents.
